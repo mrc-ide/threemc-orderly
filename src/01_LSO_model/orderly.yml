@@ -2,9 +2,9 @@ script: script.R
 
 artefacts:
   - data:
-      description: naomi fit object, including sample and sd report
+      description: naomi fit object
       filenames:
-      - TMBObjects_DistrictAgeTime_ByType.RData
+      - TMBObjects_DistrictAgeTime_ByType.rds
   - data:
       description: Modelling results, including error bounds
       filenames:

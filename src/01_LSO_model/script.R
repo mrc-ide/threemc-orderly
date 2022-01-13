@@ -191,7 +191,7 @@ obj <- TMB::MakeADFun(dat_tmb,
                  hessian = TRUE,
                  DLL = "Surv_SpaceAgeTime_ByType")
 
-rm(dat_tmb, parameters); gc()
+# rm(dat_tmb, parameters); gc()
 
 # Running optimiser
 opt <- stats::nlminb(start   = obj$par,
@@ -228,7 +228,14 @@ out <- out %>%
 
 # Saving results (also make into function)
 data.table::fwrite(out, file = "Results_DistrictAgeTime_ByType.csv.gz")
-save(fit, file = "TMBObjects_DistrictAgeTime_ByType.RData")
+# save(fit, file = "TMBObjects_DistrictAgeTime_ByType.RData")
+# save smaller TMB object
+fit_small <- fit
+fit_small$tmb_data <- dat_tmb
+fit_small$par_init <- parameters
+fit_small$sample <- NULL
+fit_small$obj <- NULL
+saveRDS(fit_small, "TMBObjects_DistrictAgeTime_ByType.rds")
 
 # Plotting results (make this into a diagnostics plot kind of function)
 # Coverage
