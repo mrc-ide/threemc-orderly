@@ -1,0 +1,40 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: naomi fit object, including sample and sd report
+      filenames:
+      - TMBObjects_DistrictAgeTime_ByType.RData
+  - data:
+      description: Modelling results, including error bounds
+      filenames:
+      - Results_DistrictAgeTime_ByType.csv.gz
+  
+displayname: threemc model fit
+
+parameters:
+  cntry:
+    default: ~
+
+packages:
+  - threemc
+  - sf
+  - data.table
+  - dplyr
+  - Matrix
+  - TMB
+  
+global_resources:
+  areas.geojson: areas.geojson
+  Surv_SpaceAgeTime_ByType.cpp: Surv_SpaceAgeTime_ByType.cpp
+  Surv_SpaceAgeTime_ByType.o: Surv_SpaceAgeTime_ByType.o
+  Surv_SpaceAgeTime_ByType.so: Surv_SpaceAgeTime_ByType.so
+  survey_circumcision.csv.gz: survey_circumcision.csv.gz
+  survey_clusters.csv.gz: survey_clusters.csv.gz
+  survey_individuals.csv.gz: survey_individuals.csv.gz
+  
+# sources:
+#  - debug-functions.R
+
+# resources:
+#  - 2021_naomi_model_options.csv
