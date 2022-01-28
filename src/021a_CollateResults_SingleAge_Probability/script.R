@@ -71,7 +71,9 @@ fit$obj <- MakeADFun(data = fit$tmb_data,
                      DLL = "Surv_SpaceAgeTime_ByType")
 fit$obj$fn()  
 fit <- naomi::sample_tmb(fit, nsample = N)
+fit_no_prog <- fit
 
+rm(fit_no_prog); gc()
 
 # Model with total rate (i.e. including VMMC data)
 # prog_results <- as_tibble(data.table::fread(here::here(
@@ -124,6 +126,3 @@ results <- merge_area_info(results, areas)
 ####################
 # Saving files
 data.table::fwrite(results, file = save_loc)
-
-# Clearing Workspace
-rm(list = ls()); gc()
