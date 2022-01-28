@@ -1,0 +1,33 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: 
+      - Aggregated Survey Circumcison Rates
+      filenames: 
+      - circumcision_surveypoints.csv.gz
+  
+displayname: aggregating probability of circumcision in surveys
+
+parameters:
+  cntry:
+    default: ~
+      
+packages:
+  - threemc
+  - sf
+  - data.table
+  - naomi
+  - dplyr
+  - stringr
+  - TMB
+  
+global_resources:
+  areas.geojson: areas.geojson
+  population_singleage.csv.gz: population_singleage.csv.gz
+  survey_clusters.csv.gz: survey_clusters.csv.gz 
+  survey_individuals.csv.gz: survey_individuals.csv.gz 
+  survey_circumcision.csv.gz: survey_circumcision.csv.gz 
+  
+sources:
+  - source.R
