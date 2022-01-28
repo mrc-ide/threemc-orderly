@@ -73,7 +73,7 @@ fit$obj$fn()
 fit <- naomi::sample_tmb(fit, nsample = N)
 fit_no_prog <- fit
 
-rm(fit_no_prog); gc()
+rm(fit); gc()
 
 # Model with total rate (i.e. including VMMC data)
 # prog_results <- as_tibble(data.table::fread(here::here(
@@ -98,7 +98,7 @@ results <- prepare_sample_data(N = N,
                                type = "probability")
 
 # remove unnecessary objects
-rm(populations); gc()
+rm(populations, fit_no_prog); gc()
 
 ####################################
 ### Preparing results for output ###
