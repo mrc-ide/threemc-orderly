@@ -2,8 +2,8 @@ script: script.R
 
 artefacts:
   - data:
-      description: Aggregated Probabilities of Circumcision for Single Ages, 
-      for traditional and medical circumcision.
+      description: 
+      - Aggregated Probabilities of Circumcision for Single Ages
       filenames: 
       - Results_Age_Probability.csv.gz
   
@@ -16,7 +16,7 @@ parameters:
 depends:
   01_modelling:
     id: latest(parameter:cntry == cntry)
-    uses:
+    use:
       Results_DistrictAgeTime_ByType.csv.gz: Results_DistrictAgeTime_ByType.csv.gz
       TMBObjects_DistrictAgeTime_ByType.rds: TMBObjects_DistrictAgeTime_ByType.rds
       
