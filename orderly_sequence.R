@@ -33,8 +33,8 @@ lapply(aggregations, orderly::orderly_run, list(cntry = iso3))
 
 ## plots
 # plotting orderly tasks
-plots <- dirs[dirs %like% "03"]
-lapply(plots, orderly::orderly_run, list(cntry = iso3))
+# plots <- dirs[dirs %like% "03"]
+# lapply(plots, orderly::orderly_run, list(cntry = iso3))
 
 #### Committing Reports #### 
 
