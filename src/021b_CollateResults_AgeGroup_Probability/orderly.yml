@@ -7,7 +7,7 @@ artefacts:
       filenames: 
       - Results_AgeGroup_Probability.csv.gz
   
-displayname: aggregating probability of circumcision for single age groups.
+displayname: aggregating probability of circumcision for age groups.
 
 parameters:
   cntry:
