@@ -8,10 +8,6 @@
 ### Metadata to run the models
 
 # !! Change this to use dataset stored in threemc
-# pull recommended area hierarchy for target country
-area_lev <- threemc::datapack_psnu_area_level %>%
-    filter(iso3 == cntry) %>%
-    pull(psnu_area_level)
 k_dt <- 5 # Age knot spacing
 start_year <-  2006
 cens_age = 59
@@ -32,6 +28,18 @@ survey_circumcision <- read_circ_data(
   "survey_circumcision.csv.gz", 
   filters
 )
+
+# pull recommended area hierarchy for target country
+area_lev <- threemc::datapack_psnu_area_level %>%
+  filter(iso3 == cntry) %>%
+  pull(psnu_area_level)
+if (area_lev == 0) area_lev <- NULL # don't model at the country level
+
+# if area_level is missing, assume most common area lev in surveys
+if (length(area_lev) == 0) {
+  area_lev <- table(as.numeric(substr(survey_clusters$geoloc_area_id, 5, 5)))
+  area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
+}
 
 #####################################
 #### Preparing circumcision data ####
