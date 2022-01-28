@@ -15,6 +15,22 @@
 # fill in ordelry.yml with artefacts, parameters, global resources, etc
 # write out script to be run
 
+#### Committing Reports: Function #### 
+orderly_commits <- function() {
+  # list draft reports
+  (dr <- orderly::orderly_list_drafts())
+  
+  # commit the latest reports
+  dr <- dr %>% 
+    group_by(name) %>% 
+    summarise(id = last(id), .groups = 'drop')
+  print(dr)
+  lapply(dr$id, orderly::orderly_commit)
+  
+  # push to sharepoint
+  lapply(dr$name, orderly::orderly_push_archive)
+}
+
 #### Run src Scripts ####
 
 # set country parameter
@@ -26,27 +42,21 @@ dirs <- list.dirs(path = "src", full.names = FALSE)
 ## modelling
 orderly::orderly_run("01_modelling", list(cntry = iso3))
 
+# commit 
+orderly_commits()
+
 ## aggregations
 # aggregation orderly tasks
 aggregations <- dirs[dirs %like% "02"]
 lapply(aggregations, orderly::orderly_run, list(cntry = iso3))
+
+# commit 
+orderly_commits()
 
 ## plots
 # plotting orderly tasks
 # plots <- dirs[dirs %like% "03"]
 # lapply(plots, orderly::orderly_run, list(cntry = iso3))
 
-#### Committing Reports #### 
-
-# list draft reports
-(dr <- orderly::orderly_list_drafts())
-
-# commit the latest reports
-dr <- dr %>% 
-  group_by(name) %>% 
-  summarise(id = last(id), .groups = 'drop')
-print(dr)
-lapply(dr$id, orderly::orderly_commit)
-
-# push to sharepoint
-lapply(dr$name, orderly::orderly_push_archive)
+# commit 
+# orderly_commits()
