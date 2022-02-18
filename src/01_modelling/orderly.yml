@@ -9,11 +9,11 @@ artefacts:
       description: Modelling results, including error bounds
       filenames:
       - Results_DistrictAgeTime_ByType.csv.gz
-  - pdf:
+  - staticgraph:
       description: Plot of circumcision coverage for all areas modelled.
       filenames:
       - Circ_Coverage.pdf
-  - pdf:
+  - staticgraph:
       description: Plot of circumcision rates for all areas modelled.
       filenames:
       - Circ_Rates.pdf
