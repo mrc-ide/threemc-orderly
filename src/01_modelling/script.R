@@ -10,10 +10,14 @@
 # !! Change this to use dataset stored in threemc
 k_dt <- 5 # Age knot spacing
 start_year <-  2006
-cens_age = 59
+cens_age <- 59
+N <- 1000
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
+
+# remove circumcisions with missing type?
+rm_missing_type <- FALSE
 
 # read in data, filter for specific country and male surveys only
 filters <- c("iso3" = cntry, sex = "male")
@@ -60,11 +64,19 @@ survey_circumcision <- prepare_survey_data(
     start_year = start_year,
     cens_year = cens_year,
     cens_age = cens_age,
+    rm_missing_type = rm_missing_type,
     norm_kisk_weights = TRUE)
 
 if (nrow(survey_circumcision) == 0) {
     message("no valid surveys at this level")
 }
+
+# include indicator to determine whether there is any type distinction for cntry
+if (all(is.na(survey_circumcision$circ_who) &
+        is.na(survey_circumcision$circ_where))) {
+  print("No type distinction made in valid surveys for this country")
+  is_type <- FALSE
+} else is_type <- TRUE
 
 # rm unnecessary datasets
 rm(survey_clusters, survey_individuals); gc()
@@ -141,8 +153,11 @@ rm(design_matrices, survival_matrices, integration_matrices, Q_space); gc()
 
 
 # compile TMB model
-compile_tmb("Surv_SpaceAgeTime_ByType.cpp")
-dyn.load(TMB::dynlib("Surv_SpaceAgeTime_ByType"))
+if (is_type == TRUE) {
+  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
+} else mod <- "Surv_SpaceAgeTime"
+compile_tmb(paste0(mod, ".cpp"))
+dyn.load(TMB::dynlib(mod))
 
 # Initial values
 parameters <- with(
@@ -188,16 +203,42 @@ parameters <- with(
   )
 )
 
-# Creating TMB object
+# random effects
+randoms <- c("u_time_mmc", "u_age_mmc", "u_space_mmc",
+             "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
+             "u_age_tmc", "u_space_tmc", "u_agespace_tmc")
+# remove "type" suffix from randoms and dat_tmb names, if looking at just MC
+if (is_type == FALSE) {
+  
+  remove_type_distinction <- function(x) {
+    names(x) <- stringr::str_remove(names(x), "_mmc")
+    x <- x[!names(x) %like% "_tmc"]
+  }
+  
+  dat_tmb <- remove_type_distinction(
+    dat_tmb[!names(dat_tmb) %in% c("A_mmc", "A_tmc")]
+  )
+  names(dat_tmb)[names(dat_tmb) == "A_mc"] <- "A"
+  
+  parameters <- remove_type_distinction(parameters)
+  
+  randoms <- stringr::str_remove(randoms, "_mmc")
+  randoms <- randoms[!randoms %like% "_tmc"]
+}
+
+# ensure all "randoms" are parameters in our model
+randoms <- randoms[randoms %in% names(parameters)]
+if (length(randoms) == 0) {
+  randoms <- NULL
+}
+
+# Create TMB object
 obj <- TMB::MakeADFun(dat_tmb,
-                 parameters,
-                 random = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
-                            "u_agetime_mmc", "u_agespace_mmc",
-                            "u_spacetime_mmc", "u_age_tmc",
-                            "u_space_tmc", "u_agespace_tmc"),
-                 method = "BFGS",
-                 hessian = TRUE,
-                 DLL = "Surv_SpaceAgeTime_ByType")
+                      parameters,
+                      random = randoms,
+                      method = "BFGS",
+                      hessian = TRUE,
+                      DLL = mod)
 
 # rm(dat_tmb, parameters); gc()
 
@@ -220,23 +261,20 @@ out <- compute_quantiles(out, fit)
 ######################
 # preparing for output (could surely put this in function and make more terse!)
 out <- out %>%
-    dplyr::select(c(area_id, area_name, year, age = circ_age, #population,
-                    obs_mmc, obs_tmc, cens, icens, N,
-                    rate_mmcM, rate_mmcL, rate_mmcU,
-                    rate_tmcM, rate_tmcL, rate_tmcU,
-                    rateM, rateL, rateU,
-                    survM, survL, survU,
-                    inc_tmcM, inc_tmcL, inc_tmcU,
-                    inc_mmcM, inc_mmcL, inc_mmcU,
-                    incM, incL, incU,
-                    cum_inc_tmcM, cum_inc_tmcL, cum_inc_tmcU,
-                    cum_inc_mmcM, cum_inc_mmcL, cum_inc_mmcU,
-                    cum_incM, cum_incL, cum_incU))
+  select(
+    area_id, area_name, year, age = circ_age,
+    contains("obs"),
+    cens, icens, N,
+    contains("rate_mmc"), contains("rate_tmc"), contains("rate"),
+    contains("surv"),
+    contains("cum_inc_mmc"), contains("cum_inc_tmc"), contains("cum_inc"),
+    contains("inc_mmc"), contains("inc_tmc"), contains("inc")
+  )
 
 
 # Saving results (also make into function)
 data.table::fwrite(out, file = "Results_DistrictAgeTime_ByType.csv.gz")
-# save(fit, file = "TMBObjects_DistrictAgeTime_ByType.RData")
+
 # save smaller TMB object
 fit_small <- fit
 fit_small$tmb_data <- dat_tmb
@@ -245,47 +283,43 @@ fit_small$sample <- NULL
 fit_small$obj <- NULL
 saveRDS(fit_small, "TMBObjects_DistrictAgeTime_ByType.rds")
 
-# Plotting results (make this into a diagnostics plot kind of function)
+# Plotting results 
 # Coverage
-# pdf(here::here(paste0("Runs/", cntry, "_Coverage.pdf")), width = 10)
-# ggplot(out,
-#        aes(x = age,
-#            y = cum_incM,
-#            ymin = cum_incL,
-#            ymax = cum_incU,
-#            group = as.factor(year),
-#            colour = as.factor(year))) +
-#   geom_ribbon(fill = "lightgrey",
-#               colour = NA) +
-#   geom_line(size = 1) +
-#   scale_y_continuous(labels = scales::label_percent()) +
-#   labs(x = "Age",
-#        y = "Coverage",
-#        colour = "") +
-#   theme_bw() +
-#   facet_wrap(. ~ area_name)
-# dev.off()
-# 
-# # Rates
-# pdf(here::here(paste0("Runs/", cntry, "_Rates.pdf")), width = 10)
-# ggplot(out,
-#        aes(x = age,
-#            y = rateM,
-#            ymin = rateL,
-#            ymax = rateU,
-#            group = as.factor(year),
-#            colour = as.factor(year))) +
-#   geom_ribbon(fill = "lightgrey",
-#               colour = NA) +
-#   geom_line(size = 1) +
-#   scale_y_continuous(labels = scales::label_percent()) +
-#   labs(x = "Age",
-#        y = "Rates",
-#        colour = "") +
-#   theme_bw() +
-#   facet_wrap(. ~ area_name)
-# dev.off()
+pdf("Circ_Coverage.pdf", width = 10)
+ggplot(out,
+       aes(x = age,
+           y = cum_incM,
+           ymin = cum_incL,
+           ymax = cum_incU,
+           group = as.factor(year),
+           colour = as.factor(year))) +
+  geom_ribbon(fill = "lightgrey",
+              colour = NA) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(x = "Age",
+       y = "Coverage",
+       colour = "") +
+  theme_bw() +
+  facet_wrap(. ~ area_name)
+dev.off()
 
-
-# Clearing Workspace
-# rm(list = ls()); gc()
+# Rates
+pdf("Circ_Rates.pdf", width = 10)
+ggplot(out,
+       aes(x = age,
+           y = rateM,
+           ymin = rateL,
+           ymax = rateU,
+           group = as.factor(year),
+           colour = as.factor(year))) +
+  geom_ribbon(fill = "lightgrey",
+              colour = NA) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(x = "Age",
+       y = "Rates",
+       colour = "") +
+  theme_bw() +
+  facet_wrap(. ~ area_name)
+dev.off()

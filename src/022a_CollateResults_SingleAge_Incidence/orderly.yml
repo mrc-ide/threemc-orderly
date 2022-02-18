@@ -32,9 +32,15 @@ packages:
 global_resources:
   areas.geojson: areas.geojson
   population_singleage.csv.gz: population_singleage.csv.gz
-  Surv_SpaceAgeTime_ByType.cpp: Surv_SpaceAgeTime_ByType.cpp
-  Surv_SpaceAgeTime_ByType.o: Surv_SpaceAgeTime_ByType.o
-  Surv_SpaceAgeTime_ByType.so: Surv_SpaceAgeTime_ByType.so
+  Surv_SpaceAgeTime_ByType_withUnknownType.cpp: 
+  - Surv_SpaceAgeTime_ByType_withUnknownType.cpp
+  Surv_SpaceAgeTime_ByType_withUnknownType.o: 
+  - Surv_SpaceAgeTime_ByType_withUnknownType.o
+  Surv_SpaceAgeTime_ByType_withUnknownType.so: 
+  - Surv_SpaceAgeTime_ByType_withUnknownType.so
+  Surv_SpaceAgeTime.cpp: Surv_SpaceAgeTime.cpp
+  Surv_SpaceAgeTime.o: Surv_SpaceAgeTime.o
+  Surv_SpaceAgeTime.so: Surv_SpaceAgeTime.so 
   
-sources:
-  - source.R
+# sources:
+#   - source.R

@@ -9,6 +9,14 @@ artefacts:
       description: Modelling results, including error bounds
       filenames:
       - Results_DistrictAgeTime_ByType.csv.gz
+  - staticgraph:
+      description: Plot of circumcision coverage for all areas modelled.
+      filenames:
+      - Circ_Coverage.pdf
+  - staticgraph:
+      description: Plot of circumcision rates for all areas modelled.
+      filenames:
+      - Circ_Rates.pdf
   
 displayname: threemc model fit
 
@@ -23,12 +31,20 @@ packages:
   - dplyr
   - Matrix
   - TMB
+  - rlang
+  - ggplot2
   
 global_resources:
+  Surv_SpaceAgeTime_ByType_withUnknownType.cpp: 
+  - Surv_SpaceAgeTime_ByType_withUnknownType.cpp
+  Surv_SpaceAgeTime_ByType_withUnknownType.o: 
+  - Surv_SpaceAgeTime_ByType_withUnknownType.o
+  Surv_SpaceAgeTime_ByType_withUnknownType.so: 
+  - Surv_SpaceAgeTime_ByType_withUnknownType.so
+  Surv_SpaceAgeTime.cpp: Surv_SpaceAgeTime.cpp
+  Surv_SpaceAgeTime.o: Surv_SpaceAgeTime.o
+  Surv_SpaceAgeTime.so: Surv_SpaceAgeTime.so
   areas.geojson: areas.geojson
-  Surv_SpaceAgeTime_ByType.cpp: Surv_SpaceAgeTime_ByType.cpp
-  Surv_SpaceAgeTime_ByType.o: Surv_SpaceAgeTime_ByType.o
-  Surv_SpaceAgeTime_ByType.so: Surv_SpaceAgeTime_ByType.so
   survey_circumcision.csv.gz: survey_circumcision.csv.gz
   survey_clusters.csv.gz: survey_clusters.csv.gz
   survey_individuals.csv.gz: survey_individuals.csv.gz

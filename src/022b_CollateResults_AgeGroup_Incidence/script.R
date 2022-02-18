@@ -1,9 +1,11 @@
+
+
 #####################
 ### Preliminaries ###
 #####################
 
 # source aggregation functions
-source("source.R")
+# source("source.R")
 
 # Number of samples to use
 N <- 100
@@ -13,8 +15,8 @@ N <- 100
 
 # area hierarchy
 area_lev <- threemc::datapack_psnu_area_level %>%
-  filter(iso3 == cntry) %>%
-  pull(psnu_area_level)
+    filter(iso3 == cntry) %>%
+    pull(psnu_area_level)
 
 save_loc <- paste0("Results_AgeGroup_Incidence.csv.gz")
 
@@ -24,14 +26,14 @@ save_loc <- paste0("Results_AgeGroup_Incidence.csv.gz")
 
 # load shapefile
 areas <- read_circ_data(
-  path    = "areas.geojson",
-  filters = c("iso3" = cntry)
-) %>%
-  # Add a unique identifier within Admin code and merging to boundaries
-  sf::st_drop_geometry() %>%
-  group_by(area_level) %>%
-  mutate(space = row_number()) %>%
-  ungroup()
+    path    = "areas.geojson",
+    filters = c("iso3" = cntry)
+    ) %>%
+    # Add a unique identifier within Admin code and merging to boundaries
+    sf::st_drop_geometry() %>%
+    group_by(area_level) %>%
+    mutate(space = row_number()) %>%
+    ungroup()
 
 # wide formatted areas, for changing area levels later
 areas_wide <- areas %>%
@@ -40,17 +42,20 @@ areas_wide <- areas %>%
 
 # Load populations (for male pop for country in question only)
 populations <- read_circ_data(
-  "population_singleage.csv.gz",
-  filters = c("iso3" = cntry, "sex" = "male")
+    "population_singleage.csv.gz",
+    filters = c("iso3" = cntry, "sex" = "male")
 )
 
 # Model with Probability of MC
 results <- read_circ_data("Results_DistrictAgeTime_ByType.csv.gz")
 results$model <- "No program data"
 
-# Load TMB model
-compile_tmb("Surv_SpaceAgeTime_ByType.cpp")
-dyn.load(TMB::dynlib("Surv_SpaceAgeTime_ByType"))
+# Load TMB model (use model with type if type is included in results colnames)
+if ("rate_mmcM" %in% names(results)) {
+ mod <- "Surv_SpaceAgeTime_ByType_withUnknownType" 
+} else mod <- "Surv_SpaceAgeTime"
+compile_tmb(paste0(mod, ".cpp"))
+dyn.load(TMB::dynlib(mod))
 
 fit <- readRDS("TMBObjects_DistrictAgeTime_ByType.rds")
 
@@ -61,19 +66,32 @@ parlist[is_matrix] <- Map(matrix,
                           nrow = lapply(fit$par_init[is_matrix], nrow),
                           ncol = lapply(fit$par_init[is_matrix], ncol))
 
+randoms <- c("u_time_mmc", "u_age_mmc", "u_space_mmc",
+             "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
+             "u_age_tmc", "u_space_tmc", "u_agespace_tmc")
+# remove "type" suffix from randoms and names, if looking at just MC
+if (!"rate_mmcM" %in% names(results)) {
+  
+  remove_type_distinction <- function(x) {
+    names(x) <- stringr::str_remove(names(x), "_mmc")
+    x <- x[!names(x) %like% "_tmc"]
+  }
+  randoms <- stringr::str_remove(randoms, "_mmc")
+  randoms <- randoms[!randoms %like% "_tmc"]
+}
+# ensure random effects are in the model
+randoms <- randoms[randoms %in% names(fit$par.full)]
+
 fit$obj <- MakeADFun(data = fit$tmb_data,
                      parameters = parlist,
-                     random = c("u_time_mmc",'u_age_mmc','u_space_mmc',
-                                'u_agetime_mmc','u_agespace_mmc','u_spacetime_mmc',
-                                'u_age_tmc','u_space_tmc','u_agespace_tmc'),
+                     random = randoms,
                      method = "BFGS",
                      hessian = TRUE,
-                     DLL = "Surv_SpaceAgeTime_ByType")
+                     DLL = mod)
 fit$obj$fn()  
 fit <- naomi::sample_tmb(fit, nsample = N)
 fit_no_prog <- fit
 
-rm(fit); gc()
 
 # Model with total rate (i.e. including VMMC data)
 # prog_results <- as_tibble(data.table::fread(here::here(
@@ -87,6 +105,8 @@ rm(fit); gc()
 # )
 # fit_prog <- fit # need to load model with programme data as well
 # rm(fit); gc()
+
+rm(fit); gc()
 
 #########################################
 ### Loading rates from survival model ###
@@ -106,7 +126,7 @@ rm(populations, fit_no_prog); gc()
 
 # collect results for lower area hierarchies by joining higher area
 # hierarchies (do so until you reach "area 0")
-results_list <- combine_areas(results, area_lev, join = F)
+results_list <- combine_areas(results, areas_wide, area_lev, join = F)
 
 # aggregate samples for each individual age group
 results <- aggregate_sample_age_group(results_list)
