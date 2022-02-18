@@ -240,7 +240,7 @@ obj <- TMB::MakeADFun(dat_tmb,
                       hessian = TRUE,
                       DLL = mod)
 
-rm(dat_tmb, parameters); gc()
+# rm(dat_tmb, parameters); gc()
 
 # Running optimiser
 opt <- stats::nlminb(start   = obj$par,
