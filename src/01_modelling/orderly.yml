@@ -32,6 +32,7 @@ packages:
   - Matrix
   - TMB
   - rlang
+  - ggplot2
   
 global_resources:
   Surv_SpaceAgeTime_ByType_withUnknownType.cpp: 
