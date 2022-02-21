@@ -17,6 +17,13 @@ artefacts:
       description: Plot of circumcision rates for all areas modelled.
       filenames:
       - Circ_Rates.pdf
+  - staticgraph: 
+      description: Compilation files
+      filenames:
+      - Surv_SpaceAgeTime_ByType_withUnknownType.o
+      - Surv_SpaceAgeTime_ByType_withUnknownType.so
+      - Surv_SpaceAgeTime.o
+      - Surv_SpaceAgeTime.so
   
 displayname: threemc model fit
 
@@ -37,13 +44,7 @@ packages:
 global_resources:
   Surv_SpaceAgeTime_ByType_withUnknownType.cpp: 
   - Surv_SpaceAgeTime_ByType_withUnknownType.cpp
-  Surv_SpaceAgeTime_ByType_withUnknownType.o: 
-  - Surv_SpaceAgeTime_ByType_withUnknownType.o
-  Surv_SpaceAgeTime_ByType_withUnknownType.so: 
-  - Surv_SpaceAgeTime_ByType_withUnknownType.so
   Surv_SpaceAgeTime.cpp: Surv_SpaceAgeTime.cpp
-  Surv_SpaceAgeTime.o: Surv_SpaceAgeTime.o
-  Surv_SpaceAgeTime.so: Surv_SpaceAgeTime.so
   areas.geojson: areas.geojson
   survey_circumcision.csv.gz: survey_circumcision.csv.gz
   survey_clusters.csv.gz: survey_clusters.csv.gz
