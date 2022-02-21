@@ -156,7 +156,7 @@ rm(design_matrices, survival_matrices, integration_matrices, Q_space); gc()
 if (is_type == TRUE) {
   mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
 } else mod <- "Surv_SpaceAgeTime"
-compile_tmb(paste0(mod, ".cpp"))
+compile_tmb(paste0(mod, ".cpp"), logfile = NULL)
 dyn.load(TMB::dynlib(mod))
 
 # Initial values
