@@ -4,6 +4,9 @@ root <- "~/net/home/circumcision-coverage-orderly/contexts"
 threemc::create_dirs_r(root)
 config <- didehpc::didehpc_config(workdir = root)
 
+# ?
+orderly_root <- here::here()
+
 # path to save bundles
 path_bundles <- file.path(root, "bundles")
 
@@ -55,8 +58,10 @@ setwd(here::here())
 # iso3 <- c("LSO", "SWZ", "NAM")
 
 # pack up 01_modelling for each country
-bundles <- orderly::orderly_bundle_pack(path_bundles, "01_modelling",
-                            parameters = list(cntry = "LSO"))
+bundles <- orderly::orderly_bundle_pack(path_bundles, 
+                                        "01_modelling",
+                            parameters = list(cntry = "LSO"), 
+                            root = orderly_root)
 # bundles <- lapply(iso3, function(x) orderly::orderly_bundle_pack(path_bundles,
 #                                                       "01_modelling",
 #                                                       parameters = list(
@@ -64,6 +69,7 @@ bundles <- orderly::orderly_bundle_pack(path_bundles, "01_modelling",
 #                                                       )))
 
 #### Run Bundles ####
+
 path <- paste(last(strsplit(dirname(bundles$path), "/")[[1]]), 
       basename(bundles$path), sep = "/")
 # paths <- lapply(bundles, function(x) {
@@ -74,4 +80,15 @@ t <- obj$enqueue(orderly::orderly_bundle_run(
  path 
 ))
 # t <- obj$lapply(paths, orderly::orderly_bundle_run)
+
+####  ####
+setwd(dirname(root))
+
+output <- strsplit(t$wait(100)$path, "\\\\")[[1]]
+output_filename <- output[length(output)]
+output_path <- "output"
+threemc::create_dirs_r(output_path)
+orderly::orderly_bundle_import(file.path(root, output_path, output_filename),
+                               root = orderly_root)
+
 
