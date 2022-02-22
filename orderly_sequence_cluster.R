@@ -1,6 +1,7 @@
 
 # directory to save contexts
 root <- "~/net/home/circumcision-coverage-orderly/contexts"
+threemc::create_dirs_r(root)
 config <- didehpc::didehpc_config(workdir = root)
 
 # path to save bundles
@@ -25,12 +26,13 @@ ctx <- context::context_save(
   root,
   packages = c(
     "dplyr", "sf", "data.table", "Matrix", "TMB", "rlang", "ggplot2", "orderly",
-    "R.utils"
+    "R.utils", "RcppEigen"
   ),
   package_sources = conan::conan_sources(c(
     "github::mrc-ide/first90release",
     # paths,
     "github::paddy7wb/anclik",
+    # "github::jeffeaton/anclik/anclik",
     "github::paddy7wb/epp@local_anclik",
     "github::paddy7wb/eppasm@local_epp",
     "github::paddy7wb/naomi@local_eppasm",
