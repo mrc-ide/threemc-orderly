@@ -37,7 +37,7 @@ survey_circumcision <- read_circ_data(
 area_lev <- threemc::datapack_psnu_area_level %>%
   filter(iso3 == cntry) %>%
   pull(psnu_area_level)
-if (area_lev == 0) area_lev <- NULL # don't model at the country level
+if (length(area_lev) == 0) area_lev <- NULL # don't model at the country level
 
 # if area_level is missing, assume most common area lev in surveys
 if (length(area_lev) == 0) {
