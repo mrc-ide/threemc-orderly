@@ -54,8 +54,6 @@ results$model <- "No program data"
 if ("rate_mmcM" %in% names(results)) {
  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType" 
 } else mod <- "Surv_SpaceAgeTime"
-compile_tmb(paste0(mod, ".cpp"))
-dyn.load(TMB::dynlib(mod))
 
 fit <- readRDS("TMBObjects_DistrictAgeTime_ByType.rds")
 
