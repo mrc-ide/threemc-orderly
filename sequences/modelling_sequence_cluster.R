@@ -17,13 +17,14 @@ output_path <- "output"
 threemc::create_dirs_r(output_path)
 
 # working countries  
-# iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE", 
-#           "ZMB", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV", 
-#           "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE")
+iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE",
+          "ZMB", "ZAF", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD",
+          "CIV", "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE")
 
 #### bundle orderly tasks #### 
 
-# pack up 01_modelling for each country
+# pack up 01_modelling for each country (different methods for single or 
+# multiple tasks)
 if (length(iso3) == 1) {
   bundles <- orderly::orderly_bundle_pack(path_bundles,
                                           "01_modelling",
@@ -41,19 +42,18 @@ if (length(iso3) == 1) {
 
 #### contexts ####
 
-# change directory to cluster
-# setwd(dirname(root))
-
 # cluster config
 config <- didehpc::didehpc_config(workdir = root)
 
 # setup context for orderly task (packages required, etc)
 ctx <- context::context_save(
   root,
+  # packages imported in tasks
   packages = c(
     "dplyr", "sf", "data.table", "Matrix", "TMB", "rlang", "ggplot2", "orderly",
     "R.utils", "RcppEigen", "stringr", "naomi"
   ),
+  # remote packages (installs remote dependencies as well)
   package_sources = conan::conan_sources(c(
     "github::mrc-ide/first90release",
     "github::mrc-ide/threemc@feature/add_tmb"
