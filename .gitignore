@@ -19,5 +19,4 @@ orderly_envir.yml
 runner
 backup
 # don't want to upload data in global, as it is large and may be sensitive
-global
 .RData
