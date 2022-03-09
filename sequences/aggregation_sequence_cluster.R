@@ -1,7 +1,7 @@
 #### Initial ####
 
 # directory to save contexts (change as appropriate)
-root <- "~/net/home/circumcision-coverage-orderly/contexts"
+root <- "~/net/home/threemc-orderly/contexts"
 # ensure it exists, and if not, create it
 threemc::create_dirs_r(root)
 
