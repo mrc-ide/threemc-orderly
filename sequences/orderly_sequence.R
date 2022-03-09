@@ -15,6 +15,8 @@
 # fill in ordelry.yml with artefacts, parameters, global resources, etc
 # write out script to be run
 
+library(data.table)
+
 #### Committing Reports: Function #### 
 orderly_commits <- function() {
   # list draft reports
@@ -34,7 +36,7 @@ orderly_commits <- function() {
 #### Run src Scripts ####
 
 # set country parameter
-iso3 <- "LSO"
+# iso3 <- "LSO"
 
 # take directories/orderly tasks in src
 dirs <- list.dirs(path = "src", full.names = FALSE)
