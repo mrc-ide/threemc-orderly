@@ -14,7 +14,7 @@ remote:
     args:
       url: https://imperiallondon.sharepoint.com
       site: HIVInferenceGroup-WP
-      path: Shared Documents/orderly/circumcision-coverage
+      path: Shared Documents/orderly/threemc
   
   fertility:
     driver: orderly.sharepoint::orderly_remote_sharepoint

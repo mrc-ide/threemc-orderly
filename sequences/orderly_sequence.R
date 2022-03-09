@@ -1,10 +1,10 @@
 #### Initial Orderly Repo Setup ####
 
 # initialise orderly repo
-# orderly::orderly_init(root = "~/imperial_repos/circumcision-coverage-orderly/")
+# orderly::orderly_init(root = "~/imperial_repos/threemc-orderly/")
 
 # Change directory to this directory
-# setwd("~/imperial_repos/circumcision-coverage-orderly/")
+# setwd("~/imperial_repos/threemc-orderly/")
 
 # generate orderly-specific gitignore 
 # orderly::orderly_use_gitignore(prompt = FALSE)
