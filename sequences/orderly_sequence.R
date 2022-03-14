@@ -39,7 +39,7 @@ orderly_commits <- function() {
 # iso3 <- "LSO"
 
 # take directories/orderly tasks in src
-dirs <- list.dirs(path = "src", full.names = FALSE)
+dirs <- list.dirs(path = "src", full.names = FALSE, recursive = FALSE)
 
 ## modelling
 orderly::orderly_run("01_modelling", list(cntry = iso3))
