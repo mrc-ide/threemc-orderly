@@ -30,7 +30,7 @@ orderly_commits <- function() {
   lapply(dr$id, orderly::orderly_commit)
   
   # push to sharepoint
-  lapply(dr$name, orderly::orderly_push_archive)
+  lapply(dr$name, orderly::orderly_push_archive, remote = "real")
 }
 
 #### Run src Scripts ####
