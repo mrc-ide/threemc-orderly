@@ -15,6 +15,8 @@
 # fill in ordelry.yml with artefacts, parameters, global resources, etc
 # write out script to be run
 
+library(data.table)
+
 #### Committing Reports: Function #### 
 orderly_commits <- function() {
   # list draft reports
