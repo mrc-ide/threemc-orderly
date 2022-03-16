@@ -1,0 +1,397 @@
+script: script.R
+
+artefacts:
+  - data:
+      description:
+      - shapefiles
+      filenames:
+      - areas.geojson
+  - data: 
+      description: 
+      - survey clusters
+      filenames:
+      - survey_clusters.csv.gz
+  - data: 
+      description: 
+      - survey individuals
+      filenames:
+      - survey_individuals.csv.gz
+  - data: 
+      description: 
+      - survey circumcision
+      filenames:
+      - survey_circumcision.csv.gz
+   
+displayname: coalate survey data and shapefiles
+
+packages:
+  - threemc
+  - orderly
+  - sf
+  - dplyr
+  
+  
+# ZAF, MWI and Survey extract data not in orderly repo yet
+global_resources:
+  zaf_survey_clusters.csv: zaf_survey_clusters.csv
+  zaf_survey_individuals.csv: zaf_survey_individuals.csv
+  zaf_survey_circumcision.csv: zaf_survey_circumcision.csv
+  mwi_survey_clusters.csv: mwi_survey_clusters.csv
+  mwi_survey_individuals.csv: mwi_survey_individuals.csv
+  mwi_survey_circumcision.csv: mwi_survey_circumcision.csv
+  survey_individuals_circ_dhs.rds: survey_individuals_circ_dhs.rds
+  survey_individuals_ais-reextract.csv: survey_individuals_ais-reextract.csv
+  circ_recoded_dhs.rds: circ_recoded_dhs.rds
+  
+# this is going to be long!!
+depends:
+  #### shapefile/area hierarchy remotes
+  ago_data_areas:
+    id: latest
+    use:
+      ago_areas.geojson: ago_areas.geojson
+  bdi_data_areas:
+    id: latest
+    use:
+      bdi_areas.geojson: bdi_areas.geojson
+  ben_data_areas:
+    id: latest
+    use:
+      ben_areas.geojson: ben_areas.geojson
+  bfa_data_areas:
+    id: latest
+    use:
+      bfa_areas.geojson: bfa_areas.geojson
+  bwa_data_areas:
+    id: latest
+    use:
+      bwa_areas.geojson: bwa_areas.geojson
+  caf_data_areas:
+    id: latest
+    use:
+      caf_areas.geojson: caf_areas.geojson
+  civ_data_areas:
+    id: latest
+    use:
+      civ_areas.geojson: civ_areas.geojson
+  cmr_data_areas:
+    id: latest
+    use:
+      cmr_areas.geojson: cmr_areas.geojson
+  cod_data_areas:
+    id: latest
+    use:
+      cod_areas.geojson: cod_areas.geojson
+  cog_data_areas:
+    id: latest
+    use:
+      cog_areas.geojson: cog_areas.geojson
+  eth_data_areas:
+    id: latest
+    use:
+      eth_areas.geojson: eth_areas.geojson
+  gab_data_areas:
+    id: latest
+    use:
+      gab_areas.geojson: gab_areas.geojson
+  gha_data_areas:
+    id: latest
+    use:
+      gha_areas.geojson: gha_areas.geojson
+  gin_data_areas:
+    id: latest
+    use:
+      gin_areas.geojson: gin_areas.geojson
+  gmb_data_areas:
+    id: latest
+    use:
+      gmb_areas.geojson: gmb_areas.geojson
+  gnb_data_areas:
+    id: latest
+    use:
+      gnb_areas.geojson: gnb_areas.geojson
+  gnq_data_areas:
+    id: latest
+    use:
+      gnq_areas.geojson: gnq_areas.geojson
+  hti_data_areas:
+    id: latest
+    use:
+      hti_areas.geojson: hti_areas.geojson
+  ken_data_areas:
+    id: latest
+    use:
+      ken_areas.geojson: ken_areas.geojson
+  lbr_data_areas:
+    id: latest
+    use:
+      lbr_areas.geojson: lbr_areas.geojson
+  lso_data_areas:
+    id: latest
+    use:
+      lso_areas.geojson: lso_areas.geojson
+  mli_data_areas:
+    id: latest
+    use:
+      mli_areas.geojson: mli_areas.geojson
+  moz_data_areas:
+    id: latest
+    use:
+      moz_areas.geojson: moz_areas.geojson
+  mwi_data_areas:
+    id: latest
+    use:
+      mwi_areas_ta.geojson: mwi_areas_ta.geojson
+  nam_data_areas:
+    id: latest
+    use:
+      nam_areas.geojson: nam_areas.geojson
+  ner_data_areas:
+    id: latest
+    use:
+      ner_areas.geojson: ner_areas.geojson
+  nga_data_areas:
+    id: latest
+    use:
+      nga_areas.geojson: nga_areas.geojson
+  rwa_data_areas:
+    id: latest
+    use:
+      rwa_areas.geojson: rwa_areas.geojson
+  sen_data_areas:
+    id: latest
+    use:
+      sen_areas.geojson: sen_areas.geojson
+  sle_data_areas:
+    id: latest
+    use:
+      sle_areas.geojson: sle_areas.geojson
+  swz_data_areas:
+    id: latest
+    use:
+      swz_areas.geojson: swz_areas.geojson
+  tcd_data_areas:
+    id: latest
+    use:
+      tcd_areas.geojson: tcd_areas.geojson
+  tgo_data_areas:
+    id: latest
+    use:
+      tgo_areas.geojson: tgo_areas.geojson
+  tza_data_areas:
+    id: latest
+    use:
+      tza_areas.geojson: tza_areas.geojson
+  uga_data_areas:
+    id: latest
+    use:
+      uga_areas.geojson: uga_areas.geojson
+  zaf_data_areas:
+    id: latest
+    use:
+      zaf_areas.geojson: zaf_areas.geojson
+  zmb_data_areas:
+    id: latest
+    use:
+      zmb_areas.geojson: zmb_areas.geojson
+  zwe_data_areas:
+    id: latest
+    use:
+      zwe_areas.geojson: zwe_areas.geojson
+  #### DHS cluster remotes
+  ago_survey:
+    id: latest
+    use:
+      ago_dhs_clusters.csv: ago_dhs_clusters.csv
+  bdi_survey:
+    id: latest
+    use:
+      bdi_dhs_clusters.csv: bdi_dhs_clusters.csv
+  ben_survey:
+    id: latest
+    use:
+      ben_dhs_clusters.csv: ben_dhs_clusters.csv
+  bfa_survey:
+    id: latest
+    use:
+      bfa_dhs_clusters.csv: bfa_dhs_clusters.csv
+  civ_survey:
+    id: latest
+    use:
+      civ_dhs_clusters.csv: civ_dhs_clusters.csv
+  cmr_survey:
+    id: latest
+    use:
+      cmr_dhs_clusters.csv: cmr_dhs_clusters.csv
+  cod_survey:
+    id: latest
+    use:
+      cod_dhs_clusters.csv: cod_dhs_clusters.csv
+  cog_survey:
+    id: latest
+    use:
+      cog_dhs_clusters.csv: cog_dhs_clusters.csv
+  eth_survey:
+    id: latest
+    use:
+      eth_dhs_clusters.csv: eth_dhs_clusters.csv
+  gab_survey:
+    id: latest
+    use:
+      gab_dhs_clusters.csv: gab_dhs_clusters.csv
+  gha_survey:
+    id: latest
+    use:
+      gha_dhs_clusters.csv: gha_dhs_clusters.csv
+  gin_survey:
+    id: latest
+    use:
+      gin_dhs_clusters.csv: gin_dhs_clusters.csv
+  gmb_survey:
+    id: latest
+    use:
+      gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
+  ken_survey:
+    id: latest
+    use:
+      ken_dhs_clusters.csv: ken_dhs_clusters.csv
+  lbr_survey:
+    id: latest
+    use:
+      lbr_dhs_clusters.csv: lbr_dhs_clusters.csv
+  lso_survey:
+    id: latest
+    use:
+      lso_dhs_clusters.csv: lso_dhs_clusters.csv
+  mli_survey:
+    id: latest
+    use:
+      mli_dhs_clusters.csv: mli_dhs_clusters.csv
+  moz_survey:
+    id: latest
+    use:
+      moz_dhs_clusters.csv: moz_dhs_clusters.csv
+  mwi_survey:
+    id: latest
+    use:
+      mwi_dhs_clusters.csv: mwi_dhs_clusters.csv 
+  nam_survey:
+    id: latest
+    use:
+      nam_dhs_clusters.csv: nam_dhs_clusters.csv
+  ner_survey:
+    id: latest
+    use:
+      ner_dhs_clusters.csv: ner_dhs_clusters.csv
+  nga_survey:
+    id: latest
+    use:
+      nga_dhs_clusters.csv: nga_dhs_clusters.csv
+  rwa_survey:
+    id: latest
+    use:
+      rwa_dhs_clusters.csv: rwa_dhs_clusters.csv
+  sen_survey:
+    id: latest
+    use:
+      sen_dhs_clusters.csv: sen_dhs_clusters.csv 
+  sle_survey:
+    id: latest
+    use:
+      sle_dhs_clusters.csv: sle_dhs_clusters.csv
+  swz_survey:
+    id: latest
+    use:
+      swz_dhs_clusters.csv: swz_dhs_clusters.csv
+  tcd_survey:
+    id: latest
+    use:
+      tcd_dhs_clusters.csv: tcd_dhs_clusters.csv
+  tgo_survey:
+    id: latest
+    use:
+      tgo_dhs_clusters.csv: tgo_dhs_clusters.csv
+  tza_survey:
+    id: latest
+    use:
+      tza_dhs_clusters.csv: tza_dhs_clusters.csv
+  uga_survey:
+    id: latest
+    use:
+      uga_dhs_clusters.csv: uga_dhs_clusters.csv 
+  zmb_survey:
+    id: latest
+    use:
+      zmb_dhs_clusters.csv: zmb_dhs_clusters.csv
+  zwe_survey:
+    id: latest
+    use:
+      zwe_dhs_clusters.csv: zwe_dhs_clusters.csv
+  #### PHIA remotes (includes clusters, individuals and circumcision data)
+  civ_survey_phia:
+    id: latest
+    use:
+      civ2017phia_survey_clusters.csv: civ2017phia_survey_clusters.csv
+      civ2017phia_survey_individuals.csv: civ2017phia_survey_individuals.csv
+      civ2017phia_survey_circumcision.csv: civ2017phia_survey_circumcision.csv
+  cmr_survey_phia:
+    id: latest
+    use:
+      cmr2017phia_survey_clusters.csv: cmr2017phia_survey_clusters.csv
+      cmr2017phia_survey_individuals.csv: cmr2017phia_survey_individuals.csv
+      cmr2017phia_survey_circumcision.csv: cmr2017phia_survey_circumcision.csv
+  lso_survey_phia:
+    id: latest
+    use:
+      lso2017phia_survey_clusters.csv: lso2017phia_survey_clusters.csv
+      lso2017phia_survey_individuals.csv: lso2017phia_survey_individuals.csv
+      lso2017phia_survey_circumcision.csv: lso2017phia_survey_circumcision.csv
+  mwi_survey_phia:
+    id: latest
+    use:
+      mwi2016phia_survey_clusters.csv: mwi2016phia_survey_clusters.csv
+      mwi2016phia_survey_individuals.csv: mwi2016phia_survey_individuals.csv
+      mwi2016phia_survey_circumcision.csv: mwi2016phia_survey_circumcision.csv
+  nam_survey_phia:
+    id: latest
+    use:
+      nam2017phia_survey_clusters.csv: nam2017phia_survey_clusters.csv
+      nam2017phia_survey_individuals.csv: nam2017phia_survey_individuals.csv
+      nam2017phia_survey_circumcision.csv: nam2017phia_survey_circumcision.csv
+  rwa_survey_phia:
+    id: latest
+    use:
+      rwa2018phia_survey_clusters.csv: rwa2018phia_survey_clusters.csv
+      rwa2018phia_survey_individuals.csv: rwa2018phia_survey_individuals.csv
+      rwa2018phia_survey_circumcision.csv: rwa2018phia_survey_circumcision.csv
+  swz_survey_phia:
+    id: latest
+    use:
+      swz2017phia_survey_clusters.csv: swz2017phia_survey_clusters.csv
+      swz2017phia_survey_individuals.csv: swz2017phia_survey_individuals.csv
+      swz2017phia_survey_circumcision.csv: swz2017phia_survey_circumcision.csv
+  tza_survey_phia:
+    id: latest
+    use:
+      tza2016phia_survey_clusters.csv: tza2016phia_survey_clusters.csv
+      tza2016phia_survey_individuals.csv: tza2016phia_survey_individuals.csv
+      tza2016phia_survey_circumcision.csv: tza2016phia_survey_circumcision.csv
+  uga_survey_phia:
+    id: latest
+    use:
+      uga2016phia_survey_clusters.csv: uga2016phia_survey_clusters.csv
+      uga2016phia_survey_individuals.csv: uga2016phia_survey_individuals.csv
+      uga2016phia_survey_circumcision.csv: uga2016phia_survey_circumcision.csv
+  zmb_survey_phia:
+    id: latest
+    use:
+      zmb2016phia_survey_clusters.csv: zmb2016phia_survey_clusters.csv
+      zmb2016phia_survey_individuals.csv: zmb2016phia_survey_individuals.csv
+      zmb2016phia_survey_circumcision.csv: zmb2016phia_survey_circumcision.csv
+  zwe_survey_phia:
+    id: latest
+    use:
+      zwe2016phia_survey_clusters.csv: zwe2016phia_survey_clusters.csv
+      zwe2016phia_survey_individuals.csv: zwe2016phia_survey_individuals.csv
+      zwe2016phia_survey_circumcision.csv: zwe2016phia_survey_circumcision.csv
+  
