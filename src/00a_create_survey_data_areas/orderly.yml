@@ -30,20 +30,6 @@ packages:
   - sf
   - dplyr
   
-  
-# ZAF, MWI and Survey extract data not in orderly repo yet
-# global_resources:
-#   zaf_survey_clusters.csv: zaf_survey_clusters.csv
-#   zaf_survey_individuals.csv: zaf_survey_individuals.csv
-#   zaf_survey_circumcision.csv: zaf_survey_circumcision.csv
-#   mwi_survey_clusters.csv: mwi_survey_clusters.csv
-#   mwi_survey_individuals.csv: mwi_survey_individuals.csv
-#   mwi_survey_circumcision.csv: mwi_survey_circumcision.csv
-#   survey_individuals_circ_dhs.rds: survey_individuals_circ_dhs.rds
-#   survey_individuals_ais-reextract.csv: survey_individuals_ais-reextract.csv
-#   circ_recoded_dhs.rds: circ_recoded_dhs.rds
-  
-# this is going to be long!!
 depends:
   #### shapefile/area hierarchy remotes
   ago_data_areas:
