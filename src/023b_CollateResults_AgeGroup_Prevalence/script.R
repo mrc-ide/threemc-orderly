@@ -12,11 +12,6 @@ N <- 100
 # country
 # cntry <- "LSO"
 
-# area hierarchy
-area_lev <- threemc::datapack_psnu_area_level %>%
-    filter(iso3 == cntry) %>%
-    pull(psnu_area_level)
-
 save_loc <- paste0("Results_AgeGroup_Prevalence.csv.gz")
 
 ################################################
@@ -48,6 +43,23 @@ populations <- read_circ_data(
 # Model with Probability of MC
 results <- read_circ_data("Results_DistrictAgeTime_ByType.csv.gz")
 results$model <- "No program data"
+
+# pull recommended area hierarchy for target country
+area_lev <- threemc::datapack_psnu_area_level %>%
+  filter(iso3 == cntry) %>%
+  pull(psnu_area_level)
+
+# don't model at the country level
+if (length(area_lev) == 1) {
+  if (area_lev == 0) {
+    area_lev <- NULL 
+  }
+}
+# if area_level is missing (or 0), assume most common area lev in results
+if (length(area_lev) == 0) {
+  area_lev <- table(as.numeric(substr(results$area_id, 5, 5)))
+  area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
+}
 
 # Load TMB model (use model with type if type is included in results colnames)
 if ("rate_mmcM" %in% names(results)) {
