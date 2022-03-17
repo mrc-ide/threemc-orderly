@@ -23,3 +23,5 @@ global
 .RData
 # don't upload temp files from orderly
 .orderly
+# don't upload ordelry environment file
+orderly_envir.yml
