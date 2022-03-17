@@ -24,7 +24,48 @@ packages:
   
 depends:
   # areas file
-  00a_create_survey_data_areas:
-    id: latest
-    use:
-      areas.geojson: areas.geojson
+  - 00a_create_survey_data_areas:
+      id: latest
+      use:
+        areas.geojson: areas.geojson
+  #### Populations which are in orderly tasks #### 
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "BEN")
+      use:
+        ben_interpolated_population.csv: interpolated_population.csv 
+  -  aaa_scale_pop:
+      id: latest(parameter:iso3 == "COD")
+      use:
+        cod_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "COG")
+      use:
+        cog_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "GAB")
+      use:
+        gab_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "LBR")
+      use:
+        lbr_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "MLI")
+      use:
+        mli_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "NER")
+      use:
+        ner_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "SEN")
+      use:
+        sen_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "SLE")
+      use:
+        sle_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "TCD")
+      use:
+        tcd_interpolated_population.csv: interpolated_population.csv
