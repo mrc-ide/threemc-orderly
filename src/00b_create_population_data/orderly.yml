@@ -1,0 +1,30 @@
+script: script.R
+
+artefacts:
+  - data: 
+      description: 
+      - country populations
+      filenames:
+      - population_singleage.csv.gz
+   
+displayname: coalate country populations.
+
+packages:
+  - threemc
+  - orderly
+  - sf
+  - dplyr
+  - naomi
+  - tidyr
+  - readr
+  - spud
+  - beers
+  - tools
+  - parallel
+  
+depends:
+  # areas file
+  00a_create_survey_data_areas:
+    id: latest
+    use:
+      areas.geojson: areas.geojson
