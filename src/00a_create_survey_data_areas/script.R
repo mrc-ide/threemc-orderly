@@ -1,3 +1,49 @@
+#### Initial Sharepoint Download ####
+sharepoint <- spud::sharepoint$new("https://imperiallondon.sharepoint.com/")
+
+# function to load data from specific 
+load_sharepoint_data <- function(path, pattern = NULL) {
+  
+  # List files in folder
+  folder <- sharepoint$folder("HIVInferenceGroup-WP", URLencode(path))
+  
+  # pull urls for each file
+  urls <- URLencode(
+    file.path("sites/HIVINferenceGroup-WP", paste0(path, "/", folder$files()$name))
+  )
+  # may only require certain files 
+  if (!is.null(pattern)) {
+    # only want cluster, individuals and circumcision data
+    urls <- urls[grepl(pattern, urls)]
+  }
+  # download files, name with urls so we know order of temp files
+  files = lapply(urls, sharepoint$download)
+  if (length(files) == 0) error("No files found at supplied path")
+  names(files) <- basename(urls)
+  return(files)
+}
+
+shared_path <- "Shared Documents/Circumcision coverage/raw"
+
+## zaf data
+zaf_path <- file.path(shared_path, "zaf/survey")
+zaf_pattern <- paste(c("clusters", "individuals", "circ"), collapse = "|")
+zaf_files <- load_sharepoint_data(zaf_path, zaf_pattern)
+
+## mwi data
+mwi_path <- file.path(shared_path, "mwi_data_survey_combine")
+mwi_pattern <- zaf_pattern
+mwi_files <- load_sharepoint_data(mwi_path, mwi_pattern)
+
+## Survey extract (se) data
+se_path <- file.path(shared_path, "Survey extract")
+se_pattern <- paste(c(
+  "survey_individuals_circ_dhs.rds",
+  "survey_individuals_ais-reextract.csv",
+  "circ_recoded_dhs.rds"), collapse = "|"
+)
+se_files <- load_sharepoint_data(se_path, se_pattern)
+
 #### Area hierarchy ####
 
 # notes:
@@ -19,7 +65,7 @@ names(area_paths) <- toupper(iso3)
 area_paths["MWI"] = "mwi_areas_ta.geojson"
 
 # load shapefiles
-areas <- lapply(area_paths, threemc::read_circ_data)
+areas <- lapply(area_paths, read_circ_data)
 
 # Clean GMB area hierarchy geometry. (This should be done way upsteam)
 areas[["GMB"]] <- sf::st_collection_extract(areas[["GMB"]], "POLYGON")
@@ -48,7 +94,7 @@ areas <- bind_rows(areas) %>%
 load_cluster_data <- function(path) {
   
   # load data
-  cluster_list <- lapply(path, threemc::read_circ_data)
+  cluster_list <- lapply(path, read_circ_data)
   # add iso3 column and bind together
   names(cluster_list) <- substr(path, 0, 3)
   cluster_df <- cluster_list %>% 
@@ -86,7 +132,8 @@ survey_clusters <- dhs_clusters %>%
   bind_rows(phia_clusters)
   
 # add zaf cluster
-zaf_clusters <- threemc::read_circ_data("zaf_survey_clusters.csv")
+# zaf_clusters <- read_circ_data("zaf_survey_clusters.csv")
+zaf_clusters <- read_circ_data(zaf_files$zaf_survey_clusters.csv)
 zaf_clusters$iso3 <- "ZAF"
 zaf_clusters <- zaf_clusters %>%
   rename(res_type = restype) %>%
@@ -96,13 +143,17 @@ survey_clusters <- bind_rows(survey_clusters, zaf_clusters)
 
 #### Survey individuals datasets ####
 
-dhs_individuals <- as.list(readRDS("survey_individuals_circ_dhs.rds")) %>% 
+# dhs_individuals <- as.list(readRDS("survey_individuals_circ_dhs.rds")) %>% 
+dhs_individuals <- as.list(
+  readRDS(se_files$survey_individuals_circ_dhs.rds)
+) %>% 
   bind_rows() %>%
   mutate(iso3 = substr(survey_id, 1, 3))
 
 # Replace re-extracted datasets to get weights for AIS surveys
-dhs_individuals_reextract <- threemc::read_circ_data(
-  "survey_individuals_ais-reextract.csv"
+dhs_individuals_reextract <- read_circ_data(
+  # "survey_individuals_ais-reextract.csv"
+  se_files$`survey_individuals_ais-reextract.csv`
 )
 
 dhs_individuals <- dhs_individuals %>%
@@ -130,7 +181,7 @@ dhs_individuals <- dhs_individuals %>%
 
 phia_paths <- paste0(iso3_phia, phia_years, "phia_survey_individuals.csv")
 
-phia_individuals <- lapply(phia_paths, threemc::read_circ_data)
+phia_individuals <- lapply(phia_paths, read_circ_data)
 names(phia_individuals) <- toupper(iso3_phia)
 phia_individuals <- phia_individuals %>%
   Map(mutate, ., iso3 = toupper(names(.))) %>%
@@ -143,7 +194,8 @@ survey_individuals <- dhs_individuals %>%
          line = as.character(line)) %>%
   bind_rows(phia_individuals)
 
-zaf_individuals <- read_csv("zaf_survey_individuals.csv")
+# zaf_individuals <- read_csv("zaf_survey_individuals.csv")
+zaf_individuals <- read_circ_data(zaf_files$zaf_survey_individuals.csv)
 zaf_individuals <- zaf_individuals %>%
   mutate(iso3 = "ZAF",
          household = as.character(household),
@@ -155,10 +207,10 @@ survey_individuals <- bind_rows(survey_individuals, zaf_individuals)
 
 #### Survey circumcision ####
 
-dhs_circumcision <- readRDS("circ_recoded_dhs.rds") %>% 
+# dhs_circumcision <- readRDS("circ_recoded_dhs.rds") %>% 
+dhs_circumcision <- readRDS(se_files$circ_recoded_dhs.rds) %>% 
   bind_rows() %>% 
   mutate(individual_id = as.character(individual_id))
-
 dhs_circumcision <- as.list(dhs_circumcision) %>%
   bind_rows() %>%
   mutate(iso3 = substr(survey_id, 1, 3)) %>% 
@@ -170,7 +222,7 @@ dhs_circumcision <- as.list(dhs_circumcision) %>%
   )
 
 phia_paths <- paste0(iso3_phia, phia_years, "phia_survey_circumcision.csv")
-phia_circumcision <- lapply(phia_paths, threemc::read_circ_data)
+phia_circumcision <- lapply(phia_paths, read_circ_data)
 names(phia_circumcision) <- toupper(iso3_phia)
 phia_circumcision <- phia_circumcision %>% 
   Map(mutate, ., iso3 = toupper(names(.))) %>%
@@ -194,8 +246,10 @@ survey_circumcision <- dhs_circumcision %>%
   mutate(circ_who = recode(circ_who, "other" = "traditional"))
 
 # load ZAF data
-zaf_circumcision <- read_csv("zaf_survey_circumcision.csv")
-zaf_circumcision <- zaf_circumcision %>%
+# zaf_circumcision <- read_csv("zaf_survey_circumcision.csv")
+zaf_circumcision <- read_circ_data(
+  zaf_files$zaf_survey_circumcision.csv
+) %>% 
   rename(circ_status = circ) %>%
   mutate(
     iso3 = "ZAF",
@@ -209,9 +263,12 @@ survey_circumcision <- bind_rows(survey_circumcision, zaf_circumcision)
 
 #### Replace Malawi data with mwi-hiv-orderly version (more surveys) #### 
 
-mwi_survey_clusters <- read_circ_data("mwi_survey_clusters.csv")
-mwi_survey_individuals <- read_circ_data("mwi_survey_individuals.csv")
-mwi_survey_circumcision <- read_circ_data("mwi_survey_circumcision.csv")
+# mwi_survey_clusters <- read_circ_data("mwi_survey_clusters.csv")
+# mwi_survey_individuals <- read_circ_data("mwi_survey_individuals.csv")
+# mwi_survey_circumcision <- read_circ_data("mwi_survey_circumcision.csv")
+mwi_survey_clusters <- read_circ_data(mwi_files$mwi_survey_clusters.csv)
+mwi_survey_individuals <- read_circ_data(mwi_files$mwi_survey_individuals.csv)
+mwi_survey_circumcision <- read_circ_data(mwi_files$mwi_survey_circumcision.csv)
 
 survey_clusters <- survey_clusters %>%
   filter(iso3 != "MWI") %>%
