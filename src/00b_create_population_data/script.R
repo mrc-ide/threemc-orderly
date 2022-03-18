@@ -15,6 +15,11 @@ iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
           "rwa", "sen", "sle", "swz", "tcd", "tgo", "tza", "uga", "zmb",
           "zwe", "zaf")
 
+# countries whose populations are pulled from other orderly tasks
+orderly_iso3 <-  c(
+  "ben", "cod", "cog", "gab", "lbr", "mli", "ner", "sen", "sle", "tcd"
+)
+
 # individual file names for each country
 pop_file_names <- sort(c(
                ago = "ago_population_worldpop-2015.csv",
@@ -113,19 +118,36 @@ specpop <- specpop_raw %>%
   select(iso3, everything())
 
 # Areas files
-areas <- threemc::read_circ_data("areas.geojson") %>% 
+areas <- read_circ_data("areas.geojson") %>% 
   filter(iso3 %in% c(toupper(iso3), "ZAF"))
 
 #### Raw district population ####
 
-# pop_raw <- lapply(pop_files, function(x) read_csv(here::here(file.path("raw", "population", x))))
-pop_raw <- lapply(pop_files, threemc::read_circ_data)
+pop_raw <- lapply(pop_files, read_circ_data)
+
+# load orderly populations
+pop_orderly <- lapply(
+  paste0(orderly_iso3, "_interpolated_population.csv"), read_circ_data
+)
+names(pop_orderly) <- orderly_iso3
+# join area name into pop_ordelry
+pop_orderly <- pop_orderly %>% 
+  Map(mutate, ., iso3 = toupper(names(.))) %>% 
+  bind_rows() %>% 
+  left_join(
+    (areas %>%
+       sf::st_drop_geometry() %>%
+       select(iso3, area_id, area_name))
+) %>% 
+  split(.$iso3)
+  
+# join with raw populations from sharepoint
+pop_raw <- c(pop_raw, pop_orderly)
 
 pop_raw <- pop_raw %>%
   Map(mutate, ., iso3 = toupper(substr(names(.), 0, 3))) %>%
   bind_rows() %>%
-  select(iso3, area_id, area_name, source, calendar_quarter, sex, age_group, population)
-
+  select(iso3, area_id, area_name, source, calendar_quarter, year, sex, age_group, population)
 
 pop_raw <- pop_raw %>%
   filter(iso3 != "BWA", !grepl("KEN_3", area_id))
@@ -179,8 +201,12 @@ pop_raw <- pop_raw %>%
 #### Interpolate population annually for 2000 to 2021 ####
 
 pop_interp <- pop_raw %>%
-  mutate(year = as.integer(substr(calendar_quarter, 3, 6))) %>%
-  select(-calendar_quarter, -source) %>%
+  mutate(
+    year = ifelse(!is.na(calendar_quarter),
+                  as.integer(substr(calendar_quarter, 3, 6)),
+                  year)
+  ) %>%
+  select(-c(calendar_quarter, source)) %>%
   filter(year %in% 2000:2021) %>%
   mutate(year = factor(year, 2000:2021)) %>%
   complete(nesting(iso3, area_id, area_name), sex, age_group, year) %>%
@@ -192,6 +218,30 @@ pop_interp <- pop_interp %>%
   mutate(population = naomi:::log_linear_interp(population, year)) %>%
   ungroup()
 
+# pop_interp1 <- pop_raw %>%
+#   mutate(
+#     year = ifelse(!is.na(calendar_quarter),
+#                   as.integer(substr(calendar_quarter, 3, 6)),
+#                   year)
+#   ) %>%
+#   select(-c(calendar_quarter, source)) %>%
+#   filter(year %in% 2000:2021) %>%
+#   mutate(year = factor(year, 2000:2021)) %>%
+#   complete(nesting(iso3, area_id, area_name), sex, age_group, year) %>%
+#   mutate(year = type.convert(year, as.is = TRUE))
+# 
+# 
+# pop_interp1 <- crossing(area_id = unique(areas$area_id),
+#                                      year = 2000:2021,
+#                                      sex = c("male"),
+#                                      age_group = unique(pop_interp1$age_group)) %>%
+#   left_join(
+#     (pop_interp1 %>% 
+#        select(iso3, area_id, area_name, year, sex, age_group, population))
+#   ) %>%
+#   group_by(area_id, sex, age_group) %>%
+#   mutate(population = exp(zoo::na.approx(log(population), na.rm = FALSE))) %>% 
+#   ungroup()
 
 #### Graduate 5-year age group Stats SA pops to single-year of age ####
 
