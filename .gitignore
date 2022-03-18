@@ -4,6 +4,11 @@ data
 archive
 draft
 metadata
+check
+depends
+backup
+runner
+
 # Orderly will store data in a sqlite database, by default orderly.sqlite
 *.sqlite
 # It is suggested to use environment variables, in either
