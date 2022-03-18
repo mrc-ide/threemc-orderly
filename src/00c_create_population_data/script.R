@@ -118,7 +118,7 @@ specpop <- specpop_raw %>%
   select(iso3, everything())
 
 # Areas files
-areas <- read_circ_data("areas.geojson") %>% 
+areas <- read_circ_data("depends/areas.geojson") %>% 
   filter(iso3 %in% c(toupper(iso3), "ZAF"))
 
 #### Raw district population ####
@@ -127,10 +127,11 @@ pop_raw <- lapply(pop_files, read_circ_data)
 
 # load orderly populations
 pop_orderly <- lapply(
-  paste0(orderly_iso3, "_interpolated_population.csv"), read_circ_data
+  paste0("depends/", orderly_iso3, "_interpolated_population.csv"), 
+  read_circ_data
 )
 names(pop_orderly) <- orderly_iso3
-# join area name into pop_ordelry
+# join area name into pop_orderly
 pop_orderly <- pop_orderly %>% 
   Map(mutate, ., iso3 = toupper(names(.))) %>% 
   bind_rows() %>% 
