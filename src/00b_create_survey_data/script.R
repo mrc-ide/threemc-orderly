@@ -44,49 +44,7 @@ se_pattern <- paste(c(
 )
 se_files <- load_sharepoint_data(se_path, se_pattern)
 
-#### Area hierarchy ####
-
-# notes:
-# - is HTI needed?
-# - areas created with this code does not match areas used in modelling analysis
-# - actually missing a lot here lol, look back at `create-data.R`
-# - Missing ZAF, MWI, survey_individuals data from global
-
-# countries to pull shapefiles for 
-iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
-          "cog", "eth", "gab", "gha", "gin", "gmb", "gnb", "gnq", "hti",
-          "ken", "lbr", "lso", "mli", "moz", "mwi", "nam", "ner", "nga",
-          "rwa", "sen", "sle", "swz", "tcd", "tgo", "tza", "uga", "zaf",
-          "zmb", "zwe")
-# append iso3 code with name of areas files for each country
-area_paths <- paste0(iso3, "_areas.geojson")
-names(area_paths) <- toupper(iso3)
-# replace MWI areas with TA-level for linking survey data
-area_paths["MWI"] = "mwi_areas_ta.geojson"
-
-# load shapefiles
-areas <- lapply(area_paths, read_circ_data)
-
-# Clean GMB area hierarchy geometry. (This should be done way upsteam)
-areas[["GMB"]] <- sf::st_collection_extract(areas[["GMB"]], "POLYGON")
-
-# make sure to add iso3 column to start of each area file
-# also only keep required columns (AGO known to have correct cols)
-keep_cols <- unique(c("iso3", colnames(areas[["AGO"]])))
-areas <- lapply(seq_along(areas), function(i) {
-  areas[[i]]$iso3 <- names(areas)[i]
-  # return(select(areas[[i]], all_of(keep_cols)))
-  return(select(areas[[i]], -(contains("level") & !matches("area_level"))))
-})
-
-# bind area files together
-areas <- bind_rows(areas) %>% 
-  select(iso3, everything(), -matches("n_areas"))
-
-# not the same as this for some reason!! 
-# areas_test <- sf::read_sf("~/OneDrive/data/areas_orig.geojson")
-# anti_join(sf::st_drop_geometry(areas), sf::st_drop_geometry(areas_test)) %>%
-#   distinct(iso3)
+areas <- sf::read_sf("depends/areas.geojson")
 
 #### Survey Clusters ####
 
@@ -109,7 +67,7 @@ load_cluster_data <- function(path) {
 iso3_dhs <- iso3[!iso3 %in% c("bwa", "caf", "gnb", "gnq", "hti", "zaf")]
 
 # load dhs survey cluster datasets
-dhs_paths <- paste0(iso3_dhs, "_dhs_clusters.csv")
+dhs_paths <- paste0("depends/", iso3_dhs, "_dhs_clusters.csv")
 dhs_clusters <- load_cluster_data(dhs_paths)
 
 # countries with phia surveys
@@ -123,7 +81,7 @@ phia_years <- c(
 )
 
 # load phia cluster datasets
-phia_paths <- paste0(iso3_phia, phia_years, "phia_survey_clusters.csv")
+phia_paths <- paste0("depends/", iso3_phia, phia_years, "phia_survey_clusters.csv")
 phia_clusters <- load_cluster_data(phia_paths)
 
 # bind together both cluster datasets
@@ -179,7 +137,7 @@ dhs_individuals <- dhs_individuals %>%
 #                          recursive = TRUE, full.names = TRUE) %>%
 #   setNames(iso3_phia)
 
-phia_paths <- paste0(iso3_phia, phia_years, "phia_survey_individuals.csv")
+phia_paths <- paste0("depends/", iso3_phia, phia_years, "phia_survey_individuals.csv")
 
 phia_individuals <- lapply(phia_paths, read_circ_data)
 names(phia_individuals) <- toupper(iso3_phia)
@@ -221,7 +179,7 @@ dhs_circumcision <- as.list(dhs_circumcision) %>%
     survey_id != "CIV2005AIS"
   )
 
-phia_paths <- paste0(iso3_phia, phia_years, "phia_survey_circumcision.csv")
+phia_paths <- paste0("depends/", iso3_phia, phia_years, "phia_survey_circumcision.csv")
 phia_circumcision <- lapply(phia_paths, read_circ_data)
 names(phia_circumcision) <- toupper(iso3_phia)
 phia_circumcision <- phia_circumcision %>% 
@@ -298,7 +256,6 @@ survey_circumcision <- survey_circumcision %>%
 
 #### save data #### 
 
-sf::write_sf(areas, "areas.geojson")
 write_csv(survey_clusters, "survey_clusters.csv.gz")
 write_csv(survey_individuals, "survey_individuals.csv.gz")
 write_csv(survey_circumcision, "survey_circumcision.csv.gz")
