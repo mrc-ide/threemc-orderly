@@ -13,10 +13,10 @@ iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
           "rwa", "sen", "sle", "swz", "tcd", "tgo", "tza", "uga", "zaf",
           "zmb", "zwe")
 # append iso3 code with name of areas files for each country
-area_paths <- paste0(iso3, "_areas.geojson")
+area_paths <- paste0("depends/", iso3, "_areas.geojson")
 names(area_paths) <- toupper(iso3)
 # replace MWI areas with TA-level for linking survey data
-area_paths["MWI"] = "mwi_areas_ta.geojson"
+area_paths["MWI"] = "depends/mwi_areas_ta.geojson"
 
 # load shapefiles
 areas <- lapply(area_paths, read_circ_data)

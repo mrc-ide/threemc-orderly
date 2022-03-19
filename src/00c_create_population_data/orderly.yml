@@ -24,7 +24,7 @@ packages:
   
 depends:
   # areas file
-  - 00a_create_survey_data_areas:
+  - 00a_create_area_data:
       id: latest
       use:
         depends/areas.geojson: areas.geojson

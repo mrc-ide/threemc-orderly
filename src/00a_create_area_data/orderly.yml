@@ -19,152 +19,152 @@ depends:
   ago_data_areas:
     id: latest
     use:
-      ago_areas.geojson: ago_areas.geojson
+      depends/ago_areas.geojson: ago_areas.geojson
   bdi_data_areas:
     id: latest
     use:
-      bdi_areas.geojson: bdi_areas.geojson
+      depends/bdi_areas.geojson: bdi_areas.geojson
   ben_data_areas:
     id: latest
     use:
-      ben_areas.geojson: ben_areas.geojson
+      depends/ben_areas.geojson: ben_areas.geojson
   bfa_data_areas:
     id: latest
     use:
-      bfa_areas.geojson: bfa_areas.geojson
+      depends/bfa_areas.geojson: bfa_areas.geojson
   bwa_data_areas:
     id: latest
     use:
-      bwa_areas.geojson: bwa_areas.geojson
+      depends/bwa_areas.geojson: bwa_areas.geojson
   caf_data_areas:
     id: latest
     use:
-      caf_areas.geojson: caf_areas.geojson
+      depends/caf_areas.geojson: caf_areas.geojson
   civ_data_areas:
     id: latest
     use:
-      civ_areas.geojson: civ_areas.geojson
+      depends/civ_areas.geojson: civ_areas.geojson
   cmr_data_areas:
     id: latest
     use:
-      cmr_areas.geojson: cmr_areas.geojson
+      depends/cmr_areas.geojson: cmr_areas.geojson
   cod_data_areas:
     id: latest
     use:
-      cod_areas.geojson: cod_areas.geojson
+      depends/cod_areas.geojson: cod_areas.geojson
   cog_data_areas:
     id: latest
     use:
-      cog_areas.geojson: cog_areas.geojson
+      depends/cog_areas.geojson: cog_areas.geojson
   eth_data_areas:
     id: latest
     use:
-      eth_areas.geojson: eth_areas.geojson
+      depends/eth_areas.geojson: eth_areas.geojson
   gab_data_areas:
     id: latest
     use:
-      gab_areas.geojson: gab_areas.geojson
+      depends/gab_areas.geojson: gab_areas.geojson
   gha_data_areas:
     id: latest
     use:
-      gha_areas.geojson: gha_areas.geojson
+      depends/gha_areas.geojson: gha_areas.geojson
   gin_data_areas:
     id: latest
     use:
-      gin_areas.geojson: gin_areas.geojson
+      depends/gin_areas.geojson: gin_areas.geojson
   gmb_data_areas:
     id: latest
     use:
-      gmb_areas.geojson: gmb_areas.geojson
+      depends/gmb_areas.geojson: gmb_areas.geojson
   gnb_data_areas:
     id: latest
     use:
-      gnb_areas.geojson: gnb_areas.geojson
+      depends/gnb_areas.geojson: gnb_areas.geojson
   gnq_data_areas:
     id: latest
     use:
-      gnq_areas.geojson: gnq_areas.geojson
+      depends/gnq_areas.geojson: gnq_areas.geojson
   hti_data_areas:
     id: latest
     use:
-      hti_areas.geojson: hti_areas.geojson
+      depends/hti_areas.geojson: hti_areas.geojson
   ken_data_areas:
     id: latest
     use:
-      ken_areas.geojson: ken_areas.geojson
+      depends/ken_areas.geojson: ken_areas.geojson
   lbr_data_areas:
     id: latest
     use:
-      lbr_areas.geojson: lbr_areas.geojson
+      depends/lbr_areas.geojson: lbr_areas.geojson
   lso_data_areas:
     id: latest
     use:
-      lso_areas.geojson: lso_areas.geojson
+      depends/lso_areas.geojson: lso_areas.geojson
   mli_data_areas:
     id: latest
     use:
-      mli_areas.geojson: mli_areas.geojson
+      depends/mli_areas.geojson: mli_areas.geojson
   moz_data_areas:
     id: latest
     use:
-      moz_areas.geojson: moz_areas.geojson
+      depends/moz_areas.geojson: moz_areas.geojson
   mwi_data_areas:
     id: latest
     use:
-      mwi_areas_ta.geojson: mwi_areas_ta.geojson
+      depends/mwi_areas_ta.geojson: mwi_areas_ta.geojson
   nam_data_areas:
     id: latest
     use:
-      nam_areas.geojson: nam_areas.geojson
+      depends/nam_areas.geojson: nam_areas.geojson
   ner_data_areas:
     id: latest
     use:
-      ner_areas.geojson: ner_areas.geojson
+      depends/ner_areas.geojson: ner_areas.geojson
   nga_data_areas:
     id: latest
     use:
-      nga_areas.geojson: nga_areas.geojson
+      depends/nga_areas.geojson: nga_areas.geojson
   rwa_data_areas:
     id: latest
     use:
-      rwa_areas.geojson: rwa_areas.geojson
+      depends/rwa_areas.geojson: rwa_areas.geojson
   sen_data_areas:
     id: latest
     use:
-      sen_areas.geojson: sen_areas.geojson
+      depends/sen_areas.geojson: sen_areas.geojson
   sle_data_areas:
     id: latest
     use:
-      sle_areas.geojson: sle_areas.geojson
+      depends/sle_areas.geojson: sle_areas.geojson
   swz_data_areas:
     id: latest
     use:
-      swz_areas.geojson: swz_areas.geojson
+      depends/swz_areas.geojson: swz_areas.geojson
   tcd_data_areas:
     id: latest
     use:
-      tcd_areas.geojson: tcd_areas.geojson
+      depends/tcd_areas.geojson: tcd_areas.geojson
   tgo_data_areas:
     id: latest
     use:
-      tgo_areas.geojson: tgo_areas.geojson
+      depends/tgo_areas.geojson: tgo_areas.geojson
   tza_data_areas:
     id: latest
     use:
-      tza_areas.geojson: tza_areas.geojson
+      depends/tza_areas.geojson: tza_areas.geojson
   uga_data_areas:
     id: latest
     use:
-      uga_areas.geojson: uga_areas.geojson
+      depends/uga_areas.geojson: uga_areas.geojson
   zaf_data_areas:
     id: latest
     use:
-      zaf_areas.geojson: zaf_areas.geojson
+      depends/zaf_areas.geojson: zaf_areas.geojson
   zmb_data_areas:
     id: latest
     use:
-      zmb_areas.geojson: zmb_areas.geojson
+      depends/zmb_areas.geojson: zmb_areas.geojson
   zwe_data_areas:
     id: latest
     use:
-      zwe_areas.geojson: zwe_areas.geojson
+      depends/zwe_areas.geojson: zwe_areas.geojson
