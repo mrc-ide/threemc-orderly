@@ -1,0 +1,63 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: naomi fit object
+      filenames:
+      - TMBObjects_DistrictAgeTime_ByType.rds
+  - data:
+      description: Modelling results for area level of interest, including quantiles
+      filenames:
+      - Results_DistrictAgeTime_ByType.csv.gz
+  - staticgraph:
+      description: Plot of circumcision coverage for all areas modelled.
+      filenames:
+      - Circ_Coverage.pdf
+  - staticgraph:
+      description: Plot of circumcision rates for all areas modelled.
+      filenames:
+      - Circ_Rates.pdf
+  - data:
+      description: Probability aggregation
+      filenames: 
+      - Results_AgeGroup_Probability.csv.gz
+  - data:
+      description: Incidence aggregation
+      filenames:
+      - Results_AgeGroup_Incidence.csv.gz
+  - data:
+      description: Prevalence aggregation
+      filenames:
+      - Results_AgeGroup_Prevalence.csv.gz
+   
+displayname: threemc model fit
+
+parameters:
+  cntry:
+    default: ~
+  # default values are the means
+  logsigma_time_mmc_val:
+    default: -0.05520797
+  logsigma_agetime_mmc_val:
+    default: 0.21878839
+  logsigma_spacetime_mmc_val:
+    default: -2.09773799
+  
+packages:
+  - threemc
+  - sf
+  - data.table
+  - dplyr
+  - Matrix
+  - TMB
+  - rlang
+  - ggplot2
+  - stringr
+  
+global_resources:
+  areas.geojson: areas.geojson
+  survey_circumcision.csv.gz: survey_circumcision.csv.gz
+  survey_clusters.csv.gz: survey_clusters.csv.gz
+  survey_individuals.csv.gz: survey_individuals.csv.gz
+  population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
+  
