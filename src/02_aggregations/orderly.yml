@@ -1,0 +1,64 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: 
+      - Aggregated Probabilities of Circumcision for Single Ages
+      filenames: 
+      - Results_Age_Probability.csv.gz
+  - data:
+      description: 
+      - Aggregated Circumcision Incidences for Single Ages
+      filenames: 
+      - Results_Age_Incidence.csv.gz
+  - data:
+      description: 
+      - Aggregated Circumcision Prevalences for Single Ages
+      filenames: 
+      - Results_Age_Prevalence.csv.gz
+  - data:
+      description: 
+      - Aggregated Probabilities of Circumcision for Age Groups
+      filenames: 
+      - Results_AgeGroup_Probability.csv.gz
+  - data:
+      description: 
+      - Aggregated Circumcision Incidences for Age Groups
+      filenames: 
+      - Results_AgeGroup_Incidence.csv.gz
+  - data:
+      description: 
+      - Aggregated Circumcision Prevalences for Age Groups
+      filenames: 
+      - Results_AgeGroup_Prevalence.csv.gz 
+      
+displayname: 
+  - Aggregating circumcision probability, incidence and prevalence,
+    for discrete ages age groups. 
+
+parameters:
+  cntry:
+    default: ~
+
+depends:
+  01_modelling:
+    id: latest(parameter:cntry == cntry)
+    use:
+      Results_DistrictAgeTime_ByType.csv.gz: Results_DistrictAgeTime_ByType.csv.gz
+      TMBObjects_DistrictAgeTime_ByType.rds: TMBObjects_DistrictAgeTime_ByType.rds
+      
+packages:
+  - threemc
+  - sf
+  - data.table
+  - dplyr
+  - stringr
+  - TMB
+  - naomi
+  
+global_resources:
+  areas.geojson: areas.geojson
+  population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
+  
+# sources:
+#   - source.R
