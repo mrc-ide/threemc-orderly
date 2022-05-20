@@ -1,4 +1,3 @@
-
 #### Part 1 of Analysis (Modelling) with functionalised behaviour ####
 
 #################
@@ -205,13 +204,8 @@ out_spec <- out_spec %>%
 # minimise fit object for saving
 fit <- minimise_fit_obj(fit, dat_tmb, parameters)
 
-# Saving results (also make into function)
-data.table::fwrite(
-  out_spec,
-  file = here::here(
-    paste0(save_loc, cntry, "_Results_DistrictAgeTime_ByType.csv.gz")
-  )
-)
+# Saving results
+data.table::fwrite(out_spec, file = "Results_DistrictAgeTime_ByType.csv.gz")
 
 # save fit as .rds file
 saveRDS(fit, "TMBObjects_DistrictAgeTime_ByType.rds")
