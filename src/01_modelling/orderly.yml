@@ -6,10 +6,6 @@ artefacts:
       filenames:
       - TMBObjects_DistrictAgeTime_ByType.rds
   - data:
-      description: Modelling results
-      filenames:
-      - Results_DistrictAgeTime_ByType_full.csv.gz
-  - data:
       description: Modelling results for area level of interest, including quantiles
       filenames:
       - Results_DistrictAgeTime_ByType.csv.gz
@@ -21,13 +17,6 @@ artefacts:
       description: Plot of circumcision rates for all areas modelled.
       filenames:
       - Circ_Rates.pdf
-  # - staticgraph: 
-  #     description: Compilation files
-  #     filenames:
-  #     - Surv_SpaceAgeTime_ByType_withUnknownType.o
-  #     - Surv_SpaceAgeTime_ByType_withUnknownType.so
-  #     - Surv_SpaceAgeTime.o
-  #     - Surv_SpaceAgeTime.so
   
 displayname: threemc model fit
 
@@ -46,17 +35,9 @@ packages:
   - ggplot2
   
 global_resources:
-  # Surv_SpaceAgeTime_ByType_withUnknownType.cpp: 
-  # - Surv_SpaceAgeTime_ByType_withUnknownType.cpp
-  # Surv_SpaceAgeTime.cpp: Surv_SpaceAgeTime.cpp
   areas.geojson: areas.geojson
   survey_circumcision.csv.gz: survey_circumcision.csv.gz
   survey_clusters.csv.gz: survey_clusters.csv.gz
   survey_individuals.csv.gz: survey_individuals.csv.gz
-  population_singleage.csv.gz: population_singleage.csv.gz
+  population_singleage.csv.gz: population_singleage_aggr.csv.gz
   
-# sources:
-#  - debug-functions.R
-
-# resources:
-#  - 2021_naomi_model_options.csv
