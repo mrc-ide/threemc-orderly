@@ -39,5 +39,5 @@ global_resources:
   survey_circumcision.csv.gz: survey_circumcision.csv.gz
   survey_clusters.csv.gz: survey_clusters.csv.gz
   survey_individuals.csv.gz: survey_individuals.csv.gz
-  population_singleage.csv.gz: population_singleage_aggr.csv.gz
+  population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
   
