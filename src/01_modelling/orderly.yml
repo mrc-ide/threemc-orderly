@@ -6,7 +6,11 @@ artefacts:
       filenames:
       - TMBObjects_DistrictAgeTime_ByType.rds
   - data:
-      description: Modelling results, including error bounds
+      description: Modelling results
+      filenames:
+      - Results_DistrictAgeTime_ByType_full.csv.gz
+  - data:
+      description: Modelling results for area level of interest, including quantiles
       filenames:
       - Results_DistrictAgeTime_ByType.csv.gz
   - staticgraph:
@@ -49,6 +53,7 @@ global_resources:
   survey_circumcision.csv.gz: survey_circumcision.csv.gz
   survey_clusters.csv.gz: survey_clusters.csv.gz
   survey_individuals.csv.gz: survey_individuals.csv.gz
+  population_singleage.csv.gz: population_singleage.csv.gz
   
 # sources:
 #  - debug-functions.R
