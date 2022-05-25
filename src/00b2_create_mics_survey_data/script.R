@@ -371,10 +371,15 @@ survey_circumcision <- survey_circumcision %>%
 # check that all survey_circumcision columns are contained in mics data
 names(survey_circumcision)[!names(survey_circumcision) %in% names(mics_final)]
 
+# common names
+keep_names <- intersect(names(survey_circumcision, mics_final))
+
 # join new mics surveys with other surveys
 survey_circumcision <- mics_final %>%
   # ensure cluster_id isn't coerced from character to numeric upon joining
   mutate(cluster_id = as.character(cluster_id)) %>% 
+  # remove superfluous columns
+  select(all_of(keep_names)) %>% 
   bind_rows(survey_circumcision) %>% 
   # arrange as before
   arrange(iso3, survey_id, age, circ_age)
@@ -390,6 +395,11 @@ mics_surveys_with_circ[!mics_surveys_with_circ %in% valid_surveys] # invalid
 mics_final %>% 
   filter(is.na(area_id)) %>% 
   distinct(iso3, area_name, area_id)
+
+# added in modelling
+if ("area_name" %in% names(survey_circumcision)) {
+  survey_circumcision <- select(survey_circumcision, -area_name)
+}
 
 # save survey_circumcision
 readr::write_csv(
