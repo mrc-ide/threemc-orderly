@@ -6,6 +6,7 @@ artefacts:
       - shapefiles
       filenames:
       - artefacts/areas.geojson
+      
 displayname: coalate shapefiles and area hierarchy
 
 packages:
