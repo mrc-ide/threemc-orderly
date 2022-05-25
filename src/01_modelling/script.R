@@ -9,7 +9,7 @@
 # !! Change this to use dataset stored in threemc
 k_dt <- 5 # Age knot spacing
 start_year <-  2006
-cens_age <- 59
+if(cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 
 # Revert to using planar rather than spherical geometry in `sf`
