@@ -278,7 +278,7 @@ print(n)
 # if there are only a few surveys where this is the case, can be safely dropped
 if (n > 0 && n < 20) {
  mics_final <- mics_final %>% 
-   filter(circ_age <= age)
+   filter(is.na(circ_age) | is.na(age) | circ_age <= age)
 }
 
 # add area_id to dataset
@@ -331,24 +331,11 @@ mics_final %>%
   filter(duplicated(check)) %>% 
   nrow() == 0
 
-test <- mics_final %>% 
-  mutate(
-    check = paste(
-      survey_id, individual_id, cluster_id, household, line, circ_status, 
-      circ_age, circ_where, area_name, iso3, sex, age
-    )
-  )
-duplicates <- test$check[duplicated(test$check)]
-
-test %>% 
-  filter(check %in% duplicates) %>% 
-  arrange(check)
-
 # finally, assign any surveys with NA for area_id to the national level
 mics_final <- mics_final %>% 
   mutate(
     across(contains("area"), ~ ifelse(is.na(area_id), iso3, .)),
-    area_name_test = ifelse(
+    area_name = ifelse(
       area_name == iso3, 
       countrycode::countrycode(
         area_name, origin = "iso3c", destination = "country.name"
@@ -397,7 +384,7 @@ valid_surveys <- mics_final %>%
   filter(!is.na(circ_status), !is.na(area_id), !is.na(indweight)) %>% 
   distinct(survey_id) %>% 
   pull()
-mics_surveys_with_circ[!mics_surveys_with_circ %in% valid_surveys]
+mics_surveys_with_circ[!mics_surveys_with_circ %in% valid_surveys] # invalid
 
 # areas with NA for area_id (should be none)
 mics_final %>% 
