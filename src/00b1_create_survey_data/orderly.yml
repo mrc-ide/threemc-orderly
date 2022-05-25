@@ -30,7 +30,7 @@ depends:
   00a_create_area_data:
     id: latest
     use:
-      depends/areas.geojson: areas.geojson 
+      depends/areas.geojson: artefacts/areas.geojson 
   #### DHS cluster remotes
   ago_survey:
     id: latest
