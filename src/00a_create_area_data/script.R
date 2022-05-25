@@ -45,4 +45,4 @@ areas <- bind_rows(areas) %>%
 #   pull()
 
 # save data
-sf::write_sf(areas, "areas.geojson")
+sf::write_sf(areas, "artefacts/areas.geojson")
