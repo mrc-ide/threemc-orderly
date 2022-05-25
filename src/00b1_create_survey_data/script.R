@@ -1,25 +1,41 @@
-#### Initial Sharepoint Download ####
-sharepoint <- spud::sharepoint$new("https://imperiallondon.sharepoint.com/")
 
-# function to load data from specific 
-load_sharepoint_data <- function(path, pattern = NULL) {
+# SSA countries
+iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
+          "cog", "eth", "gab", "gha", "gin", "gmb", "gnb", "gnq", "hti",
+          "ken", "lbr", "lso", "mli", "moz", "mwi", "nam", "ner", "nga",
+          "rwa", "sen", "sle", "swz", "tcd", "tgo", "tza", "uga", "zmb",
+          "zwe")
+
+# ensure save_dir exists
+save_dir <- "artefacts/"
+threemc::create_dirs_r(save_dir)
+
+
+#### Initial Sharepoint Download ####
+sharepoint <- spud::sharepoint$new(Sys.getenv("SHAREPOINT_URL"))
+
+# function to load data from specific dir on sharepoint
+load_sharepoint_data <- function(
+  path, pattern = NULL, group = "HIVInferenceGroup-WP/"
+) {
   
   # List files in folder
-  folder <- sharepoint$folder("HIVInferenceGroup-WP", URLencode(path))
+  folder <- sharepoint$folder(group, URLencode(path))
   
   # pull urls for each file
-  urls <- URLencode(
-    file.path("sites/HIVINferenceGroup-WP", paste0(path, "/", folder$files()$name))
-  )
+  urls <- URLencode(file.path("sites", group, path, folder$files()$name))
+  
   # may only require certain files 
   if (!is.null(pattern)) {
     # only want cluster, individuals and circumcision data
     urls <- urls[grepl(pattern, urls)]
   }
+  
   # download files, name with urls so we know order of temp files
   files = lapply(urls, sharepoint$download)
-  if (length(files) == 0) error("No files found at supplied path")
+  if (length(files) == 0) stop("No files found at supplied path")
   names(files) <- basename(urls)
+  
   return(files)
 }
 
@@ -256,6 +272,6 @@ survey_circumcision <- survey_circumcision %>%
 
 #### save data #### 
 
-write_csv(survey_clusters, "survey_clusters.csv.gz")
-write_csv(survey_individuals, "survey_individuals.csv.gz")
-write_csv(survey_circumcision, "survey_circumcision.csv.gz")
+write_csv(survey_clusters, paste0(save_dir, "survey_clusters.csv.gz"))
+write_csv(survey_individuals, paste0(save_dir, "survey_individuals.csv.gz"))
+write_csv(survey_circumcision, paste0(save_dir, "survey_circumcision.csv.gz"))
