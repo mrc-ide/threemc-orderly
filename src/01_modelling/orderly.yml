@@ -4,19 +4,19 @@ artefacts:
   - data:
       description: naomi fit object
       filenames:
-      - TMBObjects_DistrictAgeTime_ByType.rds
+      - artefacts/TMBObjects_DistrictAgeTime_ByType.rds
   - data:
       description: Modelling results for area level of interest, including quantiles
       filenames:
-      - Results_DistrictAgeTime_ByType.csv.gz
+      - artefacts/Results_DistrictAgeTime_ByType.csv.gz
   - staticgraph:
       description: Plot of circumcision coverage for all areas modelled.
       filenames:
-      - Circ_Coverage.pdf
+      - artefacts/Circ_Coverage.pdf
   - staticgraph:
       description: Plot of circumcision rates for all areas modelled.
       filenames:
-      - Circ_Rates.pdf
+      - artefacts/Circ_Rates.pdf
   
 displayname: threemc model fit
 
@@ -35,9 +35,10 @@ packages:
   - ggplot2
   
 global_resources:
-  areas.geojson: areas.geojson
-  survey_circumcision.csv.gz: survey_circumcision.csv.gz
-  survey_clusters.csv.gz: survey_clusters.csv.gz
-  survey_individuals.csv.gz: survey_individuals.csv.gz
-  population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
+  depends/areas.geojson: areas.geojson
+  depends/survey_circumcision.csv.gz: survey_circumcision.csv.gz
+  depends/survey_clusters.csv.gz: survey_clusters.csv.gz
+  depends/survey_individuals.csv.gz: survey_individuals.csv.gz
+  depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
+  
   
