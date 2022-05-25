@@ -378,4 +378,4 @@ zaf_pop <- zaf_pop %>%
 
 pop1adj <- bind_rows(pop1adj, zaf_pop)
 
-readr::write_csv(pop1adj, "population_singleage.csv.gz", na = "")
+readr::write_csv(pop1adj, "artefacts/population_singleage.csv.gz", na = "")
