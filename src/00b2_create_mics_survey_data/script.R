@@ -1,17 +1,58 @@
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(haven)
 
-# source("extract_funs.R")
-source("src/00b_create_mics_survey_data/extract_funs.R")
+# source required functions
+source("source.R")
+
+# ensure save_dir exists
+save_dir <- "artefacts/"
+threemc::create_dirs_r(save_dir)
 
 # load areas
-areas <- sf::st_drop_geometry(sf::read_sf("global/areas.geojson"))
+areas <- sf::st_drop_geometry(sf::read_sf("depends/areas.geojson"))
 
-# dataframes for recoding surveys
-variable_recode = readxl::read_excel("../circumcision-coverage/raw/Survey extract/hivdata_survey_datasets.xlsx", sheet = "variable_recode", na = "NA")
-value_recode = readxl::read_excel("../circumcision-coverage/raw/Survey extract/hivdata_survey_datasets.xlsx", sheet = "value_recode", na = "NA")
+# Path to sharepoint directory
+sharepoint <- spud::sharepoint$new(Sys.getenv("SHAREPOINT_URL"))
+
+# function to load data from specific dir on sharepoint
+load_sharepoint_data <- function(
+  path, pattern = NULL, group = "HIVInferenceGroup-WP/"
+) {
+  
+  # List files in folder
+  folder <- sharepoint$folder(group, URLencode(path))
+  
+  # pull urls for each file
+  urls <- URLencode(file.path("sites", group, path, folder$files()$name))
+  
+  # may only require certain files 
+  if (!is.null(pattern)) {
+    # only want cluster, individuals and circumcision data
+    urls <- urls[grepl(pattern, urls)]
+  }
+  
+  # download files, name with urls so we know order of temp files
+  files = lapply(urls, sharepoint$download)
+  if (length(files) == 0) stop("No files found at supplied path")
+  names(files) <- basename(urls)
+  
+  return(files)
+}
+
+# load dataframes for recoding surveys from sharepoint 
+recode_xlsx <- load_sharepoint_data(
+  path = "Shared Documents/Circumcision Coverage/raw/Survey extract/", 
+  pattern = "hivdata_survey_datasets.xlsx"
+)
+variable_recode <- readxl::read_excel(
+  recode_xlsx$hivdata_survey_datasets.xlsx,
+  sheet = "variable_recode", 
+  na = "NA"
+)
+value_recode <- readxl::read_excel(
+  recode_xlsx$hivdata_survey_datasets.xlsx,
+  sheet = "value_recode", 
+  na = "NA"
+)
+
 
 #### MICS surveys ####
 
@@ -22,26 +63,18 @@ mics_surveys_with_circ <- sort(c(
   "GMB2018MICS", "SWZ2010MICS", "NGA2016MICS", "TCD2019MICS"
 ))
 
-# setup connection to MICS data on sharepoint
-sharepoint <- spud::sharepoint$new(Sys.getenv("SHAREPOINT_URL"))
-folder <- sharepoint$folder(site = Sys.getenv("SHAREPOINT_SITE"), path = Sys.getenv("MICS_ORDERLY_PATH"))
-
-# only pull through desired mics surveys
-mics_sharepoint_df <- folder$list() %>%
-  dplyr::filter(
-    stringr::str_detect(
-      name, paste0(tolower(mics_surveys_with_circ), collapse = "|")
-    )
-  )
-
-mics_paths <- file.path("sites", Sys.getenv("SHAREPOINT_SITE"), Sys.getenv("MICS_ORDERLY_PATH"), mics_sharepoint_df$name)
+# load mics surveys with circumcision data from sharepoint
+mics_paths <- load_sharepoint_data(
+  path = Sys.getenv("MICS_ORDERLY_PATH"),
+  pattern = paste(tolower(mics_surveys_with_circ), collapse = "|")
+)
 # order alphabetically
-mics_paths <- mics_paths[order(basename(mics_paths))]
+mics_paths <- mics_paths[order(names(mics_paths))]
 
 # check that mics_surveys_with_circ and mics_paths have same order
-toupper(stringr::str_remove(basename(mics_paths), ".rds")) == mics_surveys_with_circ
-
-mics_files <- lapply(mics_paths, spud::sharepoint_download, sharepoint_url = Sys.getenv("SHAREPOINT_URL"))
+mics_surveys_with_circ == toupper(stringr::str_remove(
+  names(mics_paths), ".rds"
+))
 
 # There needs to be some additional code to rename the datasets themselves when 
 # they are non-standard in the MICS files. 
@@ -62,7 +95,7 @@ mics_files <- lapply(mics_paths, spud::sharepoint_download, sharepoint_url = Sys
 # Currently surveys with custom dataset names are not extracted
 
 # read in surveys for adult men
-mics_dat <- lapply(mics_files, readRDS) %>%
+mics_dat <- lapply(mics_paths, readRDS) %>%
   lapply("[", "mn") %>% 
   unlist(recursive = FALSE) %>%
   setNames(mics_surveys_with_circ) %>% 
@@ -77,14 +110,10 @@ mics_file_type <- setNames(rep("mn", length(mics_dat)), names(mics_dat))
 
 #### Extract and recode variables ####
 
-file_type <- c(
-  # c("Individual Recode" = "ir", "Men's Recode" = "mr")[combined_datasets$FileType] %>% setNames(combined_datasets$survey_id)
-  mics_file_type # ,
-  # phia_file_type
-)
+file_type <- c(mics_file_type)
 
 # dataset with codes for mics_area_name 
-mics_indicators <- readr::read_csv("global/MICS_indicators.csv") %>% 
+mics_indicators <- readr::read_csv("depends/MICS_indicators.csv") %>% 
   pivot_longer(-c(label, id, filetype), names_to = "survey_id")
 
 # join both recoding dfs
@@ -154,13 +183,11 @@ circ_extracted <- lapply(seq_along(circ_extracted), function(i) {
 names(circ_extracted) <- names(circ_raw)
 
 # OLI: Note on the value_recode tab of the excel file
-# There are several cases where though the variable name is custom to the survey, 
+# There are several cases where though the var name is custom to the survey, 
 # the value coding is the same as the default. 
 # The value recode entries for those surveys can be removed, but for speed I 
 # just added them all. I'm not sure removing them is any better than leaving 
 # them in though. The size of the value recode book is immaterial. 
-# circ_extracted_test <- circ_extracted[grepl("GHA", names(circ_extracted))]
-# circ_extracted_test <- circ_extracted[grepl("NGA", names(circ_extracted))]
 circ_recoded <- Map(
   recode_survey_variables,
   df = circ_extracted,
@@ -175,7 +202,9 @@ mics_final <- circ_recoded %>%
   lapply(function(x) {
     if(ncol(x) < 6) {
       NULL
-    } else if (length(unique(x$circ_status)) == 1 && is.na(unique(x$circ_status))) {
+    } else if (
+      length(unique(x$circ_status)) == 1 && is.na(unique(x$circ_status))
+    ) {
       NULL
     } else {
       x
@@ -209,25 +238,25 @@ mics_final <- mics_final %>%
     ),
     # fix issues with area names (change to match areas sf file)
     area_name = case_when(
-      # capitalise the word "city", as it is in areas
+      # capitalise the word "city", as it is in areas (only required for MWI)
       grepl("city", tolower(area_name)) ~ stringr::str_to_title(area_name),
       # GHA: Area names shouldn't be capitalised
-      iso3 == "GHA" ~ stringr::str_to_title(area_name),
+      iso3 == "GHA"                     ~ stringr::str_to_title(area_name),
       # BEN: fix region with non-ascii letters
-      area_name == "OuÃ©mÃ©" ~ "Oueme",
+      area_name == "OuÃ©mÃ©"            ~ "Oueme",
       # GMB: regions appear to be joined in areas, change to match
       iso3 == "GMB" & grepl("Banjul|Kanifing|Brikama", area_name) ~ "Banjul/Kanifing/Brikama",
-      iso3 == "GMB" & grepl("Kuntaur|Janjanbureh", area_name) ~ "Kuntaur/Janjanbureh",
-      # TCD: Some strange parsing errors for accents & lack of hyphons
-      iso3 == "TCD" & area_name == "Guera" ~ "GuÃ©ra",
-      iso3 == "TCD" & area_name == "Tandjile" ~ "TandjilÃ©",
-      iso3 == "TCD" & area_name == "Ndjamena" ~ "N'Djamena",
-      iso3 == "TCD" & area_name == "Hadjer Lamis" ~ "Hadjer-Lamis",   
-      iso3 == "TCD" & area_name == "Mayo Kebbi Est" ~ "Mayo-Kebbi Est",
+      iso3 == "GMB" & grepl("Kuntaur|Janjanbureh", area_name)     ~ "Kuntaur/Janjanbureh",
+      # TCD: Some strange parsing errors for accents & lack of hyphens
+      iso3 == "TCD" & area_name == "Guera"            ~ "GuÃ©ra",
+      iso3 == "TCD" & area_name == "Tandjile"         ~ "TandjilÃ©",
+      iso3 == "TCD" & area_name == "Ndjamena"         ~ "N'Djamena",
+      iso3 == "TCD" & area_name == "Hadjer Lamis"     ~ "Hadjer-Lamis",   
+      iso3 == "TCD" & area_name == "Mayo Kebbi Est"   ~ "Mayo-Kebbi Est",
       iso3 == "TCD" & area_name == "Mayo Kebbi Ouest" ~ "Mayo-Kebbi Ouest",
-      iso3 == "TCD" & area_name == "Barh El Gazal" ~ "Barh-El-Gazel",  
-      iso3 == "TCD" & area_name == "Chari Baguirmi" ~ "Chari-Baguirmi",  
-      iso3 == "TCD" & area_name == "Moyen Chari" ~ "Moyen-Chari",  
+      iso3 == "TCD" & area_name == "Barh El Gazal"    ~ "Barh-El-Gazel",  
+      iso3 == "TCD" & area_name == "Chari Baguirmi"   ~ "Chari-Baguirmi",  
+      iso3 == "TCD" & area_name == "Moyen Chari"      ~ "Moyen-Chari",  
       # GHA: FCT Abuja is just Abuja
       iso3 == "GHA" & area_name == "FCT Abuja" ~ "FCT",
       TRUE ~ area_name
@@ -239,9 +268,18 @@ mics_final <- mics_final %>%
 
 # check that any survey ages are greater than circumcision ages
 # something wrong with circ_age! 8 times where circ_age > surveyed age
-mics_final %>% 
+# Let Oli know 
+n <- mics_final %>% 
   filter(circ_age > age) %>% 
   nrow()
+
+print(n)
+
+# if there are only a few surveys where this is the case, can be safely dropped
+if (n > 0 && n < 20) {
+ mics_final <- mics_final %>% 
+   filter(circ_age <= age)
+}
 
 # add area_id to dataset
 areas_join <- areas %>% 
@@ -252,8 +290,26 @@ areas_join <- areas %>%
     (iso3 == "MWI" & area_level %in% c(3, 5)) |  # need lev 3 for Mzimba
     (iso3 == "NGA" & area_level == 2)
   ) %>% 
-  select(area_id, area_name)
+  select(area_id, area_name, area_level) %>% 
+  arrange() 
 
+# remove possible duplicate, lower level areas from areas_join (for MWI)
+duplicate_areas <- areas_join %>% 
+  group_by(area_name) %>% 
+  summarise(
+    occurences = n(), 
+    area_id = area_id, 
+    area_level = area_level,
+    max_area_level = max(area_level),
+    .groups = "drop"
+  ) %>% 
+  filter(occurences > 1, area_level != max_area_level) %>% 
+  select(area_name, area_id)
+
+areas_join <- areas_join %>% 
+  anti_join(duplicate_areas, by = c("area_id", "area_name")) %>% 
+  select(area_id, area_name)
+  
 # split by iso3 before joining with areas_join, again to avoid duplication 
 mics_final_list <- split(mics_final, mics_final$iso3)
 mics_final <- bind_rows(lapply(seq_along(mics_final_list), function(i) {
@@ -264,13 +320,29 @@ mics_final <- bind_rows(lapply(seq_along(mics_final_list), function(i) {
     )
 }))
 
-# check that no duplication has occurred
+# check that no duplication has occurred (seems to be duplication for MWI!)
 mics_final %>% 
   mutate(
-    check = paste(survey_id, individual_id, cluster_id, household, line, circ_status, circ_age, circ_where, area_name, iso3, sex)
+    check = paste(
+      survey_id, individual_id, cluster_id, household, line, circ_status, 
+      circ_age, circ_where, area_name, iso3, sex, age
+    )
   ) %>% 
   filter(duplicated(check)) %>% 
   nrow() == 0
+
+test <- mics_final %>% 
+  mutate(
+    check = paste(
+      survey_id, individual_id, cluster_id, household, line, circ_status, 
+      circ_age, circ_where, area_name, iso3, sex, age
+    )
+  )
+duplicates <- test$check[duplicated(test$check)]
+
+test %>% 
+  filter(check %in% duplicates) %>% 
+  arrange(check)
 
 # finally, assign any surveys with NA for area_id to the national level
 mics_final <- mics_final %>% 
@@ -278,29 +350,30 @@ mics_final <- mics_final %>%
     across(contains("area"), ~ ifelse(is.na(area_id), iso3, .)),
     area_name_test = ifelse(
       area_name == iso3, 
-      countrycode(area_name, origin = "iso3c", destination = "country.name"), 
+      countrycode::countrycode(
+        area_name, origin = "iso3c", destination = "country.name"
+      ), 
       area_name
     )  
 )
 
-# save
-readr::write_csv(mics_final, file = "~/imperial_repos/circumcision-coverage/data/mics_surveys.csv.gz")
-readr::write_csv(mics_final, file = "~/imperial_repos/threemc-orderly/global/mics_surveys.csv.gz")
+#### Joining MICS With Other Surveys ###
 
-survey_circumcision <- readr::read_csv("global/survey_circumcision_no_mics.csv.gz")
-survey_clusters <- readr::read_csv("global/survey_clusters.csv.gz")
-survey_individuals <- readr::read_csv("global/survey_individuals.csv.gz")
+# load previous survey datasets
+survey_circumcision <- readr::read_csv("depends/survey_circumcision.csv.gz")
+survey_clusters <- readr::read_csv("depends/survey_clusters.csv.gz")
+survey_individuals <- readr::read_csv("depends/survey_individuals.csv.gz")
 
-# start of script from survey_circumcision
+# join survey dataset information
 survey_circumcision <- survey_circumcision %>%
-  # Merging on individual information to  the circumcision dataset
+  # Merge on individual information to the circumcision dataset
   dplyr::left_join(
     survey_individuals %>%
       dplyr::select(.data$survey_id, .data$cluster_id, .data$individual_id,
                     .data$sex, .data$age, .data$indweight),
     by = c("survey_id", "individual_id")
   ) %>%
-  # Merging on cluster information to the circumcision dataset
+  # Merge on cluster information to the circumcision dataset
   dplyr::left_join(
     (survey_clusters %>%
        dplyr::mutate(area_id = as.character(.data$geoloc_area_id)) %>% 
@@ -311,8 +384,9 @@ survey_circumcision <- survey_circumcision %>%
 # check that all survey_circumcision columns are contained in mics data
 names(survey_circumcision)[!names(survey_circumcision) %in% names(mics_final)]
 
+# join new mics surveys with other surveys
 survey_circumcision <- mics_final %>%
-  # ensure cluster_id isn't coerced from character upon joining
+  # ensure cluster_id isn't coerced from character to numeric upon joining
   mutate(cluster_id = as.character(cluster_id)) %>% 
   bind_rows(survey_circumcision) %>% 
   # arrange as before
@@ -320,10 +394,10 @@ survey_circumcision <- mics_final %>%
 
 # Check that each MICS survey has valid circ_status and area_id values
 valid_surveys <- mics_final %>% 
-  filter(!is.na(circ_status) & !is.na(area_id) & !is.na(indweight)) %>% 
+  filter(!is.na(circ_status), !is.na(area_id), !is.na(indweight)) %>% 
   distinct(survey_id) %>% 
   pull()
-(invalid_surveys <- mics_surveys_with_circ[!mics_surveys_with_circ %in% valid_surveys])
+mics_surveys_with_circ[!mics_surveys_with_circ %in% valid_surveys]
 
 # areas with NA for area_id (should be none)
 mics_final %>% 
@@ -331,4 +405,7 @@ mics_final %>%
   distinct(iso3, area_name, area_id)
 
 # save survey_circumcision
-readr::write_csv(survey_circumcision, file = "~/imperial_repos/circumcision-coverage/data/survey_circumcision.csv.gz")
+readr::write_csv(
+  survey_circumcision, 
+  file = paste0(save_dir, "survey_circumcision.csv.gz")
+)
