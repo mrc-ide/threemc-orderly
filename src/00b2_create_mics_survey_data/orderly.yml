@@ -1,22 +1,7 @@
 script: script.R
 
 artefacts:
-  # - data: 
-  #     description: 
-  #     - survey clusters
-  #     filenames:
-  #     - survey_clusters.csv.gz
-  # - data: 
-  #     description: 
-  #     - survey individuals
-  #     filenames:
-  #     - survey_individuals.csv.gz
-  # - data: 
-  #     description: 
-  #     - survey circumcision
-  #     filenames:
-  #     - survey_circumcision.csv.gz
-  - data:
+ - data:
       description:
       - survey_circumcision with additional MICS surveys included
       filenames:
@@ -27,6 +12,7 @@ displayname: Pull MICS surveys and add them to survey data
 packages:
   - orderly
   - threemc
+  - countrycode
   - sf
   - readxl
   - dplyr
@@ -43,19 +29,17 @@ sources:
   - source.R
   
 global_resources:
-# depends/areas.geojson: areas.geojson
-# depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
   depends/MICS_indicators.csv: MICS_indicators.csv  
   
 depends:
   00a_create_area_data:
     id: latest
     use:
-      depends/areas.geojson: areas.geojson 
+      depends/areas.geojson: artefacts/areas.geojson 
   00b1_create_survey_data:
     id: latest
     use: 
-      depends/survey_circumcision: survey_circumcision
-      depends/survey_clusters: survey_clusters
-      depends/survey_individuals: survey_individuals
+      depends/survey_circumcision: artefacts/survey_circumcision.csv.gz
+      depends/survey_clusters: artefacts/survey_clusters.csv.gz
+      depends/survey_individuals: artefacts/survey_individuals.csv.gz
       
