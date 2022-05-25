@@ -32,21 +32,14 @@ artefacts:
       filenames: 
       - artefacts/Results_AgeGroup_Prevalence.csv.gz 
       
-displayname: 
+displayname: |
   - Aggregating circumcision probability, incidence and prevalence,
     for discrete ages age groups. 
 
 parameters:
   cntry:
     default: ~
-
-depends:
-  01_modelling:
-    id: latest(parameter:cntry == cntry)
-    use:
-      Results_DistrictAgeTime_ByType.csv.gz: Results_DistrictAgeTime_ByType.csv.gz
-      TMBObjects_DistrictAgeTime_ByType.rds: TMBObjects_DistrictAgeTime_ByType.rds
-      
+    
 packages:
   - threemc
   - sf
@@ -56,6 +49,13 @@ packages:
   - TMB
   - naomi
   
+depends:
+  01_modelling:
+    id: latest(parameter:cntry == cntry)
+    use:
+      depends/Results_DistrictAgeTime_ByType.csv.gz: Results_DistrictAgeTime_ByType.csv.gz
+      depends/TMBObjects_DistrictAgeTime_ByType.rds: TMBObjects_DistrictAgeTime_ByType.rds  
+      
 global_resources:
   depends/areas.geojson: areas.geojson
   depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
