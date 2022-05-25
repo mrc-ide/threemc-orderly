@@ -5,32 +5,32 @@ artefacts:
       description: 
       - Aggregated Probabilities of Circumcision for Single Ages
       filenames: 
-      - Results_Age_Probability.csv.gz
+      - artefacts/Results_Age_Probability.csv.gz
   - data:
       description: 
       - Aggregated Circumcision Incidences for Single Ages
       filenames: 
-      - Results_Age_Incidence.csv.gz
+      - artefacts/Results_Age_Incidence.csv.gz
   - data:
       description: 
       - Aggregated Circumcision Prevalences for Single Ages
       filenames: 
-      - Results_Age_Prevalence.csv.gz
+      - artefacts/Results_Age_Prevalence.csv.gz
   - data:
       description: 
       - Aggregated Probabilities of Circumcision for Age Groups
       filenames: 
-      - Results_AgeGroup_Probability.csv.gz
+      - artefacts/Results_AgeGroup_Probability.csv.gz
   - data:
       description: 
       - Aggregated Circumcision Incidences for Age Groups
       filenames: 
-      - Results_AgeGroup_Incidence.csv.gz
+      - artefacts/Results_AgeGroup_Incidence.csv.gz
   - data:
       description: 
       - Aggregated Circumcision Prevalences for Age Groups
       filenames: 
-      - Results_AgeGroup_Prevalence.csv.gz 
+      - artefacts/Results_AgeGroup_Prevalence.csv.gz 
       
 displayname: 
   - Aggregating circumcision probability, incidence and prevalence,
@@ -57,8 +57,8 @@ packages:
   - naomi
   
 global_resources:
-  areas.geojson: areas.geojson
-  population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
+  depends/areas.geojson: areas.geojson
+  depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
   
 # sources:
 #   - source.R

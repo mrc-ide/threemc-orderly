@@ -2,6 +2,9 @@
 
 #### Initial ####
 
+save_dir <- "artefacts/"
+threemc::create_dirs_r(save_dir)
+
 # sharepoint remote
 sharepoint <- spud::sharepoint$new("https://imperiallondon.sharepoint.com/")
 
@@ -378,4 +381,6 @@ zaf_pop <- zaf_pop %>%
 
 pop1adj <- bind_rows(pop1adj, zaf_pop)
 
-readr::write_csv(pop1adj, "population_singleage.csv.gz", na = "")
+readr::write_csv(
+  pop1adj, paste0(save_dir, "population_singleage.csv.gz", na = "")
+)
