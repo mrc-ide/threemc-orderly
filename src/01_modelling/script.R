@@ -27,11 +27,7 @@ filters <- c("iso3" = cntry, sex = "male")
 areas <- read_circ_data("depends/areas.geojson", filters) %>% 
   dplyr::mutate(space = 1:dplyr::n()) # add space column to areas
 areas <- st_make_valid(areas) 
-
-# survey_clusters <- read_circ_data("depends/survey_clusters.csv.gz", filters)
-# survey_individuals <- read_circ_data("depends/survey_individuals.csv.gz", filters)
 survey_circumcision <- read_circ_data("depends/survey_circumcision.csv.gz", filters)
-# also read in population data
 populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
 
 # pull recommended area hierarchy for target country
@@ -44,7 +40,6 @@ if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL
 
 # if area_level is missing, assume most common area lev in surveys
 if (length(area_lev) == 0) {
-  # area_lev <- table(as.numeric(substr(survey_clusters$geoloc_area_id, 5, 5)))
   area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
 }
@@ -55,24 +50,10 @@ cens_year <- max(as.numeric(
   substr(unique(survey_circumcision$survey_id), 4, 7)
 ))
 
-# areas_test <- areas
-areas <- areas_test
-# survey_circumcision_test <- survey_circumcision
-survey_circumcision <- survey_circumcision_test
-survey_individuals = NULL
-survey_clusters = NULL
-start_year = 2006
-rm_missing_type = FALSE
-norm_kisk_weights = TRUE
-strata.norm = c("survey_id", "area_id")
-strata.kish = c("survey_id")
-
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circumcision <- prepare_survey_data(
   areas               = areas,
   survey_circumcision = survey_circumcision,
-  # survey_individuals  = survey_individuals,
-  # survey_clusters     = survey_clusters,
   area_lev            = area_lev,
   start_year          = start_year,
   cens_year           = cens_year,
@@ -222,14 +203,16 @@ out_spec <- out_spec %>%
 fit <- minimise_fit_obj(fit, dat_tmb, parameters)
 
 # Saving results
-data.table::fwrite(out_spec, file = "Results_DistrictAgeTime_ByType.csv.gz")
+data.table::fwrite(
+  out_spec, file = paste0(save_dir, "Results_DistrictAgeTime_ByType.csv.gz")
+)
 
 # save fit as .rds file
-saveRDS(fit, "TMBObjects_DistrictAgeTime_ByType.rds")
+saveRDS(fit, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
 
 # Plotting results 
 # Coverage
-pdf("Circ_Coverage.pdf", width = 10)
+pdf(paste0(save_dir, "Circ_Coverage.pdf"), width = 10)
 ggplot(out_spec,
        aes(x = age,
            y = cum_incM,
@@ -249,7 +232,7 @@ ggplot(out_spec,
 dev.off()
 
 # Rates
-pdf("Circ_Rates.pdf", width = 10)
+pdf(paste0(save_dir, "Circ_Rates.pdf"), width = 10)
 ggplot(out_spec,
        aes(x = age,
            y = rateM,
