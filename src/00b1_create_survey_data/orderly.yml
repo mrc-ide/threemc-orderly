@@ -5,17 +5,17 @@ artefacts:
       description: 
       - survey clusters
       filenames:
-      - survey_clusters.csv.gz
+      - artefacts/survey_clusters.csv.gz
   - data: 
       description: 
       - survey individuals
       filenames:
-      - survey_individuals.csv.gz
+      - artefacts/survey_individuals.csv.gz
   - data: 
       description: 
       - survey circumcision
       filenames:
-      - survey_circumcision.csv.gz
+      - artefacts/survey_circumcision.csv.gz
    
 displayname: coalate survey data
 
