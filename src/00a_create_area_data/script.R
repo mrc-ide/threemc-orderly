@@ -7,7 +7,7 @@
 # - Missing ZAF, MWI, survey_individuals data from global
 
 # ensure save directory exits
-save_dir <- "arefacts/"
+save_dir <- "artefacts/"
 threemc::create_dirs_r(save_dir)
 
 # countries to pull shapefiles for 
