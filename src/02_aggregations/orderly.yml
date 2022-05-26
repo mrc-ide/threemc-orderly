@@ -53,8 +53,8 @@ depends:
   01_modelling:
     id: latest(parameter:cntry == cntry)
     use:
-      depends/Results_DistrictAgeTime_ByType.csv.gz: Results_DistrictAgeTime_ByType.csv.gz
-      depends/TMBObjects_DistrictAgeTime_ByType.rds: TMBObjects_DistrictAgeTime_ByType.rds  
+      depends/Results_DistrictAgeTime_ByType.csv.gz: artefacts/Results_DistrictAgeTime_ByType.csv.gz
+      depends/TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds  
       
 global_resources:
   depends/areas.geojson: areas.geojson

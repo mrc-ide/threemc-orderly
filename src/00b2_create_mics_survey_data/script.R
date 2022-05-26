@@ -136,9 +136,9 @@ variable_recode <- variable_recode %>%
     tibble::tribble(
       ~survey_id,      ~dataset, ~variable,        ~var_raw,  ~var_label_raw,                ~analysis,
       "_default_mics", "mn",     "mics_area_name", "hh7",     "MICS area level",             "circ",
-      "_default_mics", "mn",     "dob",            "mwdob",   "Date of birth of man (CMC)",  "circ",
+      "ZWE2014MICS", "mn",     "dob",            "mwdob",   "Date of birth of man (CMC)",  "circ", 
       "_default_mics", "mn",     "dob",            "mdob",    "Date of birth of man (CMC)",  "circ",
-      "_default_mics", "mn",     "doi",            "mwdoi",   "Date of interview men (CMC)", "circ",
+      "ZWE2014MICS", "mn",     "doi",            "mwdoi",   "Date of interview men (CMC)", "circ",
       "_default_mics", "mn",     "doi",            "mdoi",    "Date of interview men (CMC)", "circ"
     )
   )

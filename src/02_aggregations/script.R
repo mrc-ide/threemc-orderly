@@ -7,7 +7,7 @@ N <- 100
 
 # load shapefile
 areas <- read_circ_data(
-  path    = "areas.geojson",
+  path    = "depends/areas.geojson",
   filters = c("iso3" = cntry)
   ) %>%
   # Add a unique identifier within Admin code and merging to boundaries
@@ -18,15 +18,15 @@ areas <- read_circ_data(
 
 # Load populations (for male pop for country in question only)
 populations <- read_circ_data(
-    "population_singleage_aggr.csv.gz",
+    "depends/population_singleage_aggr.csv.gz",
     filters = c("iso3" = cntry, "sex" = "male")
 )
 
 # Model with Probability of MC
-results <- read_circ_data("Results_DistrictAgeTime_ByType.csv.gz")
+results <- read_circ_data("depends/Results_DistrictAgeTime_ByType.csv.gz")
 results$model <- "No program data"
 # "small" model fit object 
-fit <- readRDS("TMBObjects_DistrictAgeTime_ByType.rds")
+fit <- readRDS("depends/TMBObjects_DistrictAgeTime_ByType.rds")
 
 # specify model, depending on whether there is an mmc/tmc split in results
 if ("obs_mmc" %in% names(results)) {
