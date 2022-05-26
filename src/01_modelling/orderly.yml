@@ -37,8 +37,6 @@ packages:
 global_resources:
   depends/areas.geojson: areas.geojson
   depends/survey_circumcision.csv.gz: survey_circumcision.csv.gz
-  depends/survey_clusters.csv.gz: survey_clusters.csv.gz
-  depends/survey_individuals.csv.gz: survey_individuals.csv.gz
   depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
   
   
