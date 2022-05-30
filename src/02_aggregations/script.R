@@ -3,6 +3,10 @@
 # Number of samples to use
 N <- 100
 
+# save loc
+save_dir <- "artefacts/"
+threemc::create_dirs_r(save_dir) # ensure save_dir exists; create if not
+
 #### Preparing location/shapefile information ####
 
 # load shapefile
@@ -89,7 +93,7 @@ lapply(seq_along(age_vars$inputs), function(i) {
         readr::write_csv(
             x = spec_results,
             file = paste0(
-                "Results_", age_vars$names[[i]], "_", 
+                save_dir, "Results_", age_vars$names[[i]], "_", 
                 stringr::str_to_title(types[j]), ".csv.gz"
             )
         )
