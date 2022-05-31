@@ -33,10 +33,10 @@ results$model <- "No program data"
 fit <- readRDS("depends/TMBObjects_DistrictAgeTime_ByType.rds")
 
 # specify model, depending on whether there is an mmc/tmc split in results
-if ("obs_mmc" %in% names(results)) {
-    mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
+if (all(results$obs_mmc == 0 & results$obs_tmc == 0)) {
+  mod <- "Surv_SpaceAgeTime"
 } else {
-    mod <- "Surv_SpaceAgeTime"
+  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
 }
 
 # re-sample from model

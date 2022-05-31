@@ -111,8 +111,8 @@ out <- create_shell_dataset(
 
 #### Dataset for modelling ####
 
-# temporary fix required due to missing populations for ETH
-if (cntry == "ETH") {
+# temporary fix required due to missing populations for ETH and MOZ
+if (cntry %in% c("ETH", "MOZ")) {
     missing_pop_areas <- out %>%
         filter(is.na(population)) %>%
         distinct(area_id) %>%
