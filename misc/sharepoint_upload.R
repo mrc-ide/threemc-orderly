@@ -28,46 +28,46 @@ lapply(seq_len(nrow(grid)), function(row) {
 })
 
 # push any reports on the present system not on sharepoint
+dr <- orderly::orderly_list_drafts()
+lapply(dr$id, orderly::orderly_commit)
+(dr <- rbind(
+  dr,
+  orderly::orderly_list_archive()
+))
+# push to sharepoint
+lapply(dr$name, possibly_push, remote = "real")
+
+# push as well!
 lapply(seq_len(nrow(grid)), function(row) {
   x <- grid[row, ]
   possibly_push(
-    name = as.character(x$names), root = orderly_root
+    name = as.character(x$names), id = "latest", root = orderly_root
   )
 })
 
+
 #### Alternative Push ###
 
-# names <- lapply(seq_len(nrow(grid)), function (row) {
-#   x <- grid[row, ]
-#   orderly::orderly_search(
-#     name = as.character(x$names),
-#     query = "latest(parameter:cntry == cntry)",
-#     parameters = list(cntry = as.character(x$iso3)),
-#     root = orderly_root
-#   )
-# })
-# names <- unlist(names)
-# 
-# files <- list.files("archive/01_modelling", recursive = "FALSE")
-# n <- length(files)
-# files <- c(
-#   files,
-#   list.files("archive/02_aggregations", recursive = "FALSE")
-# )
-# 
-# push_grid <- data.frame("id" = files)
-# push_grid$name <- "01_modelling"
-# push_grid$name[(n + 1):nrow(push_grid)] <- "02_aggregations" 
-# 
-# 
-# lapply(seq_len(nrow(push_grid)), function(row) {
-#   x <- push_grid[row, ]
-#   possibly_push(name = as.character(x$name),
-#                 # id = "latest(parameter:cntry == cntry)",
-#                 id = as.character(x$id),
-#                 root = orderly_root)
-# })
- 
+files <- list.files("archive/01_modelling", recursive = "FALSE")
+n <- length(files)
+files <- c(
+  files,
+  list.files("archive/02_aggregations", recursive = "FALSE")
+)
+
+push_grid <- data.frame("id" = files)
+push_grid$name <- "01_modelling"
+push_grid$name[(n + 1):nrow(push_grid)] <- "02_aggregations"
+
+
+lapply(seq_len(nrow(push_grid)), function(row) {
+  x <- push_grid[row, ]
+  possibly_push(name = as.character(x$name),
+                # id = "latest(parameter:cntry == cntry)",
+                id = as.character(x$id),
+                root = orderly_root)
+})
+
 #### Find Missing Tasks #### 
 
 names <- lapply(seq_len(nrow(grid)), function(row) {

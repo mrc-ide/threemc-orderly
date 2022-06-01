@@ -1,0 +1,38 @@
+iso3,modelled,aggregated,plotted,issues,status/comments,invalid_surveys,valid_surveys,missing_surveys,survey_comments,survey_source,survey_edition,areas_source,areas_edition,population_source,areas_missing_pop,population_edition
+AGO,1,1,,,,,AGO2015DHS,,,ago_survey,2020,ago_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+BDI,1,1,,,,,"BDI2010DHS, BDI2016DHS",,,bdi_survey,2020,bdi_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+BEN,1,1,,,,,"BEN2012DHS, BEN2014MICS, BEN2017DHS",,,"ben_survey, Data/household surveys/MICS/datasets/archive/mics_rds/",2020,ben_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+BFA,1,1,,,,,"BFA2003DHS, BFA2010DHS",,,bfa_survey,2020,bfa_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+BWA,,,,"All surveys left censored (Q: ""Have you been circumcised"", not when)",,"BWA2008BAIS, BWA2013BAIS",,"BWA2001AIS, BWA2004AIS, BWA2008AIS, BWA2013AIS",,unknown,,bwa_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+CAF,,,,"No surveys, last DHS survey in 1995, did not include circumcision (2006MICS survey may)",,,,CAF2006MICS,,cmr_survey,2020,caf_data_areas,2020,Circumcision coverage/raw/Spectrum files/,,
+CIV,1,1,,,,,"CIV2012DHS, CIV2017PHIA",CIV2005AIS,,"civ_survey, civ_survey_phia",2020,civ_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+CMR,1,1,,,,,"CMR2004DHS, CMR2011DHS, CMR2017PHIA, CMR2018DHS",,,"cmr_survey, cmr_survey_phia",2020,cmr_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+COD,1,,,,Running aggregation on pocatello,,COD2007DHS,,No circumcision type distinction,cod_survey,2020,cod_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+COG,1,1,,,,,"COG2005DHS, COG2009AIS, COG2011DHS",COG2014MICS,No circumcision type distinction,cog_survey,2020,cog_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+ETH,1,,,Missing populations due to shapefile misalignment,,,"ETH2005DHS, ETH2011DHS, ETH2016DHS",,,eth_survey,2020,eth_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/","ETH_2_99, ETH_2_101",
+GAB,1,1,,,,,GAB2012DHS,,,gab_survey,2020,gab_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+GHA,,,,,"Runs locally, fitting on cluster now",,"GHA2003DHS, GHA2008DHS, GHA2014DHS",,,"gha_survey, Data/household surveys/MICS/datasets/archive/mics_rds/",2020,gha_data_areas,2020,,,
+GIN,1,,,Missing populations due to shapefile misalignment,,,GIN2005DHS,,,gin_survey,2020,gin_data_areas,2020,,,
+GMB,,,,,Now I have MICS survey can fit,,GMB2018MICS,,,"gmb_survey, Data/household surveys/MICS/datasets/archive/mics_rds/",2020,gmb_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+GNB,,,,No surveys present,,,,,,,2020,,2020,,,
+GNQ,,,,No surveys present,,,,,,,2020,,2020,,,
+KEN,1,1,,,,,"KEN2003DHS, KEN2008DHS, KEN2014DHS","KEN2007AIS, KEN2013AIS",,ken_survey,2020,ken_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+LBR,,,,Prevalence v high at young age so must filter for circ_age < 29,"Runs locally, fitting on cluster now",,"LBR2007DHS, LBR2013DHS",,No circumcision type distinction,lbr_survey,2020,lbr_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+LSO,1,1,,,,,"LSO2004DHS, LSO2017PHIA",LSO2014DHS,,"lso_survey, lso_survey_phia",2020,lso_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+MLI,1,1,,,,,"MLI2006DHS, MLI2012DHS, MLI2018DHS",,,mli_survey,2020,mli_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+MOZ,1,,,Missing populations due to shapefile misalignment,,,"MOZ2009AIS, MOZ2011DHS, MOZ2015AIS",,,moz_survey,2020,moz_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/","MOZ_1_01, MOZ_1_02",
+MWI,1,1,,,,,"MWI2004DHS, MWI2010DHS, MWI2015DHS, MWI2016PHIA, MWI2019MICS, MWI2020PHIA",,,"mwi_survey, mwi_survey_phia, Shared Documents/Circumcision coverage/raw/, Data/household surveys/MICS/datasets/archive/mics_rds/",2020,mwi_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+NAM,1,1,,,,,"NAM2006DHS, NAM2013DHS, NAM2017PHIA",,,nam_survey,2020,nam_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+NER,1,1,,,,,NER2006DHS,,No circumcision type distinction,ner_survey,2020,ner_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+NGA,,,,Prevalence v high across country => age vs rates plots v unusual,"Runs locally, fitting on cluster now",,"NGA2008DHS, NGA2013DHS, NGA2016MICS, NGA2018DHS",NGA2006 Core Welfare Indicators Questionnaire Survey,,"nga_survey, Data/household surveys/MICS/datasets/archive/mics_rds/",2020,nga_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+RWA,1,1,,,,,"RWA2005DHS, RWA2008DHS, RWA2010DHS, RWA2015DHS, RWA2018PHIA, RWA2019DHS",,,"rwa_survey, rwa_survey_phia",2020,rwa_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+SEN,1,1,,,,,SEN2005DHS,,No circumcision type distinction,sen_survey,2020,sen_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+SLE,1,1,,,,,"SLE2006DHS, SLE2010MICS, SLE2014MICS",,,sle_survey,2020,sle_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+SWZ,1,1,,,"New MICS surveys seems to ""fix"" results, previously uncertainty very high for higher ages",,"SWZ2006DHS, SWZ2010MICS, SWZ2014MICS, SWZ2017PHIA",,rwa_survey,"swz_survey, swz_survey_phia, Data/household surveys/MICS/datasets/archive/mics_rds/",2020,swz_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+TCD,1,1,,,,,"TCD2014DHS, TCD2019MICS",,,"tcd_survey, Data/household surveys/MICS/datasets/archive/mics_rds",2020,tcd_data_areas,2020,,,
+TGO,1,1,,,,,TGO2013DHS,,,tgo_survey,2020,tgo_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+TZA,1,1,,,,,"TZA2003AIS, TZA2007AIS, TZA2010DHS, TZA2012AIS, TZA2015DHS, TZA2016PHIA",TZA2017AIS,,"tza_survey, tza_survey_phia",2020,tza_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+UGA,1,1,,,,,"UGA2011AIS, UGA2016DHS, UGA2016PHIA, UGA2020PHIA",UGA2005AIS,,"uga_survey, uga_survey_phia",2020,uga_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+ZAF,1,1,,,,,"ZAF2002HSRC, ZAF2008HSRC, ZAF2012HSRC, ZAF2016DHS, ZAF2017HSRC",,,Shared Documents/Circumcision coverage/raw/zaf/,,zaf_data_areas,2020,,,
+ZMB,1,1,,,,,"ZMB2007DHS, ZMB2013DHS, ZMB2016PHIA, ZMB2018DHS","ZMB2000SBS, ZMB2003SBS, ZMB2005SBS, ZMB2009SBS",,"zmb_survey, zmb_survey_phia",2020,zmb_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
+ZWE,1,1,,,,,"ZWE2010DHS, ZWE2015DHS, ZWE2016PHIA","ZWE2005 Chimanimani Behavioral Risks and HIV Serostatus Survey, ZWE2014MICS",,"zwe_survey, zwe_survey_phia, Data/household surveys/MICS/datasets/archive/mics_rds/",2020,zwe_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
