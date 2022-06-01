@@ -22,12 +22,15 @@ packages:
   - tools
   - parallel
   
+global_resources:
+  depends/areas.geojson: areas.geojson
+  
 depends:
   # areas file
-  - 00a_create_area_data:
-      id: latest
-      use:
-        depends/areas.geojson: areas.geojson
+  # - 00a_create_area_data:
+  #     id: latest
+  #     use:
+  #       depends/areas.geojson: areas.geojson
   #### Populations which are in orderly tasks #### 
   - aaa_scale_pop:
       id: latest(parameter:iso3 == "BEN")
