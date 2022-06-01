@@ -7,7 +7,7 @@ BWA,,,,"All surveys left censored (Q: ""Have you been circumcised"", not when)",
 CAF,,,,"No surveys, last DHS survey in 1995, did not include circumcision (2006MICS survey may)",,,,CAF2006MICS,,cmr_survey,2020,caf_data_areas,2020,Circumcision coverage/raw/Spectrum files/,,
 CIV,1,1,,,,,"CIV2012DHS, CIV2017PHIA",CIV2005AIS,,"civ_survey, civ_survey_phia",2020,civ_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
 CMR,1,1,,,,,"CMR2004DHS, CMR2011DHS, CMR2017PHIA, CMR2018DHS",,,"cmr_survey, cmr_survey_phia",2020,cmr_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/",,
-COD,1,,,,Running aggregation on pocatello,,COD2007DHS,,No circumcision type distinction,cod_survey,2020,cod_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
+COD,1,1,,,,,COD2007DHS,,No circumcision type distinction,cod_survey,2020,cod_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
 COG,1,1,,,,,"COG2005DHS, COG2009AIS, COG2011DHS",COG2014MICS,No circumcision type distinction,cog_survey,2020,cog_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
 ETH,1,,,Missing populations due to shapefile misalignment,,,"ETH2005DHS, ETH2011DHS, ETH2016DHS",,,eth_survey,2020,eth_data_areas,2020,"Circumcision coverage/raw/population/, Circumcision coverage/raw/Spectrum files/","ETH_2_99, ETH_2_101",
 GAB,1,1,,,,,GAB2012DHS,,,gab_survey,2020,gab_data_areas,2020,"aaa_scale_pop, Circumcision coverage/raw/Spectrum files/",,2020
