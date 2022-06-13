@@ -4,16 +4,19 @@
     # "CMR", "TCD", "COG", "GAB", "ZAF", "SWZ", "LSO", "NAM", "BEN", "BFA", "CIV",
     # "GIN", "MLI", "NER", "SEN", "SLE", "TGO")
 
-cntries <- c(
-  "LSO", "MWI", "NAM", "RWA", "SWZ", "TZA", "ZWE", "ZMB", "COG", "AGO", "BEN", 
-  "BFA", "BDI", "CMR", "TCD", "CIV", "GAB", "MLI", "TGO", "UGA", "ZAF", "GIN", 
-  "NER", "SEN" 
-)
-
-# aggregated countries
 # cntries <- c(
-#     "LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE", "CIV",
-#     "TGO", "ZMB", "ZAF", "AGO", "KEN", "ETH", "BFA", "CMR", "BDI")
+#   "LSO", "MWI", "NAM", "RWA", "SWZ", "TZA", "ZWE", "ZMB", "COG", "AGO", "BEN", 
+#   "BFA", "BDI", "CMR", "TCD", "CIV", "GAB", "MLI", "TGO", "UGA", "ZAF", "GIN", 
+#   "NER", "SEN" 
+# )
+
+cntries <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE",
+          "ZMB", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV",
+          "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE", "KEN", "ETH",
+          "ZAF", "LBR", "GHA", "GMB", "NGA", "COD")
+cntries <- unique(c(cntries, "BWA", "CAF", "GNB", "GNQ"))
+
+possibly_pull <- purrr::possibly(orderly::orderly_pull_archive, otherwise = NA)
 
 orderly_root <- "~/imperial_repos/threemc-orderly"
 
@@ -30,11 +33,14 @@ grid <- rbind(model_grid, aggr_grid)
 
 # download any missing reports
 lapply(seq_len(nrow(grid)), function(row) {
+    print(as.character(grid$iso3[row]))
     x <- grid[row, ]
-    orderly::orderly_pull_archive(name = as.character(x$names),
-                                  id = "latest(parameter:cntry == cntry)",
-                                  parameters = list(cntry = as.character(x$iso3)),
-                                  root = orderly_root)
+    possibly_pull(
+      name = as.character(x$names),
+      id = "latest(parameter:cntry == cntry)",
+      parameters = list(cntry = as.character(x$iso3)),
+      root = orderly_root
+    )
 })
 
 # find the names for the reports of each row in grid
