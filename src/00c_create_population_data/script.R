@@ -13,10 +13,9 @@ cores <- detectCores()
 
 # countries
 iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
-          "cog", "eth", "gab", "gha", "gin", "gmb", "gnb", "gnq", "hti",
-          "ken", "lbr", "lso", "mli", "moz", "mwi", "nam", "ner", "nga",
-          "rwa", "sen", "sle", "swz", "tcd", "tgo", "tza", "uga", "zmb",
-          "zwe", "zaf")
+          "cog", "eth", "gab", "gha", "gin", "gmb", "gnb", "gnq", "ken", 
+          "lbr", "lso", "mli", "moz", "mwi", "nam", "ner", "nga", "rwa", 
+          "sen", "sle", "swz", "tcd", "tgo", "tza", "uga", "zmb", "zwe", "zaf")
 
 # countries whose populations are pulled from other orderly tasks
 orderly_iso3 <-  c(
@@ -34,7 +33,6 @@ pop_file_names <- sort(c(
                cod = "cod_population_local.csv",
                eth = "eth_population.csv",
                gmb = "gmb_population_moh-projections_health-region.csv",
-               hti = "hti_population_ihsi.csv",
                ken = "ken_population_subcounty-khis.csv",
                lso = "lso_population_census16-defacto.csv",
                moz = "moz_population_nso_v2021.csv",
