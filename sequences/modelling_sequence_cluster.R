@@ -17,9 +17,9 @@ output_path <- "output"
 threemc::create_dirs_r(output_path)
 
 # working countries  
-# iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE", 
-#           "ZMB", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV", 
-#           "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE")
+iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE",
+          "ZMB", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV",
+          "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE")
 
 #### bundle orderly tasks #### 
 

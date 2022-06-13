@@ -34,6 +34,11 @@ iso3 <- # c("LSO", "MWI")
   # c("GIN", "MLI", "NER")
   # c("TGO", "SEN", "SLE")
 
+iso3 <- c("LSO", "MWI", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE", "ZMB", "COG", 
+          "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV", "GAB", "GIN", "MLI",
+          "SLE", "ZAF", "SEN", "TGO", "NER", "ETH", "MOZ", "KEN")
+
+
 # pull through orderly remotes for each country
 lapply(iso3, function(x) {
   orderly::orderly_pull_archive(name = "01_modelling", 
