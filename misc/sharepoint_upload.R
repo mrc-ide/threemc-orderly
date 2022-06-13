@@ -1,3 +1,6 @@
+library(orderly)
+library(orderly.sharepoint)
+
 orderly_root <- here::here()
 
 # all mainland SSA countries (?)
@@ -84,7 +87,7 @@ names <- unlist(names)
 
 # Missing and/or fit before 25/05/22:
 missing_names <- which(is.na(names))
-old_names <- which(as.numeric(substr(names, 0, 8)) <= 20220525)
+old_names <- which(as.numeric(substr(names, 0, 8)) < 20220525)
 
 run_tasks <- grid[-c(missing_names, old_names), ]
 missing_tasks <- grid[missing_names, ]

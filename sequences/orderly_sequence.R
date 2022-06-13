@@ -42,10 +42,10 @@ orderly_commits <- function() {
 dirs <- list.dirs(path = "src", full.names = FALSE, recursive = FALSE)
 
 ## modelling
-orderly::orderly_run("01_modelling", list(cntry = iso3))
+# orderly::orderly_run("01_modelling", list(cntry = iso3))
 
 # commit 
-orderly_commits()
+# orderly_commits()
 
 ## aggregations
 # aggregation orderly tasks

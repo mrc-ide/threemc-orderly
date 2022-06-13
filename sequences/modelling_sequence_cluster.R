@@ -21,6 +21,21 @@ threemc::create_dirs_r(output_path)
 #           "ZMB", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV", 
 #           "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE")
 
+# all countries
+iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE",
+          "ZMB", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV",
+          "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE", "KEN", "ETH",
+          "ZAF")
+
+iso3 <- c(
+  "GHA", "GMB", "NGA", "LBR"
+)
+
+# missing 
+# "MWI" "MOZ" "RWA" "ETH"
+# iso3 <- c("MOZ", "KEN", "ETH", "SLE")
+# iso3 <- c("MOZ", "ETH")
+
 #### bundle orderly tasks #### 
 
 # pack up 01_modelling for each country
@@ -56,7 +71,7 @@ ctx <- context::context_save(
   ),
   package_sources = conan::conan_sources(c(
     "github::mrc-ide/first90release",
-    "github::mrc-ide/threemc@feature/add_tmb"
+    "github::mrc-ide/threemc"
   ))
 )
 # queue above context on cluster

@@ -19,6 +19,21 @@ for (i in seq_along(success_tasks)) {
                                  root = orderly_root)
 }
 cr <-  orderly::orderly_list_archive(root = orderly_root)
+cr <- cr[cr$name == "02_aggregations", ]
+# reports that will need to be added by hand:
+cr <- cr[
+  !cr$id %in% c(
+    "20220530-222035-4f5b1737",
+    "20220530-222434-4ec27490",
+    "20220530-233042-49ca0857",
+    "20220530-233111-c4126a3b",
+    "20220525-163856-8488b817",
+    "20220530-233234-7a308bad"
+  ), ]
+
+cr <- cr %>% 
+  filter(as.numeric(substr(id, 0, 8)) > 20220600)
+
 lapply(seq_along(cr$id), function(x) orderly::orderly_push_archive(
   name = cr$name[x], id = cr$id[x], root = orderly_root)
 )
@@ -35,5 +50,3 @@ for (i in seq_along(tasks)) {
 } 
 # set iso3 to unsuccessful and run orderly sequence 
 iso3 <- unsuccessful
-
-2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24

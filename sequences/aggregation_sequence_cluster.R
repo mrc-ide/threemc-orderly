@@ -16,23 +16,24 @@ threemc::create_dirs_r(path_bundles)
 output_path <- "output"
 threemc::create_dirs_r(output_path)
 
-# working countries (run in batches due to space constraints)
-iso3 <- # c("LSO", "MWI")
-        # c("MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE")
-        # c("ZMB", "COG", "AGO", "BEN") 
-        # c("BFA", "BDI", "CMR", "TCD")
-        # c("CIV", "GAB", "GIN", "MLI")
-        # c("NER", "TGO", "SEN", "SLE")
+# modelled countries (missing ETH, KEN, MOZ)
+iso3 <- c("LSO", "MWI", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE", "ZMB", 
+          "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV",
+          "GAB", "GIN", "MLI", "SLE", "ZAF", "SEN", "TGO", "NER",
+          "ETH", "KEN", "MOZ")
 
-# iso3 <- # c("LSO", "MWI", "NAM", "RWA")
-  # c("MOZ", "SWZ", "TZA", "UGA")
-  # c("ZMB", "ZWE", "COG", "AGO")
-  # c("BEN", "BFA", "BDI", "CMR") 
-  # c("TCD", "CIV", "BFA", "BDI") 
-  # c("CMR", "TCD", "CIV", "GAB")
-  # c("BFA", "BDI", "CMR", "CIV")
-  # c("GIN", "MLI", "NER")
-  # c("TGO", "SEN", "SLE")
+# no aggregations done yet for MWI, NAM, RWA, SWZ (well, at least they're not online)
+
+# countries with older models 
+# iso3 <- iso3[!iso3 %in% c("MOZ", "KEN", "ETH", "SLE")] # may be able to add SLE
+# iso3 <- c("TZA", "UGA", "ZMB", "CMR", "TCD", "CIV", "GAB", "GIN", "MLI", "ZAF", "SEN", "TGO", "NER")
+# iso3 <- c(iso3, "KEN", "SLE")
+
+iso3 <- c(
+  # "GHA", "GMB", "NGA", "LBR", "ETH", "MOZ"
+  "GHA", "GMB"
+)
+
 
 # pull through orderly remotes for each country
 lapply(iso3, function(x) {
@@ -93,7 +94,7 @@ ctx <- context::context_save(
   ),
   package_sources = conan::conan_sources(c(
     "github::mrc-ide/first90release",
-    "github::mrc-ide/threemc@feature/add_tmb"
+    "github::mrc-ide/threemc"
   ))
 )
 # queue above context on cluster

@@ -5,11 +5,11 @@ cntries <- c(
     "GIN", "MLI", "NER", "SEN", "SLE", "TGO")
 
 # aggregated countries
-cntries <- c(
-    "LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE", "CIV",
-    "TGO", "ZMB", "ZAF", "AGO", "KEN", "ETH", "BFA", "CMR", "BDI")
+# cntries <- c(
+#     "LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE", "CIV",
+#     "TGO", "ZMB", "ZAF", "AGO", "KEN", "ETH", "BFA", "CMR", "BDI")
 
-orderly_root <- "~/imperial_repos/circumcision-coverage-orderly"
+orderly_root <- "~/imperial_repos/threemc-orderly"
 
 aggregation_tasks <- list.dirs(
     paste0(orderly_root, "/src/"),
@@ -18,7 +18,10 @@ aggregation_tasks <- list.dirs(
 )
 aggregation_tasks <- aggregation_tasks[grepl("02", aggregation_tasks)]
 
-grid <- expand.grid("iso3" = cntries, "names" = aggregation_tasks)
+modelling_grid <- expand.grid("iso3" = cntries, "names" = "01_modelling")
+aggregation_grid <- expand.grid("iso3" = cntries, "names" = aggregation_tasks)
+# grid <- rbind(modelling_grid, aggregation_grid)
+grid <- modelling_grid
 
 # download any missing reports
 lapply(seq_len(nrow(grid)), function(row) {
@@ -39,6 +42,12 @@ names <- lapply(seq_len(nrow(grid)), function (row) {
         root = orderly_root
     )
 })
+
+# find old tasks
+old_names <- vapply(names, function(x) {
+  as.numeric(substr(x, 0, 8)) < 20220525
+  }, FUN.VALUE = logical(1))
+cntries_old_mdl <- cntries[old_names]
 
 # find missing reports, run these again!
 missing_reports <- grid[is.na(names), ]
