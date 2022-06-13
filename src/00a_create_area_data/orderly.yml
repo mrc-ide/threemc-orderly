@@ -85,10 +85,6 @@ depends:
     id: latest
     use:
       depends/gnq_areas.geojson: gnq_areas.geojson
-  hti_data_areas:
-    id: latest
-    use:
-      depends/hti_areas.geojson: hti_areas.geojson
   ken_data_areas:
     id: latest
     use:

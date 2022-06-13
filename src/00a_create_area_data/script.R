@@ -1,7 +1,6 @@
 #### Area hierarchy ####
 
 # notes:
-# - is HTI needed?
 # - areas created with this code does not match areas used in modelling analysis
 # - actually missing a lot here lol, look back at `create-data.R`
 # - Missing ZAF, MWI, survey_individuals data from global
@@ -12,10 +11,9 @@ threemc::create_dirs_r(save_dir)
 
 # countries to pull shapefiles for 
 iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
-          "cog", "eth", "gab", "gha", "gin", "gmb", "gnb", "gnq", "hti",
-          "ken", "lbr", "lso", "mli", "moz", "mwi", "nam", "ner", "nga",
-          "rwa", "sen", "sle", "swz", "tcd", "tgo", "tza", "uga", "zaf",
-          "zmb", "zwe")
+          "cog", "eth", "gab", "gha", "gin", "gmb", "gnb", "gnq", "ken", 
+          "lbr", "lso", "mli", "moz", "mwi", "nam", "ner", "nga", "rwa", 
+          "sen", "sle", "swz", "tcd", "tgo", "tza", "uga", "zaf", "zmb", "zwe")
 
 # append iso3 code with name of areas files for each country
 area_paths <- paste0("depends/", iso3, "_areas.geojson")
