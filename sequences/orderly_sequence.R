@@ -21,6 +21,12 @@ library(data.table)
 orderly_commits <- function() {
   # list draft reports
   (dr <- orderly::orderly_list_drafts())
+ 
+  # list archived reports 
+  (dr <- rbind(
+    dr,
+    orderly::orderly_list_archive()
+  ))
   
   # commit the latest reports
   dr <- dr %>% 
@@ -42,10 +48,10 @@ orderly_commits <- function() {
 dirs <- list.dirs(path = "src", full.names = FALSE, recursive = FALSE)
 
 ## modelling
-orderly::orderly_run("01_modelling", list(cntry = iso3))
+# orderly::orderly_run("01_modelling", list(cntry = iso3))
 
 # commit 
-orderly_commits()
+# orderly_commits()
 
 ## aggregations
 # aggregation orderly tasks
