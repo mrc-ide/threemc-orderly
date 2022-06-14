@@ -1,0 +1,58 @@
+script: script.R
+
+displayname: Join areas files 
+
+artefacts:
+  - data:
+      description:
+      - shapefiles
+      filenames:
+      - artefacts/areas.geojson
+
+packages:
+  - threemc
+  - orderly
+  - sf
+  - dplyr
+
+depends:
+  00a1_areas_raw:
+    id: latest
+    use: 
+      depends/ago_areas.geojson: artefacts/ago_areas.geojson
+      depends/bdi_areas.geojson: artefacts/bdi_areas.geojson
+      depends/ben_areas.geojson: artefacts/ben_areas.geojson
+      depends/bfa_areas.geojson: artefacts/bfa_areas.geojson
+      depends/bwa_areas.geojson: artefacts/bwa_areas.geojson
+      depends/caf_areas.geojson: artefacts/caf_areas.geojson
+      depends/civ_areas.geojson: artefacts/civ_areas.geojson
+      depends/cmr_areas.geojson: artefacts/cmr_areas.geojson
+      depends/cod_areas.geojson: artefacts/cod_areas.geojson
+      depends/cog_areas.geojson: artefacts/cog_areas.geojson
+      depends/eth_areas.geojson: artefacts/eth_areas.geojson
+      depends/gab_areas.geojson: artefacts/gab_areas.geojson
+      depends/gha_areas.geojson: artefacts/gha_areas.geojson
+      depends/gin_areas.geojson: artefacts/gin_areas.geojson
+      depends/gmb_areas.geojson: artefacts/gmb_areas.geojson
+      depends/gnb_areas.geojson: artefacts/gnb_areas.geojson
+      depends/gnq_areas.geojson: artefacts/gnq_areas.geojson
+      depends/ken_areas.geojson: artefacts/ken_areas.geojson
+      depends/lbr_areas.geojson: artefacts/lbr_areas.geojson
+      depends/lso_areas.geojson: artefacts/lso_areas.geojson
+      depends/mli_areas.geojson: artefacts/mli_areas.geojson
+      depends/moz_areas.geojson: artefacts/moz_areas.geojson
+      depends/mwi_areas.geojson: artefacts/mwi_areas.geojson
+      depends/nam_areas.geojson: artefacts/nam_areas.geojson
+      depends/ner_areas.geojson: artefacts/ner_areas.geojson
+      depends/nga_areas.geojson: artefacts/nga_areas.geojson
+      depends/rwa_areas.geojson: artefacts/rwa_areas.geojson
+      depends/sen_areas.geojson: artefacts/sen_areas.geojson
+      depends/sle_areas.geojson: artefacts/sle_areas.geojson
+      depends/swz_areas.geojson: artefacts/swz_areas.geojson
+      depends/tcd_areas.geojson: artefacts/tcd_areas.geojson
+      depends/tgo_areas.geojson: artefacts/tgo_areas.geojson
+      depends/tza_areas.geojson: artefacts/tza_areas.geojson
+      depends/uga_areas.geojson: artefacts/uga_areas.geojson
+      depends/zaf_areas.geojson: artefacts/zaf_areas.geojson
+      depends/zmb_areas.geojson: artefacts/zmb_areas.geojson
+      depends/zwe_areas.geojson: artefacts/zwe_areas.geojson
