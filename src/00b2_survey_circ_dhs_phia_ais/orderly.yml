@@ -1,0 +1,80 @@
+script: script.R
+
+artefacts:
+  # - data: 
+  #     description: 
+  #     - survey clusters
+  #     filenames:
+  #     - artefacts/survey_clusters.csv.gz
+  # - data: 
+  #     description: 
+  #     - survey individuals
+  #     filenames:
+  #     - artefacts/survey_individuals.csv.gz
+  - data: 
+      description: 
+      - survey circumcision
+      filenames:
+      - artefacts/survey_circumcision.csv.gz
+   
+displayname: 
+  - coalate survey circumcision data for DHS, PHIA and AIS survey providers. 
+
+packages:
+  - threemc
+  - orderly
+  - sf
+  - dplyr
+  - readr
+  
+depends:
+  00a_create_area_data:
+    id: latest
+    use:
+      depends/areas.geojson: artefacts/areas.geojson 
+  #### PHIA remote
+  civ_survey_phia:
+    id: latest
+    use:
+      depends/civ2017phia_survey_circumcision.csv: civ2017phia_survey_circumcision.csv
+  cmr_survey_phia:
+    id: latest
+    use:
+      depends/cmr2017phia_survey_circumcision.csv: cmr2017phia_survey_circumcision.csv
+  lso_survey_phia:
+    id: latest
+    use:
+      depends/lso2017phia_survey_circumcision.csv: lso2017phia_survey_circumcision.csv
+  mwi_survey_phia:
+    id: latest
+    use:
+      depends/mwi2016phia_survey_circumcision.csv: mwi2016phia_survey_circumcision.csv
+  nam_survey_phia:
+    id: latest
+    use:
+      depends/nam2017phia_survey_circumcision.csv: nam2017phia_survey_circumcision.csv
+  rwa_survey_phia:
+    id: latest
+    use:
+      depends/rwa2018phia_survey_circumcision.csv: rwa2018phia_survey_circumcision.csv
+  swz_survey_phia:
+    id: latest
+    use:
+      depends/swz2017phia_survey_circumcision.csv: swz2017phia_survey_circumcision.csv
+  tza_survey_phia:
+    id: latest
+    use:
+      depends/tza2016phia_survey_circumcision.csv: tza2016phia_survey_circumcision.csv
+  uga_survey_phia:
+    id: latest
+    use:
+      depends/uga2016phia_survey_circumcision.csv: uga2016phia_survey_circumcision.csv
+  zmb_survey_phia:
+    id: latest
+    use:
+      depends/zmb2016phia_survey_circumcision.csv: zmb2016phia_survey_circumcision.csv
+  zwe_survey_phia:
+    id: latest
+    use:
+      depends/zwe2016phia_survey_circumcision.csv: zwe2016phia_survey_circumcision.csv
+  
