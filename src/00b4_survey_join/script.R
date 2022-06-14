@@ -58,10 +58,10 @@ areas <- sf::st_drop_geometry(sf::read_sf("depends/areas.geojson"))
 # 
 # # Oli: I haven't included the code for how I found these surveys. Should this 
 # # be stored elsewhere? Along with Jeff's rdhs::search_variable_label code
-# mics_surveys_with_circ <- sort(c(
-#   "ZWE2014MICS", "GHA2017MICS", "BEN2014MICS", "SWZ2014MICS", "MWI2013MICS", 
-#   "GMB2018MICS", "SWZ2010MICS", "NGA2016MICS", "TCD2019MICS"
-# ))
+mics_surveys_with_circ <- sort(c(
+  "ZWE2014MICS", "GHA2017MICS", "BEN2014MICS", "SWZ2014MICS", "MWI2013MICS",
+  "GMB2018MICS", "SWZ2010MICS", "NGA2016MICS", "TCD2019MICS"
+))
 # 
 # # load mics surveys with circumcision data from sharepoint
 # mics_paths <- load_sharepoint_data(
@@ -373,7 +373,7 @@ survey_circumcision <- survey_circumcision %>%
 names(survey_circumcision)[!names(survey_circumcision) %in% names(mics_final)]
 
 # common names
-keep_names <- intersect(names(survey_circumcision, mics_final))
+keep_names <- intersect(names(survey_circumcision), names(mics_final))
 
 # join new mics surveys with other surveys
 survey_circumcision <- mics_final %>%
