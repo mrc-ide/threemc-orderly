@@ -1,0 +1,431 @@
+script: script.R
+
+# artefacts:
+#   - data:
+#       description:
+#       - shapefiles
+#       filenames:
+#       - artefacts/areas.geojson
+
+# Should I add some form of validation here as well?
+artefacts:
+  - data: 
+      description:
+      - Hardcoded IDs used for pulling shapefiles
+      filenames: 
+      - ids_used.csv
+  - data:
+      description:
+      - AGO shapefiles
+      filenames:
+      - artefacts/ago_areas.geojson
+  - data: 
+      description: 
+      - BDI shapefiles
+      filenames: 
+      - artefacts/bdi_areas.geojson
+  - data: 
+      description: 
+      - BEN shapefiles
+      filenames: 
+      - artefacts/ben_areas.geojson
+  - data: 
+      description: 
+      - BFA shapefiles
+      filenames: 
+      - artefacts/bfa_areas.geojson
+  - data: 
+      description: 
+      - BWA shapefiles
+      filenames: 
+      - artefacts/bwa_areas.geojson
+  - data: 
+      description: 
+      - CAF shapefiles
+      filenames: 
+      - artefacts/caf_areas.geojson
+  - data: 
+      description: 
+      - CIV shapefiles
+      filenames: 
+      - artefacts/civ_areas.geojson
+  - data: 
+      description: 
+      - CMR shapefiles
+      filenames: 
+      - artefacts/cmr_areas.geojson
+  - data: 
+      description: 
+      - COD shapefiles
+      filenames: 
+      - artefacts/cod_areas.geojson
+  - data: 
+      description: 
+      - COG shapefiles
+      filenames: 
+      - artefacts/cog_areas.geojson
+  - data: 
+      description: 
+      - ETH shapefiles
+      filenames: 
+      - artefacts/eth_areas.geojson
+  - data: 
+      description: 
+      - GAB shapefiles
+      filenames: 
+      - artefacts/gab_areas.geojson
+  - data: 
+      description: 
+      - GHA shapefiles
+      filenames: 
+      - artefacts/gha_areas.geojson
+  - data: 
+      description: 
+      - GIN shapefiles
+      filenames: 
+      - artefacts/gin_areas.geojson
+  - data: 
+      description: 
+      - GMB shapefiles
+      filenames: 
+      - artefacts/gmb_areas.geojson
+  - data: 
+      description: 
+      - GNB shapefiles
+      filenames: 
+      - artefacts/gnb_areas.geojson
+  - data: 
+      description: 
+      - GNQ shapefiles
+      filenames: 
+      - artefacts/gnq_areas.geojson
+  - data: 
+      description: 
+      - KEN shapefiles
+      filenames: 
+      - artefacts/ken_areas.geojson
+  - data: 
+      description: 
+      - LBR shapefiles
+      filenames: 
+      - artefacts/lbr_areas.geojson
+  - data: 
+      description: 
+      - LSO shapefiles
+      filenames: 
+      - artefacts/lso_areas.geojson
+  - data: 
+      description: 
+      - MLI shapefiles
+      filenames: 
+      - artefacts/mli_areas.geojson
+  - data: 
+      description: 
+      - MOZ shapefiles
+      filenames: 
+      - artefacts/moz_areas.geojson
+  - data: 
+      description: 
+      - MWI shapefiles
+      filenames: 
+      - artefacts/mwi_areas.geojson
+  - data: 
+      description: 
+      - NAM shapefiles
+      filenames: 
+      - artefacts/nam_areas.geojson
+  - data: 
+      description: 
+      - NER shapefiles
+      filenames: 
+      - artefacts/ner_areas.geojson
+  - data: 
+      description: 
+      - NGA shapefiles
+      filenames: 
+      - artefacts/nga_areas.geojson
+  - data: 
+      description: 
+      - RWA shapefiles
+      filenames: 
+      - artefacts/rwa_areas.geojson
+  - data: 
+      description: 
+      - SEN shapefiles
+      filenames: 
+      - artefacts/sen_areas.geojson
+  - data: 
+      description: 
+      - SLE shapefiles
+      filenames: 
+      - artefacts/sle_areas.geojson
+  - data: 
+      description: 
+      - SWZ shapefiles
+      filenames: 
+      - artefacts/swz_areas.geojson
+  - data: 
+      description: 
+      - TCD shapefiles
+      filenames: 
+      - artefacts/tcd_areas.geojson
+  - data: 
+      description: 
+      - TGO shapefiles
+      filenames: 
+      - artefacts/tgo_areas.geojson
+  - data: 
+      description: 
+      - TZA shapefiles
+      filenames: 
+      - artefacts/tza_areas.geojson
+  - data: 
+      description: 
+      - UGA shapefiles
+      filenames: 
+      - artefacts/uga_areas.geojson
+  - data: 
+      description: 
+      - ZAF shapefiles
+      filenames: 
+      - artefacts/zaf_areas.geojson
+  - data: 
+      description: 
+      - ZMB shapefiles
+      filenames: 
+      - artefacts/zmb_areas.geojson
+  - data: 
+      description: 
+      - ZWE shapefiles
+      filenames: 
+      - artefacts/zwe_areas.geojson
+      
+displayname: coalate shapefiles and area hierarchy
+
+packages:
+  - threemc
+  - orderly
+  - sf
+  - dplyr
+
+depends:
+  #### shapefile/area hierarchy remotes
+  ago_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220518-152244-6423130e
+    use:
+      depends/ago_areas.geojson: ago_areas.geojson
+  bdi_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220518-155031-215356d9
+    use:
+      depends/bdi_areas.geojson: bdi_areas.geojson
+  ben_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220526-161853-b5460ca3 
+    use:
+      depends/ben_areas.geojson: ben_areas.geojson
+  bfa_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-145628-0a2334a1
+    use:
+      depends/bfa_areas.geojson: bfa_areas.geojson
+  bwa_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220518-144729-c8894295
+    use:
+      depends/bwa_areas.geojson: bwa_areas.geojson
+  caf_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220518-145504-892cf80a
+    use:
+      depends/caf_areas.geojson: caf_areas.geojson
+  civ_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220526-110942-64a9ac61
+    use:
+      depends/civ_areas.geojson: civ_areas.geojson
+  cmr_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-145843-7441a4c9
+    use:
+      depends/cmr_areas.geojson: cmr_areas.geojson
+  cod_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220518-161132-955fed32
+    use:
+      depends/cod_areas.geojson: cod_areas.geojson
+  cog_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220519-153623-d23142d0
+    use:
+      depends/cog_areas.geojson: cog_areas.geojson
+  eth_data_areas:
+    # id: latest(parameter:version == "2021")
+    id: 20220518-162235-06985266
+    use:
+      depends/eth_areas.geojson: eth_areas.geojson
+  gab_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-145926-30cde1c9
+    use:
+      depends/gab_areas.geojson: gab_areas.geojson
+  gha_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220519-153739-e2a13cbb
+    use:
+      depends/gha_areas.geojson: gha_areas.geojson
+  gin_data_areas:
+    # id: latest(parameter:version == "2021")
+    id: 20220516-145944-32ae32a2
+    use:
+      depends/gin_areas.geojson: gin_areas.geojson
+  gmb_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-145949-5cd9cc1e
+    use:
+      depends/gmb_areas.geojson: gmb_areas.geojson
+  gnb_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220519-153723-8de28967
+    use:
+      depends/gnb_areas.geojson: gnb_areas.geojson
+  gnq_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-145954-a19b6747
+    use:
+      depends/gnq_areas.geojson: gnq_areas.geojson
+  ken_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220526-144025-ba370a37
+    use:
+      depends/ken_areas.geojson: ken_areas.geojson
+  lbr_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-150038-e90c6fd8
+    use:
+      depends/lbr_areas.geojson: lbr_areas.geojson
+  lso_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220519-134431-50305894
+    use:
+      depends/lso_areas.geojson: lso_areas.geojson
+  mli_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220519-153836-e539828f
+    use:
+      depends/mli_areas.geojson: mli_areas.geojson
+  moz_data_areas:
+    # id: latest(parameter:version == "2021")
+    id: 20220613-143914-279bc764
+    use:
+      depends/moz_areas.geojson: moz_areas.geojson
+  mwi_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20200929-213435-8f7790a3
+    use:
+      depends/mwi_areas_ta.geojson: mwi_areas_ta.geojson
+  nam_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-151012-8d0a9a06
+    use:
+      depends/nam_areas.geojson: nam_areas.geojson
+  ner_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-151021-0134f4c1
+    use:
+      depends/ner_areas.geojson: ner_areas.geojson
+  nga_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-151025-71d5143f 
+    use:
+      depends/nga_areas.geojson: nga_areas.geojson
+  rwa_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-151038-57dff230
+    use:
+      depends/rwa_areas.geojson: rwa_areas.geojson
+  sen_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220519-153956-e993f0fd
+    use:
+      depends/sen_areas.geojson: sen_areas.geojson
+  sle_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-151044-192c4c77
+    use:
+      depends/sle_areas.geojson: sle_areas.geojson
+  swz_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-151121-e82ad159
+    use:
+      depends/swz_areas.geojson: swz_areas.geojson
+  tcd_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-151126-7f44c692
+    use:
+      depends/tcd_areas.geojson: tcd_areas.geojson
+  tgo_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-151130-d51c5325
+    use:
+      depends/tgo_areas.geojson: tgo_areas.geojson
+  tza_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220520-170436-5db07a3e
+    use:
+      depends/tza_areas.geojson: tza_areas.geojson
+  uga_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220516-151159-b3124896
+    use:
+      depends/uga_areas.geojson: uga_areas.geojson
+  zaf_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20210419-091902-c45916f6
+    use:
+      depends/zaf_areas.geojson: zaf_areas.geojson
+  zmb_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220519-111807-5d8cac85
+    use:
+      depends/zmb_areas.geojson: zmb_areas.geojson
+  zwe_data_areas:
+    # id: latest
+    # id: latest(parameter:version == "2021")
+    id: 20220526-105132-44d5b0fc
+    use:
+      depends/zwe_areas.geojson: zwe_areas.geojson
