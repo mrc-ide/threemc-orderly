@@ -42,15 +42,16 @@ depends:
     id: latest
     use:
       depends/areas.geojson: artefacts/areas.geojson 
-  00b1_survey_cluster_individuals_dhs_phia_ais:
+  00b1_survey_cluster-individuals_dhs-phia-ais:
     id: latest
     use:
       depends/survey_clusters.csv.gz: artefacts/survey_clusters.csv.gz
       depends/survey_individuals.csv.gz: artefacts/survey_individuals.csv.gz
-  00b2_survey_circ_dhs_phia_ais:
+  00b2_survey_circ_dhs-phia-ais:
     id: latest
+    use:
       depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
   00b3_survey_mics:
     id: latest
-      depends/survey_circumcision.csv.gz: artefacts/mics_surveys.csv.gz
-      
+    use:
+      depends/mics_surveys.csv.gz: artefacts/mics_surveys.csv.gz
