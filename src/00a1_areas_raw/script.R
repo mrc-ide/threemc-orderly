@@ -29,7 +29,7 @@ areas[["GMB"]] <- sf::st_collection_extract(areas[["GMB"]], "POLYGON")
 # save files 
 save_locs <- paste0(save_dir, iso3, "_areas.geojson")
 lapply(seq_along(save_locs), function(i) {
-  readr::write_csv(x = areas[[i]], file = save_locs[i])
+  sf::write_sf(areas[[i]], save_locs[i])
 })
 
 # save record of IDs used in current task
