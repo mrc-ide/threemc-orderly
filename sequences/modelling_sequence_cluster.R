@@ -1,5 +1,7 @@
 #### initial ####
 
+library(orderly)
+
 # directory to save contexts (change as appropriate)
 root <- "~/net/home/threemc-orderly/contexts"
 # ensure it exists, and if not, create it
@@ -19,7 +21,9 @@ threemc::create_dirs_r(output_path)
 # working countries  
 iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE",
           "ZMB", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV",
-          "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE")
+          "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE", "KEN", "ETH",
+          "ZAF", "LBR", "GHA", "GMB", "NGA", "COD")
+iso3 <- unique(c(iso3, "BWA", "CAF", "GNB", "GNQ"))
 
 #### bundle orderly tasks #### 
 
