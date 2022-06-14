@@ -7,6 +7,8 @@ script: script.R
 #       filenames:
 #       - artefacts/areas.geojson
 
+displayname: Collect shapefiles using hardcoded task IDs
+
 # Should I add some form of validation here as well?
 artefacts:
   - data: 
@@ -200,8 +202,6 @@ artefacts:
       filenames: 
       - artefacts/zwe_areas.geojson
       
-displayname: coalate shapefiles and area hierarchy
-
 packages:
   - threemc
   - orderly
