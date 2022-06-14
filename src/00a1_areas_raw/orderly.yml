@@ -13,7 +13,7 @@ artefacts:
       description:
       - Hardcoded IDs used for pulling shapefiles
       filenames: 
-      - ids_used.csv
+      - artefacts/ids_used.csv
   - data:
       description:
       - AGO shapefiles
