@@ -33,9 +33,11 @@ areas <- bind_rows(areas) %>%
 
 # not the same as this for some reason!! 
 # areas_test <- sf::read_sf("~/OneDrive/data/areas.geojson")
-# anti_join(sf::st_drop_geometry(areas) %>% arrange(area_id, area_name, area_sort_order), 
-#           sf::st_drop_geometry(areas_test) %>% arrange(area_id, area_name, area_sort_order)) %>%
-#   distinct(iso3) %>% 
+# 
+# anti_join(sf::st_drop_geometry(areas) %>% arrange(area_id, area_name, area_sort_order),
+#           sf::st_drop_geometry(areas_test) %>% arrange(area_id, area_name, area_sort_order),
+#           by = "area_id") %>%
+#   distinct(iso3) %>%
 #   pull()
 
 # save data
