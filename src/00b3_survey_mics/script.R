@@ -424,23 +424,11 @@ areas_join <- areas %>%
   select(iso3, area_id, area_name, area_level) %>%
   arrange()
 
-# remove possible duplicate, lower level areas from areas_join (for MWI)
-duplicate_areas <- areas_join %>%
-  group_by(iso3, area_name) %>%
-  summarise(
-    occurences = n(),
-    iso3 = iso3,
-    area_id = area_id,
-    area_level = area_level,
-    max_area_level = max(area_level),
-    .groups = "drop"
-  ) %>%
-  filter(occurences > 1, area_level != max_area_level) %>%
-  select(iso3, area_name, area_id)
-
-areas_join <- areas_join %>%
-  anti_join(duplicate_areas, by = c("iso3", "area_id", "area_name")) %>%
-  select(iso3, area_id, area_name)
+#' Confirm area_name is unique within iso3
+areas_join %>%
+  count(iso3, area_name) %>%
+  pull() == 1 %>%
+  stopifnot()
 
 
 mics_final <- mics_final %>%
@@ -459,69 +447,6 @@ mics_final %>%
 mics_final <- mics_final %>%
   select(iso3, survey_id, area_id, area_name, individual_id, cluster_id, household, line,
          sex, age, everything())
-
-#### Joining MICS With Other Surveys ###
-
-# load previous survey datasets
-# survey_circumcision <- readr::read_csv("depends/survey_circumcision.csv.gz")
-# survey_clusters <- readr::read_csv("depends/survey_clusters.csv.gz")
-# survey_individuals <- readr::read_csv("depends/survey_individuals.csv.gz")
-#
-# # join survey dataset information
-# survey_circumcision <- survey_circumcision %>%
-#   # Merge on individual information to the circumcision dataset
-#   dplyr::left_join(
-#     survey_individuals %>%
-#       dplyr::select(.data$survey_id, .data$cluster_id, .data$individual_id,
-#                     .data$sex, .data$age, .data$indweight),
-#     by = c("survey_id", "individual_id")
-#   ) %>%
-#   # Merge on cluster information to the circumcision dataset
-#   dplyr::left_join(
-#     (survey_clusters %>%
-#        dplyr::mutate(area_id = as.character(.data$geoloc_area_id)) %>%
-#        dplyr::select(.data$survey_id, .data$cluster_id, .data$area_id)),
-#     by = c("survey_id", "cluster_id")
-#   )
-#
-# # check that all survey_circumcision columns are contained in mics data
-# names(survey_circumcision)[!names(survey_circumcision) %in% names(mics_final)]
-#
-# # common names
-# keep_names <- intersect(names(survey_circumcision, mics_final))
-#
-# # join new mics surveys with other surveys
-# survey_circumcision <- mics_final %>%
-#   # ensure cluster_id isn't coerced from character to numeric upon joining
-#   mutate(cluster_id = as.character(cluster_id)) %>%
-#   # remove superfluous columns
-#   select(all_of(keep_names)) %>%
-#   bind_rows(survey_circumcision) %>%
-#   # arrange as before
-#   arrange(iso3, survey_id, age, circ_age)
-#
-# # Check that each MICS survey has valid circ_status and area_id values
-# valid_surveys <- mics_final %>%
-#   filter(!is.na(circ_status), !is.na(area_id), !is.na(indweight)) %>%
-#   distinct(survey_id) %>%
-#   pull()
-# mics_surveys_with_circ[!mics_surveys_with_circ %in% valid_surveys] # invalid
-#
-# # areas with NA for area_id (should be none)
-# mics_final %>%
-#   filter(is.na(area_id)) %>%
-#   distinct(iso3, area_name, area_id)
-#
-# # added in modelling
-# if ("area_name" %in% names(survey_circumcision)) {
-#   survey_circumcision <- select(survey_circumcision, -area_name)
-# }
-#
-# # save survey_circumcision
-# readr::write_csv(
-#   survey_circumcision,
-#   file = paste0(save_dir, "survey_circumcision.csv.gz")
-# )
 
 # save MICS surveys
 readr::write_csv(
