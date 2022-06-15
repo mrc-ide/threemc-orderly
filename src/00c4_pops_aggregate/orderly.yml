@@ -1,0 +1,40 @@
+script: script.R
+
+artefacts:
+  - data: 
+      description: 
+      - Aggregated country populations
+      filenames:
+      - artefacts/population_singleage_aggr.csv.gz
+   
+displayname: Aggregate country populations.
+
+packages:
+  - threemc
+  - orderly
+  - data.table
+  - sf
+  - dplyr
+  - naomi
+  - tidyr
+  - readr
+  
+# global_resources:
+#   depends/areas.geojson: areas.geojson
+  
+depends:
+  # areas file
+  - 00a2_areas_join:
+      id: latest
+      use:
+        depends/areas.geojson: artefacts/areas.geojson
+  # required for getting "missing" area levels
+  - 00b4_survey_join:
+      id: latest
+      use: 
+        depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
+  # previous populations task
+  - 00c3_pops_interpolate_join:
+      id: latest
+      use: 
+        depends/population_singleage.csv.gz: artefacts/population_singleage.csv.gz
