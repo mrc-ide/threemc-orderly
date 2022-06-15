@@ -1,0 +1,42 @@
+script: script.R
+
+artefacts:
+  - data: 
+      description: 
+      - country populations
+      filenames:
+      - artefacts/population_singleage.csv.gz
+   
+displayname: Interpolate populations and join from various sources. 
+
+packages:
+  - threemc
+  - orderly
+  - sf
+  - dplyr
+  - naomi
+  - tidyr
+  - readr
+  - spud
+  - beers
+  - tools
+  - parallel
+  
+depends:
+  - 00a2_areas_join:
+      id: latest
+      use:
+        depends/areas.geojson: artefacts/areas.geojson
+  # populations pulled from orderly
+  - 00c1_pops_raw:
+      id: latest
+      use:
+        depends/pops_orderly.csv.gz: artefacts/pops_orderly.csv.gz
+  # populations pulled from sharepoint
+  - 00c2_pops_sharepoint:
+      id: latest 
+      use: 
+        depends/pops_sharepoint.csv.gz: artefacts/pops_sharepoint.csv.gz
+        depends/zaf_pops_sharepoint.csv.gz: artefacts/zaf_pops_sharepoint.csv.gz
+        depends/spectrum_pops_sharepoint.csv.gz: artefacts/spectrum_pops_sharepoint.csv.gz
+  
