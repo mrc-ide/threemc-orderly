@@ -12,6 +12,7 @@ zaf_pop <- readr::read_csv(paste0(depends_path, "zaf_pops_sharepoint.csv.gz"))
 specpop <- readr::read_csv(
   paste0(depends_path, "spectrum_pops_sharepoint.csv.gz")
 )
+areas <- sf::read_sf(paste0(depends_path, "areas.geojson"))
 
 # save_dir <- "artefacts/"
 # threemc::create_dirs_r(save_dir)
@@ -19,8 +20,8 @@ specpop <- readr::read_csv(
 # # sharepoint remote
 # sharepoint <- spud::sharepoint$new("https://imperiallondon.sharepoint.com/")
 # 
-# # number of cores
-# cores <- detectCores()
+# number of cores
+cores <- detectCores()
 # 
 # # countries
 # iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
@@ -226,11 +227,27 @@ pop_interp <- pop_raw %>%
   complete(nesting(iso3, area_id, area_name), sex, age_group, year) %>%
   mutate(year = type.convert(year, as.is = TRUE))
 
-pop_interp <- pop_interp %>%
-  arrange(iso3, area_id, sex, age_group, year) %>%
+# too slow! Do with split + mclapply
+# pop_interp <- pop_interp %>%
+#   arrange(iso3, area_id, sex, age_group, year) %>%
+#   group_by(iso3, area_id, sex, age_group) %>%
+#   mutate(population = naomi:::log_linear_interp(population, year)) %>%
+#   ungroup()
+
+pop_interp_lst <- pop_interp %>%
+  arrange(iso3, area_id, sex, age_group, year) %>% 
+  # mutate(split_col = paste(iso3, area_id, sex, age_group, year))
   group_by(iso3, area_id, sex, age_group) %>%
-  mutate(population = naomi:::log_linear_interp(population, year)) %>%
-  ungroup()
+  group_split()
+
+# function to do interpolation on each list entry with mclapply
+log_lin_interp_pop <- function(x) {
+  x$population = naomi:::log_linear_interp(x$population, x$year)
+  return(x)
+}
+pop_interp_lst <- mclapply(pop_interp_lst, log_lin_interp_pop, mc.cores = cores)
+pop_interp <- bind_rows(pop_interp_lst)
+# specpop_raw <- mclapply(pjnz_files, naomi::extract_pjnz_naomi, mc.cores = cores)
 
 # pop_interp1 <- pop_raw %>%
 #   mutate(
@@ -283,10 +300,12 @@ expand_single_age <- function(df) {
 
 pop5_lst <- pop_interp %>%
   arrange(iso3, area_id, year, sex, age_group) %>%
-  split(paste(.$iso3, .$area_id, .$year, .$sex))
+  # split(paste(.$iso3, .$area_id, .$year, .$sex))
+  group_by(iso3, area_id, year, sex) %>% 
+  group_split()
 
 # This takes a while (about 5 minutes on desktop)
-pop1_lst <- parallel::mclapply(pop5_lst, expand_single_age, mc.cores = cores)
+pop1_lst <- mclapply(pop5_lst, expand_single_age, mc.cores = cores)
 pop1 <- bind_rows(pop1_lst)
 
 # stopifnot(
@@ -299,8 +318,7 @@ pop1 <- bind_rows(pop1_lst)
 # * TGO, ZMB -- recode to national Spectrum file
 # * MOZ -- recode Maputo region code to 22
 
-areas_corrected <- areas %>%
-  sf::st_drop_geometry() %>%
+areas_corrected <- sf::st_drop_geometry(areas) %>%
   mutate(
     spectrum_region_code = case_when(
       iso3 %in% c("TGO", "ZMB")                       ~ 0,
