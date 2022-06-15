@@ -254,7 +254,7 @@ recode_survey_variables <- function(df, survey_id_c, value_recode, dataset_type,
       survey_id = survey_id_c,
       individual_id = dhs_individual_id(cluster_id, household, line)
     ) %>%
-    type.convert() %>%
+    type.convert(as.is = TRUE) %>%
     select(survey_id, individual_id, everything())
 
   if (!is.null(spec_areas)) df <- mutate(df, area_name = spec_areas)
