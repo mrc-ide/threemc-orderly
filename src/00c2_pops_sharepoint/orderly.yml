@@ -1,0 +1,49 @@
+script: script.R
+
+artefacts:
+  - data: 
+      # description: 
+      # - country populations
+      # filenames:
+      # - artefacts/population_singleage.csv.gz
+     description: 
+      - country populations from Sharepoint
+     filenames:
+      # - artefacts/population_singleage.csv.gz
+      - artefacts/pops_sharepoint.csv.gz 
+  - data: 
+     description: 
+      - ZAF populations from Sharepoint
+     filenames:
+      - artefacts/zaf_pops_sharepoint.csv.gz 
+  - data: 
+     description: 
+      - Spectrum populations from Sharepoint
+     filenames:
+      - artefacts/spectrum_pops_sharepoint.csv.gz 
+    
+# displayname: coalate country populations.
+displayname: Pull country populations from sharepoint.
+
+packages:
+  - threemc
+  - orderly
+  - sf
+  - dplyr
+  - naomi
+  - tidyr
+  - readr
+  - spud
+  - beers
+  - tools
+  - parallel
+  
+# global_resources:
+#   depends/areas.geojson: areas.geojson
+  
+depends:
+  - 00a2_areas_join:
+      id: latest
+      use: 
+        depends/areas.geojson: artefacts/areas.geojson
+         
