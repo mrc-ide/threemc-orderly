@@ -1,0 +1,90 @@
+script: script.R
+
+artefacts:
+  - data: 
+      description: 
+      - country populations from orderly
+      filenames:
+      # - artefacts/population_singleage.csv.gz
+      - artefacts/pops_orderly.csv.gz
+      
+   
+displayname: Pull country populations from associated orderly tasks. 
+
+packages:
+  - threemc
+  - orderly
+  - sf
+  - dplyr
+  - naomi
+  - tidyr
+  - readr
+  - spud
+  - beers
+  - tools
+  - parallel
+  
+# global_resources:
+#  depends/areas.geojson: areas.geojson
+  
+depends:
+  # areas file
+  # - 00a_create_area_data:
+  #     id: latest
+  #     use:
+  #       depends/areas.geojson: areas.geojson
+  - 00a2_areas_join:
+      id: latest
+      use: 
+        depends/areas.geojson: artefacts/areas.geojson
+        
+  #### Populations which are in orderly tasks ####
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "BEN")
+      use:
+        depends/ben_interpolated_population.csv: interpolated_population.csv 
+  -  aaa_scale_pop:
+      id: latest(parameter:iso3 == "COD")
+      use:
+        depends/cod_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "COG")
+      use:
+        depends/cog_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "GAB")
+      use:
+        depends/gab_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "LBR")
+      use:
+        depends/lbr_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "MLI")
+      use:
+        depends/mli_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "NER")
+      use:
+        depends/ner_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "SEN")
+      use:
+        depends/sen_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "SLE")
+      use:
+        depends/sle_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "TCD")
+      use:
+        depends/tcd_interpolated_population.csv: interpolated_population.csv
+  # additional pops
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "GHA")
+      use:
+        depends/gha_interpolated_population.csv: interpolated_population.csv
+  - eth_data_population:
+      id: latest(parameter:version == "2021")
+      use: 
+         depends/eth_population.csv: eth_population.csv 
