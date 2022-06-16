@@ -410,6 +410,10 @@ pop1adj <- pop1adj %>%
 
 pop1adj <- bind_rows(pop1adj, zaf_pop)
 
+# remove columns with all NAs
+pop1adj <- Filter(function(x) !all(is.na(x)), pop1adj)
+
+# save
 readr::write_csv(
   pop1adj, paste0(save_dir, "population_singleage.csv.gz", na = "")
 )

@@ -155,7 +155,8 @@ pops_final <- populations %>%
     )
 
 # remove columns with all NAs
-pops_final <- pops_final[, colSums(is.na(pops_final)) < nrow(pops_final)]
+# pops_final <- pops_final[, colSums(is.na(pops_final)) < nrow(pops_final)]
+pops_final <- Filter(function(x) !all(is.na(x)), pops_final)
 
 # pop_test <- readr::read_csv("data/population_singleage_aggr_orig.csv.gz")
 #
