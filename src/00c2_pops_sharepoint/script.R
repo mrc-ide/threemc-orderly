@@ -12,10 +12,11 @@ sharepoint <- spud::sharepoint$new("https://imperiallondon.sharepoint.com/")
 cores <- detectCores()
 
 # countries
-iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
-          "cog", "eth", "gab", "gha", "gin", "gmb", "gnb", "gnq", "ken", 
-          "lbr", "lso", "mli", "moz", "mwi", "nam", "ner", "nga", "rwa", 
-          "sen", "sle", "swz", "tcd", "tgo", "tza", "uga", "zmb", "zwe", "zaf")
+iso3 <- iso3_spec <- 
+  c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
+    "cog", "eth", "gab", "gha", "gin", "gmb", "gnb", "gnq", "ken", 
+    "lbr", "lso", "mli", "moz", "mwi", "nam", "ner", "nga", "rwa", 
+    "sen", "sle", "swz", "tcd", "tgo", "tza", "uga", "zmb", "zwe", "zaf")
 
 # countries whose populations are pulled from other orderly tasks
 # orderly_iso3 <-  c(
@@ -107,7 +108,7 @@ names(pjnz_files) <- tolower(
 pjnz_files <- pjnz_files %>%
   split(names(.))
 
-pjnz_files <- pjnz_files[names(pjnz_files) %in% iso3]
+pjnz_files <- pjnz_files[names(pjnz_files) %in% iso3_spec]
 
 # specpop_raw <- lapply(pjnz_files, naomi::extract_pjnz_naomi)
 specpop_raw <- mclapply(pjnz_files, naomi::extract_pjnz_naomi, mc.cores = cores)
