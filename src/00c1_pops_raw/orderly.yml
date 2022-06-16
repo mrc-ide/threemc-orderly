@@ -40,38 +40,53 @@ depends:
         
   #### Populations which are in orderly tasks ####
   - aaa_scale_pop:
-      id: latest(parameter:iso3 == "BEN")
+      id: latest(parameter:iso3 == "BDI" && parameter:version == "2021")
+      use:
+        depends/bdi_interpolated_population.csv: interpolated_population.csv 
+ 
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "BEN" && parameter:version == "2021")
       use:
         depends/ben_interpolated_population.csv: interpolated_population.csv 
   -  aaa_scale_pop:
       id: latest(parameter:iso3 == "COD")
+      # id: latest(parameter:iso3 == "COD" && parameter:version == "2021")
       use:
         depends/cod_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
-      id: latest(parameter:iso3 == "COG")
+      id: latest(parameter:iso3 == "COG"  && parameter:version == "2021")
       use:
         depends/cog_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
       id: latest(parameter:iso3 == "GAB")
+      # id: latest(parameter:iso3 == "GAB" && parameter:version == "2021")
       use:
         depends/gab_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
-      id: latest(parameter:iso3 == "LBR")
+      id: latest(parameter:iso3 == "LBR" && parameter:version == "2021")
       use:
         depends/lbr_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
+      # id: latest(parameter:iso3 == "MLI" && parameter:version == "2021")
       id: latest(parameter:iso3 == "MLI")
       use:
         depends/mli_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
+      id: latest(parameter:iso3 == "MOZ" && parameter:version == "2021")
+      use:
+        depends/moz_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      # id: latest(parameter:iso3 == "NER" && parameter:version == "2021")
       id: latest(parameter:iso3 == "NER")
       use:
         depends/ner_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
+      # id: latest(parameter:iso3 == "SEN" && parameter:version == "2021")
       id: latest(parameter:iso3 == "SEN")
       use:
         depends/sen_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
+      # id: latest(parameter:iso3 == "SLE" && parameter:version == "2021")
       id: latest(parameter:iso3 == "SLE")
       use:
         depends/sle_interpolated_population.csv: interpolated_population.csv
@@ -79,9 +94,14 @@ depends:
       id: latest(parameter:iso3 == "TCD")
       use:
         depends/tcd_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      # id: latest(parameter:iso3 == "TGO" && parameter:version == "2021")
+      id: latest(parameter:iso3 == "TGO")
+      use:
+        depends/tgo_interpolated_population.csv: interpolated_population.csv
   # additional pops
   - aaa_scale_pop:
-      id: latest(parameter:iso3 == "GHA")
+      id: latest(parameter:iso3 == "GHA" && parameter:version == "2021")
       use:
         depends/gha_interpolated_population.csv: interpolated_population.csv
   - eth_data_population:
