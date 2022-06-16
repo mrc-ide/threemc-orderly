@@ -1,20 +1,30 @@
 remote:
-  # main:
-  #   driver: orderlyweb::orderlyweb_remote
-  #   args:
-  #     host: hiv-orderly.dide.ic.ac.uk
-  #     port: 443
-  #     prefix: threemc
-  #     token: $ORDERLYWEB_GITHUB_TOKEN
-  #   primary: true
-  #   master_only: true
-    
   real:
     driver: orderly.sharepoint::orderly_remote_sharepoint
     args:
       url: https://imperiallondon.sharepoint.com
       site: HIVInferenceGroup-WP
       path: Shared Documents/orderly/threemc
+      
+  main:
+    driver: orderlyweb::orderlyweb_remote
+    args:
+      host: hiv-orderly.dide.ic.ac.uk
+      port: 443
+      prefix: threemc
+      token: $ORDERLYWEB_GITHUB_TOKEN
+    primary: true
+    master_only: true
+    
+  fertility-web:
+    driver: orderlyweb::orderlyweb_remote
+    args:
+      host: hiv-orderly.dide.ic.ac.uk
+      port: 443
+      prefix: fertility
+      token: $ORDERLYWEB_GITHUB_TOKEN
+    primary: true
+    master_only: true
   
   fertility:
     driver: orderly.sharepoint::orderly_remote_sharepoint
@@ -22,6 +32,16 @@ remote:
       url: https://imperiallondon.sharepoint.com
       site: HIVInferenceGroup-WP
       path: Shared Documents/orderly/fertility
+      
+  naomi-web:
+    driver: orderlyweb::orderlyweb_remote
+    args:
+      host: hiv-orderly.dide.ic.ac.uk
+      port: 443
+      prefix: naomi 
+      token: $ORDERLYWEB_GITHUB_TOKEN
+    primary: true
+    master_only: true
       
   naomi:
     driver: orderly.sharepoint::orderly_remote_sharepoint
