@@ -15,41 +15,24 @@ artefacts:
 displayname: Join survey data, including MICS surveys. 
 
 packages:
-  - orderly
   - threemc
-  - countrycode
   - sf
   - readxl
   - dplyr
   - readr
-  - haven
-  - rdhs
-  - tidyr
   - stringr
-  - spud
-  - labelled
-  - lubridate
-  
-sources: 
-  - source.R
-  
-global_resources:
-  depends/MICS_indicators.csv: MICS_indicators.csv  
-  
+
 depends:
   # 00a_create_area_data:
   00a2_areas_join:
     id: latest
     use:
       depends/areas.geojson: artefacts/areas.geojson 
-  00b1_survey_cluster-individuals_dhs-phia-ais:
+  00b1_survey_cluster-individuals-circ_dhs-phia-ais:
     id: latest
     use:
       depends/survey_clusters.csv.gz: artefacts/survey_clusters.csv.gz
       depends/survey_individuals.csv.gz: artefacts/survey_individuals.csv.gz
-  00b2_survey_circ_dhs-phia-ais:
-    id: latest
-    use:
       depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
   00b3_survey_mics:
     id: latest

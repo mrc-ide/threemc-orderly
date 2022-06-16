@@ -427,8 +427,8 @@ areas_join <- areas %>%
 #' Confirm area_name is unique within iso3
 areas_join %>%
   count(iso3, area_name) %>%
-  pull() == 1 %>%
-  stopifnot()
+  pull(n) %>%
+  {stopifnot(. == 1)}
 
 
 mics_final <- mics_final %>%
