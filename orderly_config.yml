@@ -23,7 +23,6 @@ remote:
       port: 443
       prefix: fertility
       token: $ORDERLYWEB_GITHUB_TOKEN
-    primary: true
     master_only: true
   
   fertility:
@@ -40,7 +39,6 @@ remote:
       port: 443
       prefix: naomi 
       token: $ORDERLYWEB_GITHUB_TOKEN
-    primary: true
     master_only: true
       
   naomi:
