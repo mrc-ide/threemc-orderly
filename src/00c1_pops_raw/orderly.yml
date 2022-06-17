@@ -43,18 +43,22 @@ depends:
       id: latest(parameter:iso3 == "BDI" && parameter:version == "2021")
       use:
         depends/bdi_interpolated_population.csv: interpolated_population.csv 
- 
   - aaa_scale_pop:
       id: latest(parameter:iso3 == "BEN" && parameter:version == "2021")
       use:
         depends/ben_interpolated_population.csv: interpolated_population.csv 
+  -  aaa_scale_pop:
+      # id: latest(parameter:iso3 == "CAF" && parameter:version == "2021")
+      id: latest(parameter:iso3 == "CAF")
+      use:
+        depends/caf_interpolated_population.csv: interpolated_population.csv
   -  aaa_scale_pop:
       id: latest(parameter:iso3 == "COD")
       # id: latest(parameter:iso3 == "COD" && parameter:version == "2021")
       use:
         depends/cod_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
-      id: latest(parameter:iso3 == "COG"  && parameter:version == "2021")
+      id: latest(parameter:iso3 == "COG" && parameter:version == "2021")
       use:
         depends/cog_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
@@ -62,6 +66,14 @@ depends:
       # id: latest(parameter:iso3 == "GAB" && parameter:version == "2021")
       use:
         depends/gab_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "GHA" && parameter:version == "2021")
+      use:
+        depends/gha_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "GIN" && parameter:version == "2021")
+      use:
+        depends/gin_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
       id: latest(parameter:iso3 == "LBR" && parameter:version == "2021")
       use:
@@ -100,10 +112,6 @@ depends:
       use:
         depends/tgo_interpolated_population.csv: interpolated_population.csv
   # additional pops
-  - aaa_scale_pop:
-      id: latest(parameter:iso3 == "GHA" && parameter:version == "2021")
-      use:
-        depends/gha_interpolated_population.csv: interpolated_population.csv
   - eth_data_population:
       id: latest(parameter:version == "2021")
       use: 
