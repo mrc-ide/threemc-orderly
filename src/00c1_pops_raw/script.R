@@ -20,10 +20,12 @@ iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
 
 # countries whose populations are pulled from other orderly tasks
 orderly_iso3 <-  c(
-  "ben", "cod", "cog", "gab", "lbr", "mli", "ner", "sen", "sle", "tcd", "gha"
+  # "ben", "cod", "cog", "gab", "lbr", "mli", "ner", "sen", "sle", "tcd", "gha"
+  "bdi", "ben", "cod", "cog", "gab", "gha", "gin", "lbr", 
+  "mli", "moz", "ner", "sen", "sle", "tcd", "tgo"
 )
 
-# individual file names for each country
+# individual file names for each country (just need for names in this script)
 pop_file_names <- sort(c(
                ago = "ago_population_worldpop-2015.csv",
                bdi = "bdi_population_gpw.csv",
