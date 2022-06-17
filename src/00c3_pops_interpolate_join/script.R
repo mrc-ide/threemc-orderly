@@ -14,6 +14,12 @@ specpop <- readr::read_csv(
 )
 areas <- sf::read_sf(paste0(depends_path, "areas.geojson"))
 
+# debug for single country
+# pop_orderly <- filter(pop_orderly, iso3 == "BEN")
+# pop_raw <- filter(pop_raw, iso3 == "BEN")
+# specpop <- filter(specpop, iso3 == "BEN")
+
+
 # save_dir <- "artefacts/"
 # threemc::create_dirs_r(save_dir)
 # 
@@ -321,7 +327,8 @@ pop1 <- bind_rows(pop1_lst)
 areas_corrected <- sf::st_drop_geometry(areas) %>%
   mutate(
     spectrum_region_code = case_when(
-      iso3 %in% c("TGO", "ZMB")                       ~ 0,
+      # change spectrum_region_codes where they don't match
+      iso3 %in% c("TGO", "ZMB", "BEN")                ~ 0,
       iso3 == "MOZ" & spectrum_region_code %in% 19:20 ~ 21,
       TRUE                                            ~ spectrum_region_code)
   )
@@ -340,9 +347,9 @@ pop1_specreg <- pop1adj %>%
 pop1_calib <- pop1_specreg %>%
   left_join(
     specpop %>%
-    select(
-      iso3, spectrum_region_code, year, sex, age, population_spectrum = totpop
-    ),
+      select(
+        iso3, spectrum_region_code, year, sex, age, population_spectrum = totpop
+      ),
     by = c("iso3", "spectrum_region_code", "year", "sex", "age")
   ) %>%
   mutate(ratio = population_spectrum / population_raw)
