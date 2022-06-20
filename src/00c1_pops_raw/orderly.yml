@@ -27,6 +27,11 @@ packages:
 # global_resources:
 #  depends/areas.geojson: areas.geojson
   
+# temporary resources required due to difficulties with orderly web 
+resources: 
+ - resources/aaa_scale_pop_mwi.csv.gz
+ - resources/aaa_scale_pop_zaf.csv.gz
+  
 depends:
   # areas file
   # - 00a_create_area_data:

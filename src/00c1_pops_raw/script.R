@@ -134,14 +134,23 @@ pop_orderly <- lapply(
   paste0(depends_path, orderly_iso3, "_interpolated_population.csv"), 
   read_circ_data
 )
-
 # load eth populations
 eth_pop_orderly <- readr::read_csv(
   paste0(depends_path, "eth_population.csv")
+) %>% 
+  select(-area_name) # area names only included in this dataframe, added later
+# load mwi and zaf populations
+mwi_pop_orderly <- readr::read_csv(
+  paste0("resources/", "aaa_scale_pop_mwi.csv.gz")
 )
-
-pop_orderly <- c(pop_orderly, list(eth_pop_orderly))
-names(pop_orderly) <- c(orderly_iso3, "eth")
+zaf_pop_orderly <- readr::read_csv(
+  paste0("resources/", "aaa_scale_pop_zaf.csv.gz")
+)
+pop_orderly <- c(
+  pop_orderly, 
+  list(eth_pop_orderly, mwi_pop_orderly, zaf_pop_orderly)
+)
+names(pop_orderly) <- c(orderly_iso3, "eth", "mwi", "zaf")
 
 # join area name into pop_orderly
 pop_orderly <- pop_orderly %>% 
