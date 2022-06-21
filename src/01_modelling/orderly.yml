@@ -34,9 +34,24 @@ packages:
   - rlang
   - ggplot2
   
-global_resources:
-  depends/areas.geojson: areas.geojson
-  depends/survey_circumcision.csv.gz: survey_circumcision.csv.gz
-  depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
+# global_resources:
+#   depends/areas.geojson: areas.geojson
+#   depends/survey_circumcision.csv.gz: survey_circumcision.csv.gz
+#   depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
   
-  
+depends:
+  # areas file
+  - 00a2_areas_join:
+      id: latest
+      use:
+        depends/areas.geojson: artefacts/areas.geojson
+  # surveys
+  - 00b3_survey_join:
+      id: latest
+      use: 
+        depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
+  # populations
+  - 00c4_pops_aggregate:
+      id: latest
+      use: 
+        depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
