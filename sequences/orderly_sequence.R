@@ -44,6 +44,7 @@ orderly_commits <- function(type = "draft") {
     )
   }
 }
+orderly_commits()
 
 #### Run src Scripts ####
 
