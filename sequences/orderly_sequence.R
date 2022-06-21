@@ -15,29 +15,36 @@
 # fill in ordelry.yml with artefacts, parameters, global resources, etc
 # write out script to be run
 
+library(dplyr)
 library(data.table)
 
 #### Committing Reports: Function #### 
-orderly_commits <- function() {
+orderly_commits <- function(type = "draft") {
+  
   # list draft reports
-  (dr <- orderly::orderly_list_drafts())
- 
-  # list archived reports 
-  (dr <- rbind(
-    dr,
-    orderly::orderly_list_archive()
-  ))
-  
-  # commit the latest reports
-  dr <- dr %>% 
-    group_by(name) %>% 
-    summarise(id = last(id), .groups = 'drop')
-  print(dr)
-  lapply(dr$id, orderly::orderly_commit)
-  
-  # push to sharepoint
-  lapply(dr$name, orderly::orderly_push_archive, remote = "real")
+  if (type == "draft") {
+    (dr <- orderly::orderly_list_drafts())
+    
+    # commit the latest reports
+    dr <- dr %>% 
+      group_by(name) %>% 
+      summarise(id = last(id), .groups = 'drop')
+    print(dr)
+    lapply(dr$id, orderly::orderly_commit)
+      
+    # push to sharepoint
+    lapply(dr$name, orderly::orderly_push_archive)
+    
+  } else if (type == "archive") {
+    (cr <- orderly::orderly_list_archive())
+    # cr <- cr %>% 
+    #   filter(as.numeric(substr(cr$id, 0, 8)) > 20220600)
+    lapply(seq_len(nrow(cr)), function(x) orderly::orderly_push_archive(
+      name = cr$name[x], id = cr$id[x])
+    )
+  }
 }
+orderly_commits()
 
 #### Run src Scripts ####
 
@@ -48,10 +55,10 @@ orderly_commits <- function() {
 dirs <- list.dirs(path = "src", full.names = FALSE, recursive = FALSE)
 
 ## modelling
-# orderly::orderly_run("01_modelling", list(cntry = iso3))
+orderly::orderly_run("01_modelling", list(cntry = iso3))
 
 # commit 
-# orderly_commits()
+orderly_commits()
 
 ## aggregations
 # aggregation orderly tasks

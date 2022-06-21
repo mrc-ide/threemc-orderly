@@ -49,16 +49,30 @@ packages:
   - TMB
   - naomi
   
+ 
+# global_resources:
+#   depends/areas.geojson: areas.geojson
+#   depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
+  
 depends:
+  # modelling results from last task
   01_modelling:
     id: latest(parameter:cntry == cntry)
     use:
       depends/Results_DistrictAgeTime_ByType.csv.gz: artefacts/Results_DistrictAgeTime_ByType.csv.gz
       depends/TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds  
-      
-global_resources:
-  depends/areas.geojson: areas.geojson
-  depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
+  # shapefiles
+  - 00a2_areas_join:
+      id: latest
+      use:
+        depends/areas.geojson: artefacts/areas.geojson
+  # populations
+  - 00c4_pops_aggregate:
+      id: latest
+      use: 
+        depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
+  
+     
   
 # sources:
 #   - source.R

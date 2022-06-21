@@ -53,7 +53,8 @@ cens_year <- max(as.numeric(
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circumcision <- prepare_survey_data(
   areas               = areas,
-  survey_circumcision = survey_circumcision,
+  # remove area_level column to avoid duplicating columns in prepare_survey_data
+  survey_circumcision = select(survey_circumcision, -area_level),
   area_lev            = area_lev,
   start_year          = start_year,
   cens_year           = cens_year,
@@ -111,30 +112,30 @@ out <- create_shell_dataset(
 
 #### Dataset for modelling ####
 
-# temporary fix required due to missing populations for ETH and MOZ
-if (cntry %in% c("ETH", "MOZ")) {
-    missing_pop_areas <- out %>%
-        filter(is.na(population)) %>%
-        distinct(area_id) %>%
-        pull()
-    if (length(missing_pop_areas) > 0) {
-        message(paste0(
-            paste(missing_pop_areas, collapse = ", "),
-            " are missing populations, and will be removed"
-        ))
-        # remove areas with missing populations, change "space" accordingly
-        areas <- areas %>%
-            filter(!area_id %in% missing_pop_areas) %>%
-            mutate(space = 1:n())
-        out <- out %>%
-            filter(!is.na(population)) %>%
-            left_join(areas %>%
-                          select(area_id, space_new = space),
-                      by = "area_id") %>%
-            mutate(space = space_new) %>%
-            select(-space_new)
-    }
-}
+# # temporary fix required due to missing populations for ETH and MOZ
+# if (cntry %in% c("ETH", "MOZ")) {
+#     missing_pop_areas <- out %>%
+#         filter(is.na(population)) %>%
+#         distinct(area_id) %>%
+#         pull()
+#     if (length(missing_pop_areas) > 0) {
+#         message(paste0(
+#             paste(missing_pop_areas, collapse = ", "),
+#             " are missing populations, and will be removed"
+#         ))
+#         # remove areas with missing populations, change "space" accordingly
+#         areas <- areas %>%
+#             filter(!area_id %in% missing_pop_areas) %>%
+#             mutate(space = 1:n())
+#         out <- out %>%
+#             filter(!is.na(population)) %>%
+#             left_join(areas %>%
+#                           select(area_id, space_new = space),
+#                       by = "area_id") %>%
+#             mutate(space = space_new) %>%
+#             select(-space_new)
+#     }
+# }
 
 dat_tmb <- threemc_prepare_model_data(
   out        = out,
