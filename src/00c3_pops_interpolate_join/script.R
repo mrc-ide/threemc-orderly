@@ -163,7 +163,8 @@ cores <- detectCores()
 #   
 # join with raw populations from sharepoint
 # pop_raw <- c(pop_raw, pop_orderly)
-pop_raw <- bind_rows(pop_raw, pop_orderly)
+pop_raw <- bind_rows(pop_raw, pop_orderly) %>% 
+  filter(sex = "male") # filter for males at earliest opportunity
 
 # pop_raw <- pop_raw %>%
 #   Map(mutate, ., iso3 = toupper(substr(names(.), 0, 3))) %>%
@@ -362,9 +363,11 @@ pop1adj <- pop1adj %>%
     ),
     by = c("iso3", "area_level", "spectrum_region_code", "year", "sex", "age")
   ) %>%
-  mutate(population = population * ratio,
-         spectrum_region_code = NULL,
-         ratio = NULL)
+  mutate(
+    population = population * ratio,
+    spectrum_region_code = NULL,
+    ratio = NULL
+  )
 
 # stopifnot(round(sum(pop1adj$population, na.rm = TRUE), 3) ==
 #           round(sum(pop1_calib$population_spectrum, na.rm = TRUE), 3))
@@ -376,7 +379,7 @@ pop1adj <- pop1adj %>%
 # Aggregate MOZ Maputo province populations
 
 pop1adj <- pop1adj %>%
-  filter(area_id != "MOZ_1_12") %>%
+  # filter(area_id != "MOZ_1_12") %>%
   bind_rows(
     select(., -c(area_name, area_level)) %>%
     rename(area_id2 = area_id) %>%
