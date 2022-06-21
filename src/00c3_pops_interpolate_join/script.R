@@ -164,7 +164,7 @@ cores <- detectCores()
 # join with raw populations from sharepoint
 # pop_raw <- c(pop_raw, pop_orderly)
 pop_raw <- bind_rows(pop_raw, pop_orderly) %>% 
-  filter(sex = "male") # filter for males at earliest opportunity
+  filter(sex == "male") # filter for males at earliest opportunity
 
 # pop_raw <- pop_raw %>%
 #   Map(mutate, ., iso3 = toupper(substr(names(.), 0, 3))) %>%
