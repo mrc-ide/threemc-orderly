@@ -31,6 +31,7 @@ packages:
 resources: 
  - resources/aaa_scale_pop_mwi.csv.gz
  - resources/aaa_scale_pop_zaf.csv.gz
+ - resources/aaa_scale_pop_moz.csv.gz
   
 depends:
   # areas file
@@ -88,10 +89,10 @@ depends:
       id: latest(parameter:iso3 == "MLI")
       use:
         depends/mli_interpolated_population.csv: interpolated_population.csv
-  - aaa_scale_pop:
-      id: latest(parameter:iso3 == "MOZ" && parameter:version == "2021")
-      use:
-        depends/moz_interpolated_population.csv: interpolated_population.csv
+  # - aaa_scale_pop:
+  #     id: latest(parameter:iso3 == "MOZ" && parameter:version == "2021")
+  #     use:
+  #       depends/moz_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
       # id: latest(parameter:iso3 == "NER" && parameter:version == "2021")
       id: latest(parameter:iso3 == "NER")

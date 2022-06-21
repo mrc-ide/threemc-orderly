@@ -20,9 +20,9 @@ iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
 
 # countries whose populations are pulled from other orderly tasks
 orderly_iso3 <-  c(
-  # "ben", "cod", "cog", "gab", "lbr", "mli", "ner", "sen", "sle", "tcd", "gha"
   "bdi", "ben", "cod", "cog", "gab", "gha", "gin", "lbr", 
-  "mli", "moz", "ner", "sen", "sle", "tcd", "tgo"
+  # "mli", "moz", "ner", "sen", "sle", "tcd", "tgo" 
+  "mli", "ner", "sen", "sle", "tcd", "tgo" # temp remove MOZ
 )
 
 # individual file names for each country (just need for names in this script)
@@ -139,18 +139,21 @@ eth_pop_orderly <- readr::read_csv(
   paste0(depends_path, "eth_population.csv")
 ) %>% 
   select(-area_name) # area names only included in this dataframe, added later
-# load mwi and zaf populations
+# load mwi, zaf, moz populations
 mwi_pop_orderly <- readr::read_csv(
   paste0("resources/", "aaa_scale_pop_mwi.csv.gz")
 )
 zaf_pop_orderly <- readr::read_csv(
   paste0("resources/", "aaa_scale_pop_zaf.csv.gz")
 )
+moz_pop_orderly <- readr::read_csv(
+  paste0("resources/", "aaa_scale_pop_moz.csv.gz")
+)
 pop_orderly <- c(
   pop_orderly, 
-  list(eth_pop_orderly, mwi_pop_orderly, zaf_pop_orderly)
+  list(eth_pop_orderly, mwi_pop_orderly, zaf_pop_orderly, moz_pop_orderly)
 )
-names(pop_orderly) <- c(orderly_iso3, "eth", "mwi", "zaf")
+names(pop_orderly) <- c(orderly_iso3, "eth", "mwi", "zaf", "moz")
 
 # join area name into pop_orderly
 pop_orderly <- pop_orderly %>% 
