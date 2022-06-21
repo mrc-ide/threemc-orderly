@@ -34,7 +34,7 @@ depends:
       depends/survey_clusters.csv.gz: artefacts/survey_clusters.csv.gz
       depends/survey_individuals.csv.gz: artefacts/survey_individuals.csv.gz
       depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
-  00b3_survey_mics:
+  00b2_survey_mics:
     id: latest
     use:
       depends/mics_surveys.csv.gz: artefacts/mics_surveys.csv.gz

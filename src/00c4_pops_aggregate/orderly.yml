@@ -29,7 +29,7 @@ depends:
       use:
         depends/areas.geojson: artefacts/areas.geojson
   # required for getting "missing" area levels
-  - 00b4_survey_join:
+  - 00b3_survey_join:
       id: latest
       use: 
         depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
