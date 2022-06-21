@@ -144,6 +144,13 @@ extract_survey_vars <- function(df, survey_id_c, variable_recode, dataset_type, 
     id_vars <- c(id_vars, add_vars)
   }
 
+  # ensure no column is "selected" twice
+  # opt_var <- opt_var[!opt_var %in% id_vars[id_vars %in% names(df)]]
+  if ("mics_area_name" %in% opt_var && "mics_area_name" %in% id_vars) {
+    id_vars <- id_vars[!id_vars == "mics_area_name"]
+  }
+  opt_var <- unique(opt_var)
+  id_vars <- unique(id_vars)
   df <- df %>%
     select(
       all_of(id_vars)[id_vars %in% names(df)],
