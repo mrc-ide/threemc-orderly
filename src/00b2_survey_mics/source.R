@@ -33,6 +33,10 @@ recode_mics_id_vars <- function(variable_recode, survey_id_c, dataset_type) {
     variable_recode, survey_id == "_default_mics",
     dataset == dataset_type
   )
+  
+  # remove any custom recodings already in default recodings (test!)
+  custom_recode <- custom_recode %>% 
+    anti_join(default_recode, by = c("variable", "var_raw"))
 
   # variable_df <- data.frame(variable = c("cluster_id", "household", "line"))
   variable_df <- data.frame(variable = c("cluster_id", "household", "line", "mics_area_name", "mics_area_level"))
@@ -75,6 +79,8 @@ recode_mics_id_vars <- function(variable_recode, survey_id_c, dataset_type) {
 extract_survey_vars <- function(df, survey_id_c, variable_recode, dataset_type, analysis_c, add_vars = NULL) {
   message(survey_id_c)
 
+  # browser()
+  
   surv_type <- substr(survey_id_c, 8, stringr::str_length(survey_id_c))
 
   ## If individual ID is to be used as primary key - this if statement needs editing
@@ -109,6 +115,7 @@ extract_survey_vars <- function(df, survey_id_c, variable_recode, dataset_type, 
 
   # Finds if there are custom variable names associated with this survey ID and dataset type
   custom_recode <- filter(variable_recode, survey_id == survey_id_c, dataset == dataset_type)
+  
 
   # Finds the default variable names for specified survey and dataset types
   default_recode <- filter(
@@ -119,6 +126,11 @@ extract_survey_vars <- function(df, survey_id_c, variable_recode, dataset_type, 
   )
   # !variable %in% c("cluster_id", "household", "line", "mnweight"))
 
+  # remove any custom recodings already in default recodings (test!)
+  custom_recode <- custom_recode %>% 
+    anti_join(default_recode, by = c("variable", "var_raw"))
+
+  
   variable_df <- variable_recode %>%
     filter(
       analysis == analysis_c,
@@ -145,12 +157,13 @@ extract_survey_vars <- function(df, survey_id_c, variable_recode, dataset_type, 
   }
 
   # ensure no column is "selected" twice
+  # browser()
   # opt_var <- opt_var[!opt_var %in% id_vars[id_vars %in% names(df)]]
-  if ("mics_area_name" %in% opt_var && "mics_area_name" %in% id_vars) {
-    id_vars <- id_vars[!id_vars == "mics_area_name"]
-  }
-  opt_var <- unique(opt_var)
-  id_vars <- unique(id_vars)
+  # if ("mics_area_name" %in% opt_var && "mics_area_name" %in% id_vars) {
+  #   opt_var <- opt_var[!opt_var == "mics_area_name"]
+  # }
+  # opt_var <- unique(opt_var)
+  # id_vars <- unique(id_vars)
   df <- df %>%
     select(
       all_of(id_vars)[id_vars %in% names(df)],
