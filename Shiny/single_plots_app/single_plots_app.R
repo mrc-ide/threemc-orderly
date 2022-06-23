@@ -2,6 +2,7 @@
 
 library(shiny)
 library(shinyjs)
+library(shinycssloaders)
 library(shinyWidgets)
 library(shinyhelper)
 library(dplyr)
