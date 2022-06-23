@@ -62,12 +62,12 @@ depends:
       depends/Results_DistrictAgeTime_ByType.csv.gz: artefacts/Results_DistrictAgeTime_ByType.csv.gz
       depends/TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds  
   # shapefiles
-  - 00a2_areas_join:
+  00a2_areas_join:
       id: latest
       use:
         depends/areas.geojson: artefacts/areas.geojson
   # populations
-  - 00c4_pops_aggregate:
+  00c4_pops_aggregate:
       id: latest
       use: 
         depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
