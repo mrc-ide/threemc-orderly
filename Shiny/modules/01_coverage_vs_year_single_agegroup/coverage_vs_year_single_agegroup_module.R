@@ -45,6 +45,28 @@ single_plots_UI <- function(id) {
                 selected = NULL
               )
             ),
+            tabPanel(
+              strong("Save Options"),
+              chooseSliderSkin("Modern", color = "#b2b2b2"),
+              selectInput(
+                inputId = ns("units"),
+                label = "Units", 
+                choices = c("in", "cm", "mm", "px"),
+                selected = "in"
+              ),
+              selectInput(
+                inputId = ns("width"),
+                label = "Plot Width",
+                choices = seq(0, 2000),
+                selected = 15
+              ),
+              selectInput(
+                inputId = ns("height"),
+                label = "Plot Height",
+                choices = seq(0, 1000),
+                selected = 11
+              )
+            ),
           ),
         ),
         # plot
@@ -164,6 +186,10 @@ single_plots_server <- function(input, output, session, connection, selected = r
     req(cov_vs_year_plt_data())
     req(input$plot)
     
+    print(input$units)
+    print(input$width)
+    print(input$height)
+     
     cov_vs_year_plt_data()[[input$plot]]
   }) 
   
@@ -175,12 +201,20 @@ single_plots_server <- function(input, output, session, connection, selected = r
     },
     content = function(file) {
       temp <- cov_vs_year_plt_data()[[input$plot]]
-      ggplot2::ggsave(filename = file, plot = temp, dpi = "retina")
+      ggplot2::ggsave(
+        filename = file, 
+        plot = temp, 
+        dpi = "retina",
+        units = input$units,
+        width = as.numeric(input$width),
+        height = as.numeric(input$height)
+      )
     }
   )
   
   # All Plots
   output$all_plots_download <- downloadHandler(
+    
     filename = function() {
       paste0("01_", tolower(input$country), "_coverage_prevalence.pdf")
     },
@@ -190,7 +224,10 @@ single_plots_server <- function(input, output, session, connection, selected = r
         plot = gridExtra::marrangeGrob(
           rlang::squash(cov_vs_year_plt_data()), nrow = 1, ncol = 1
         ), 
-        dpi = "retina"
+        dpi = "retina",
+        units = input$units,
+        width = as.numeric(input$width),
+        height = as.numeric(input$height)
       )
     }
   )
