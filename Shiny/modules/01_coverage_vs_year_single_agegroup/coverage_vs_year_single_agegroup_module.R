@@ -16,7 +16,7 @@ colourPalette <- rev(colorRampPalette(
 single_plots_UI <- function(id) {
   ns <- NS(id)
   tagList(
-    titlePanel("Sub-Saharan Africa Circumcision Coverage Plots"),
+    # titlePanel("Circumcision Coverage vs Year for Single Age Group"),
     fluidRow(
       width = 12,
       sidebarLayout(
@@ -24,8 +24,7 @@ single_plots_UI <- function(id) {
           tabsetPanel(
             # # Main Options
             tabPanel(
-              # strong("Specific Country Plots"),
-              strong("?"),
+              strong("Options"),
               chooseSliderSkin("Modern", color = "#b2b2b2"),
               selectInput(
                 inputId = ns("country"),
@@ -39,6 +38,12 @@ single_plots_UI <- function(id) {
                 choices = NULL,
                 selected = NULL
               ),
+              selectInput(
+                inputId = ns("age_group"),
+                label = "Select Age Group",
+                choices = NULL,
+                selected = NULL
+              )
             ),
           ),
         ),
@@ -50,20 +55,19 @@ single_plots_UI <- function(id) {
         ),
         position = "right"
       )
-    ) # ,
+    ),
       # download buttons
-      # fluidRow(
-      #   column(3, downloadButton(ns("country_download"), "Download Country Surplus Data")),
-      #   column(3, downloadButton(ns("vaccine_download"), "Download Nested Vaccine-Specific Data"))
-      # ),
+    fluidRow(
+      column(3, downloadButton(ns("single_plot_download"), "Download Single Plot")),
+      column(3, downloadButton(ns("all_plots_download"), "Download All Plots"))
+    )
   )
 }
 
-# the 'selected' parameter is used if we want to pass in a default country to 'select' in the initial drop down
-# this is useful if we want to link the default selection to a global input, so that the user doesn't have to change multiple inputs all over the app to view statistics for a given country
+#### Server ####
 single_plots_server <- function(input, output, session, connection, selected = reactive(NULL), data) {
 
-  # update picker options
+  #### update picker options (initial) ####
   observe({
     updateSelectInput(
       session,
@@ -81,7 +85,8 @@ single_plots_server <- function(input, output, session, connection, selected = r
     }
   })
   
-  # pull in data (later change this to reactively pull in dir_path)
+  #### Pull in data ####
+  
   results_agegroup <- reactive({
     req(input$country)
     
@@ -106,15 +111,31 @@ single_plots_server <- function(input, output, session, connection, selected = r
     
     return(output)
   })
+  
+  #### update plot options (from data) ####
+  
+  # update age group selector
+  observe({
+    req(results_agegroup())
+    
+    updateSelectInput(
+      session,
+      "age_group",
+      choices = unique(results_agegroup()$age_group),
+      selected = "10+"
+    )
+  })
 
-  # Plot data for plot of Circumcision Coverage vs Year 
+  #### Plot ####
+  # plot Circumcision Coverage vs Year 
   cov_vs_year_plt_data <- reactive({
     req(results_agegroup())
+    req(input$age_group)
     
     plt_mc_coverage_prevalence(
       results_agegroup(),
       data$areas,
-      spec_age_group = "10+",
+      spec_age_group = input$age_group,
       spec_years = 2009:2021,
       area_levels = unique(results_agegroup()$area_level), # use all area levels
       spec_model = "No program data",
@@ -126,7 +147,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
     )
   })
   
-  # Update plot selecter
+  # Update plot selector
   observe({
     req(cov_vs_year_plt_data())
 
@@ -138,10 +159,39 @@ single_plots_server <- function(input, output, session, connection, selected = r
     )
   })
 
+  #### Output Plot ####
   output$cov_vs_year_plt <- renderPlot({
     req(cov_vs_year_plt_data())
     req(input$plot)
     
     cov_vs_year_plt_data()[[input$plot]]
   }) 
+  
+  #### Downloads ####
+  # Single plot
+  output$single_plot_download <- downloadHandler(
+    filename = function() {
+      paste0("01_", tolower(input$country), "_coverage_prevalence.png")
+    },
+    content = function(file) {
+      temp <- cov_vs_year_plt_data()[[input$plot]]
+      ggplot2::ggsave(filename = file, plot = temp, dpi = "retina")
+    }
+  )
+  
+  # All Plots
+  output$all_plots_download <- downloadHandler(
+    filename = function() {
+      paste0("01_", tolower(input$country), "_coverage_prevalence.pdf")
+    },
+    content = function(file) {
+      ggplot2::ggsave(
+        filename = file, 
+        plot = gridExtra::marrangeGrob(
+          rlang::squash(cov_vs_year_plt_data()), nrow = 1, ncol = 1
+        ), 
+        dpi = "retina"
+      )
+    }
+  )
 }

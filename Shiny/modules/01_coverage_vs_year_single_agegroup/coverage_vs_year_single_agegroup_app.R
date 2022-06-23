@@ -34,15 +34,10 @@ orderly_root <- paste(orderly_root, collapse = "/")
 #   "SEN", "SLE", "SWZ", "TCD", "TGO", "TZA", "UGA", "ZAF", "ZMB", "ZWE"
 # )
 
-# temp use one country to test
-ssa_iso3 <- c("LSO")
+# temp use a few countries to test
+ssa_iso3 <- c("LSO", "RWA", "NAM")
 
 # shapefile
-# areas_loc <- orderly::orderly_search(
-#   name = "00a2_areas_join", 
-#   query = "latest",
-#   root = orderly_root
-# )
 areas_loc <- orderly::orderly_list_archive() %>% 
   filter(name == "00a2_areas_join") %>% 
   slice(n()) %>% 
@@ -56,16 +51,7 @@ areas_loc <- file.path(
 areas <- read_circ_data(areas_loc) %>% 
   filter(iso3 %in% ssa_iso3)
 
-# surplus_data <- list(
-#   "forecast_country_supply" = forecast_country_supply, 
-#   "supply_df" = supply_df, 
-#   "age_demographics" = age_demographics,
-#   "key" = key, 
-#   "expiration_dates_df" = expiration_dates_df, 
-#   # "owid" = owid, 
-#   "donations_df" = donations_df
-# )
-
+# data which is fed into Shiny app
 single_plots_data <- list(
   "ssa_iso3" = ssa_iso3,
   "orderly_root" = orderly_root,
@@ -73,8 +59,6 @@ single_plots_data <- list(
 )
 
 # source function and module, respectively
-# source ("./functions/surplus_doses.R")
-# source ("./surplus_doses_module.R")
 source(paste0(orderly_root, "/Shiny/src/functions.R"))
 source(paste0(
   orderly_root, 
