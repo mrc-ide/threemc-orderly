@@ -24,7 +24,8 @@ single_plots_UI <- function(id) {
           tabsetPanel(
             # # Main Options
             tabPanel(
-              strong("Specific Country Plots"),
+              # strong("Specific Country Plots"),
+              strong("?"),
               chooseSliderSkin("Modern", color = "#b2b2b2"),
               selectInput(
                 inputId = ns("country"),

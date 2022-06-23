@@ -76,7 +76,10 @@ single_plots_data <- list(
 # source ("./functions/surplus_doses.R")
 # source ("./surplus_doses_module.R")
 source(paste0(orderly_root, "/Shiny/src/functions.R"))
-source(paste0(orderly_root, "/Shiny/single_plots_app/single_plots_module.R"))
+source(paste0(
+  orderly_root, 
+  "/Shiny/modules/01_coverage_vs_year_single_agegroup/coverage_vs_year_single_agegroup_module.R"
+))
 
 #### Shiny Instance ####
 

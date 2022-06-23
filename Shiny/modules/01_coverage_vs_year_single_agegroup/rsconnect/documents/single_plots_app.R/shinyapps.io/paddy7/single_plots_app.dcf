@@ -1,0 +1,14 @@
+name: single_plots_app
+title: single_plots_app
+username:
+account: paddy7
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6537496
+bundleId: 6035728
+url: https://paddy7.shinyapps.io/single_plots_app/
+when: 1655986125.80757
+lastSyncTime: 1655986125.80758
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: single_plots_module_old.R|supply_module.R
