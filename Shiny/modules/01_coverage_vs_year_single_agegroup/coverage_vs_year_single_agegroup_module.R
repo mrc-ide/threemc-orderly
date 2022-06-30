@@ -37,7 +37,8 @@ single_plots_UI <- function(id) {
                 label = "Plot Type", 
                 choices = c(
                  "Prevalence vs Year" = "plt_1",
-                 "Prevalence vs Age"  = "plt_2"
+                 "Prevalence vs Age"  = "plt_2",
+                 "Prevalence Map"     = "plt_3"
                 )
               ),
               selectInput(
@@ -45,27 +46,29 @@ single_plots_UI <- function(id) {
                 label = "Plot Number",
                 choices = NULL,
                 selected = NULL
-              ),
+              ) # ,
+              # leave out for now
               # selectInput(
               #   inputId = ns("n_plot"),
               #   label = "Number of Areas to Display",
               #   choices = 1:10, 
               #   selected = 1
               # ),
-              selectInput(
-                inputId = ns("area_levels"),
-                label = "Select Area Levels",
-                choices = NULL,
-                selected = NULL, 
-                multiple = TRUE
-              ),
+              # move to plot-specific options
+              # selectInput(
+              #   inputId = ns("area_levels"),
+              #   label = "Select Area Levels",
+              #   choices = NULL,
+              #   selected = NULL, 
+              #   multiple = TRUE
+              # )
             ),
             #### Options specific to each plot ####
             tabPanel(
               strong("Plot Specific"),
               # single choice for age group
               conditionalPanel(
-                condition = "input.plot_type == 'plt_1'",
+                condition = "input.plot_type == 'plt_1' || input.plot_type == 'plt_3'",
                 ns = ns,
                 selectInput(
                   inputId = ns("age_group_single"),
@@ -89,14 +92,15 @@ single_plots_UI <- function(id) {
               ),
               # two-way slider for year
               conditionalPanel(
-                condition = "input.plot_type == 'plt_1'",
+                condition = "input.plot_type == 'plt_1' || input.plot_type == 'plt_3'",
                 ns = ns,
                 sliderInput(
                   inputId = ns("year_slider"), # also updated below
                   label = "Select Years",
                   min = 2009,
-                  max = 2021,
-                  value = c(2009, 2021)
+                  max = 2021, 
+                  value = c(2009, 2021),
+                  sep = ""
                 )
               ),
               # multiple selector for year
@@ -111,6 +115,39 @@ single_plots_UI <- function(id) {
                   multiple = TRUE
                 )
               ),
+              # area level for non-map plots
+              conditionalPanel(
+                condition = "input.plot_type != 'plt_3",
+                ns = ns,
+                selectInput(
+                  inputId = ns("area_levels"),
+                  label = "Select Area Levels",
+                  choices = NULL,
+                  selected = NULL, 
+                  multiple = TRUE
+                )
+              ),
+              # separate area level selectors for map plots
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_3",
+                ns = ns,
+                selectInput(
+                  inputId = ns("border_area_levels"),
+                  label = "Select Border Area Level",
+                  choices = NULL,
+                  selected = NULL
+                )
+              ),
+              conditionalPanel(
+                condition = "input.plot_type != 'plt_3",
+                ns = ns,
+                selectInput(
+                  inputId = ns("results_area_levels"),
+                  label = "Select Results Area Level",
+                  choices = NULL,
+                  selected = NULL
+                )
+              )
             ),
             #### Options for saving plots ####
             tabPanel(
@@ -218,20 +255,6 @@ single_plots_server <- function(input, output, session, connection, selected = r
     )
   })
   
-  # update ages slider 
-  # observe({
-  #   req(results())
-  #   
-  #   updateSliderInput(
-  #     session,
-  #     "age_slider",
-  #     min = min(results()$age, na.rm = TRUE),
-  #     max = max(results()$age, na.rm = TRUE),
-  #     value = c(0, 60),
-  #     step = 5
-  #   )
-  # })
-  
   # update years slider 
   observe({
     req(results())
@@ -275,19 +298,50 @@ single_plots_server <- function(input, output, session, connection, selected = r
     )
   })
   
+  # update "results" area levels selector
+  observe({
+    req(results())
+    
+    area_levs <- unique(results()$area_level)
+    
+    updateSelectInput(
+      session,
+      "results_area_levels",
+      choices = area_levs,
+      selected = max(area_levs)
+    )
+  })
+  
+  # update "shapefiles" area levels selector
+  observe({
+    req(input$country)
+    
+    area_levs <- data$areas %>% 
+      filter(iso3 == input$country) %>% 
+      distinct(area_level) %>% 
+      pull()
+    
+    updateSelectInput(
+      session,
+      "border_area_levels",
+      choices = area_levs,
+      selected = min(area_levs)
+    )
+  })
+  
+  
   #### Plot ####
   # plot Circumcision Coverage vs Year 
-  cov_vs_year_plt_data <- reactive({
+  plt_data <- reactive({
     req(results())
     req(input$plot_type)
-    if (input$plot_type == "plt_1") {
-      req(input$age_group_single)
-    } else if (input$plot_type == "plt_2") {
-      req(input$age_slider)
-    }
+    if (input$plot_type %in% c("plt_1", "plt_3")) {
+    } 
     
     # Prevalence vs year
     if (input$plot_type == "plt_1") {
+      
+      req(input$age_group_single)
       
       plt_mc_coverage_prevalence(
         results(),
@@ -305,6 +359,8 @@ single_plots_server <- function(input, output, session, connection, selected = r
       # Prevalence vs age for each circumcision type
     } else if (input$plot_type == "plt_2") {
       
+      req(input$age_slider)
+      
       plt_age_coverage_by_type(
         results(),
         data$areas,
@@ -317,27 +373,51 @@ single_plots_server <- function(input, output, session, connection, selected = r
         main = "Circumcision Coverage vs Age, ",
         n_plots = 1
       )
+    # Map plot for prevalence   
+    } else if (input$plot_type == "plt_3") {
+      
+      req(input$age_group_single)
+      req(input$year_select)
+      req(input$results_area_level)
+      req(input$border_area_level)
+      
+      # browser()
+      plt_coverage_map(
+        results_agegroup   = results(),  
+        areas              = data$areas, 
+        colourPalette      = colourPalette, 
+        spec_countries     = input$country,
+        # spec_age_group   = "15-49", 
+        spec_age_group     =  input$age_group_single,
+        # spec_years = c("2010", "2021"),
+        spec_years         = as.numeric(c(input$year_select[1], input$year_select[3])), 
+        results_area_level = input$results_area_level, 
+        country_area_level = input$border_area_level,
+        spec_model         = "No program data", 
+        plot_type          = "single",
+        n_plots            = 1
+      )
     }
   })
   
   # Update plot selector
   observe({
-    req(cov_vs_year_plt_data())
+    req(plt_data())
 
     updateSelectInput(
       session,
       "plot_n",
-      choices = seq_len(length(cov_vs_year_plt_data())),
+      choices = seq_len(length(plt_data())),
       selected = 1
     )
   })
   
   #### Output Plot ####
   output$cov_vs_year_plt <- renderPlot({
-    req(cov_vs_year_plt_data())
+    req(plt_data())
     req(input$plot_n)
-    
-    cov_vs_year_plt_data()[[input$plot_n]]
+    # if (input$plot_type == "plt_3") browser()
+    plt_data()[[input$plot_n]]
   }) 
   
   #### Downloads ####
@@ -347,7 +427,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
       paste0("01_", tolower(input$country), "_coverage_prevalence.png")
     },
     content = function(file) {
-      temp <- cov_vs_year_plt_data()[[input$plot_n]]
+      temp <- plt_data()[[input$plot_n]]
       ggplot2::ggsave(
         filename = file, 
         plot = temp, 
@@ -369,7 +449,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
       ggplot2::ggsave(
         filename = file, 
         plot = gridExtra::marrangeGrob(
-          rlang::squash(cov_vs_year_plt_data()), nrow = 1, ncol = 1
+          rlang::squash(plt_data()), nrow = 1, ncol = 1
         ), 
         dpi = "retina",
         units = input$units,
