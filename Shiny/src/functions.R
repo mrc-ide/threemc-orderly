@@ -452,6 +452,12 @@ plt_mc_coverage_prevalence <- function(
               legend.text = element_text(size = 16),
               axis.title = element_text(size = 18),
               plot.title = element_text(size = 26, hjust = 0.5),
+              axis.text.x = element_text(
+                # size = 12,
+                hjust = 1,
+                vjust = 1,
+                angle = 45
+              ),
               strip.placement = "outside",
               legend.position = "bottom")
     })
