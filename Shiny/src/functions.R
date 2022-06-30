@@ -390,6 +390,7 @@ plt_mc_coverage_prevalence <- function(
         b$area_name[1],
         b$area_level[1],
         b$area_level_label[1],
+        paste0(b$age_group[1], "years old"),
         sep = ", "
       )
 
