@@ -38,10 +38,10 @@ single_plots_UI <- function(id) {
                 inputId = ns("plot_type"),
                 label   = "Plot Type", 
                 choices = c(
-                 "Prevalence vs Year"                            = "plt_1",
-                 "Prevalence vs Year split by Type"              = "plt_4",
-                 "Prevalence & Coverage vs Age split by Type"    = "plt_2",
+                 "Coverage & Prevalence vs Year"                 = "plt_1",
+                 "Prevalence & Coverage vs Age by Type"          = "plt_2",
                  "Prevalence Map"                                = "plt_3",
+                 "Prevalence vs Year by Type"                    = "plt_4",
                  "Coverage vs Age"                               = "plt_5",
                  "Ridge Plot of mean TMIC and MMC-nT age"        = "plt_6"
                 )
@@ -52,6 +52,7 @@ single_plots_UI <- function(id) {
                 choices  = NULL,
                 selected = NULL
               ),
+              # # leave out for now
               # numericInput(
               #   inputId = ns("plot_height"),
               #   label = "Plot Height (pixels)", 
@@ -60,7 +61,6 @@ single_plots_UI <- function(id) {
               #   max = 1600, 
               #   step = 50 
               # )
-              # leave out for now
               # selectInput(
               #   inputId = ns("n_plot"),
               #   label = "Number of Areas to Display",
@@ -91,6 +91,7 @@ single_plots_UI <- function(id) {
                     "Medical Circumcision" = "MMC coverage",
                     "Traditional Circumcision" = "TMC coverage"
                   ),
+                  selected = "MC coverage",
                   multiple = TRUE
                 ) 
               ),
@@ -246,6 +247,24 @@ single_plots_server <- function(input, output, session, connection, selected = r
     }
   })
   
+  # update age range slider (doesn't require results)
+  observe({
+    req(input$plot_type)
+    
+    default <- switch(
+      input$plot_type,
+      "plt_2" = c(0, 60),
+      "plt_5" = c(0, 60),
+      "plt_6" = c(0, 30)
+    )
+    
+    updateSliderInput(
+      session,
+      "age_slider",
+      value = default
+    )
+  })
+  
   #### Pull in data ####
   
   results <- reactive({
@@ -291,14 +310,23 @@ single_plots_server <- function(input, output, session, connection, selected = r
   # update single age group selector
   observe({
     req(results())
+    req(input$plot_type)
+    
+    default <- switch(
+      input$plot_type,
+      "plt_1" = "10+",
+      "plt_3" = "15-49",
+      "plt_4" = "15-49"
+    )
     
     updateSelectInput(
       session,
       "age_group_single",
       choices = unique(results()$age_group),
-      selected = "10+"
+      selected = default
     )
   })
+  
   
   # update years slider 
   observe({
@@ -429,7 +457,6 @@ single_plots_server <- function(input, output, session, connection, selected = r
       req(input$results_area_level)
       req(input$border_area_level)
       
-      # browser()
       plt_coverage_map(
         results_agegroup   = results(),  
         areas              = data$areas, 
@@ -521,8 +548,9 @@ single_plots_server <- function(input, output, session, connection, selected = r
   output$cov_vs_year_plt <- renderPlot({
     req(plt_data())
     req(input$plot_n)
+    
     # if (input$plot_type == "plt_3") browser()
-    plt_data()[[input$plot_n]]
+    plt_data()[[as.numeric(input$plot_n)]]
   })
   
   #### Downloads ####
