@@ -46,12 +46,12 @@ single_plots_UI <- function(id) {
                 choices = NULL,
                 selected = NULL
               ),
-              selectInput(
-                inputId = ns("n_plot"),
-                label = "Number of Countries to Display",
-                choices = 1:10, 
-                selected = 1
-              ),
+              # selectInput(
+              #   inputId = ns("n_plot"),
+              #   label = "Number of Areas to Display",
+              #   choices = 1:10, 
+              #   selected = 1
+              # ),
               selectInput(
                 inputId = ns("area_levels"),
                 label = "Select Area Levels",
@@ -222,6 +222,8 @@ single_plots_server <- function(input, output, session, connection, selected = r
     req(results_agegroup())
     req(input$age_group)
     
+    # browser()
+    
     plt_mc_coverage_prevalence(
       results_agegroup(),
       data$areas,
@@ -231,8 +233,8 @@ single_plots_server <- function(input, output, session, connection, selected = r
       area_levels = input$area_levels,
       spec_model = "No program data",
       main = "Circumcision Coverage vs Year, ",
-      # n_plots = 1
-      n_plots = input$n_plot
+      n_plots = 1
+      # n_plots = as.numeric(input$n_plot)
     )
   })
   
