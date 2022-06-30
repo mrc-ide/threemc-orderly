@@ -30,3 +30,7 @@ global
 .orderly
 # don't upload ordelry environment file
 orderly_envir.yml
+
+# don't upload rsconnect directories from Shiny apps
+rsconnect
+
