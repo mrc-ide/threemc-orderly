@@ -200,7 +200,7 @@ plt_age_coverage_by_type <- function(
     ggsave(
       # filename = paste0("Runs/plots/", cntry, "_Figure2.pdf"),
       filename = str_save,
-      plot = gridExtra:: marrangeGrob(purrr::flatten(plots), nrow = 1, ncol = 1),
+      plot = gridExtra:: marrangeGrob(rlang::squash(plots), nrow = 1, ncol = 1),
       dpi = "retina",
       # width = 15,
       width = save_width,
@@ -208,7 +208,7 @@ plt_age_coverage_by_type <- function(
       height = save_height
     )
   } else {
-    return(purrr::flatten(plots))
+    return(rlang::squash(plots))
   }
 }
 
@@ -467,7 +467,7 @@ plt_mc_coverage_prevalence <- function(
     ggsave(
       # filename = paste0("Runs/plots/", cntry, "_Figure1.pdf"),
       filename = str_save,
-      plot = gridExtra:: marrangeGrob(purrr::flatten(plots), nrow = 1, ncol = 1),
+      plot = gridExtra:: marrangeGrob(rlang::squash(plots), nrow = 1, ncol = 1),
       dpi = "retina",
       # width = 16,
       width = save_width,
@@ -475,7 +475,7 @@ plt_mc_coverage_prevalence <- function(
       height = save_height
     )
   } else {
-    return(purrr::flatten(plots))
+    return(rlang::squash(plots))
   }
 }
 
@@ -610,7 +610,7 @@ plt_age_coverage_by_type <- function(
     ggsave(
       # filename = paste0("Runs/plots/", cntry, "_Figure2.pdf"),
       filename = str_save,
-      plot = gridExtra:: marrangeGrob(purrr::flatten(plots), nrow = 1, ncol = 1),
+      plot = gridExtra:: marrangeGrob(rlang::squash(plots), nrow = 1, ncol = 1),
       dpi = "retina",
       # width = 15,
       width = save_width,
@@ -618,7 +618,7 @@ plt_age_coverage_by_type <- function(
       height = save_height
     )
   } else {
-    return(purrr::flatten(plots))
+    return(rlang::squash(plots))
   }
 }
 
@@ -868,7 +868,7 @@ plt_coverage_map <- function(
             }
             plots[[i]] <- plots2
         }
-        plots <- rlang::flatten(plots)
+        plots <- rlang::squash(plots)
     }
 
     # If desired, save plots, else, return them ("ungrobbed")
@@ -1050,7 +1050,7 @@ plt_area_facet_coverage <- function(
     if (!is.null(str_save)) {
         ggsave(
             filename = str_save,
-            plot = gridExtra:: marrangeGrob(purrr::flatten(plots),
+            plot = gridExtra:: marrangeGrob(rlang::squash(plots),
                                             nrow = 1,
                                             ncol = 1),
             dpi = "retina",
@@ -1058,7 +1058,7 @@ plt_area_facet_coverage <- function(
             height = save_height
         )
     } else {
-        return(purrr::flatten(plots))
+        return(rlang::squash(plots))
     }
 }
 
@@ -1067,7 +1067,7 @@ plt_area_facet_coverage <- function(
 plt_age_coverage_multi_years <- function(
     results_age,
     areas,
-    spec_type = "MC coverage",
+    spec_types = "MC coverage",
     spec_years, # = c(2009, 2015, 2021)
     area_levels = unique(results_age$area_level),
     spec_model = "No program data",
@@ -1081,7 +1081,7 @@ plt_age_coverage_multi_years <- function(
     # Subsetting
     tmp <- results_age %>%
         filter(
-            type      == spec_type,
+            type      %in% spec_types,
             year     %in% spec_years,
             area_level %in% area_levels,
             model == spec_model
@@ -1163,13 +1163,13 @@ plt_age_coverage_multi_years <- function(
     if (!is.null(str_save)) {
         ggsave(
             filename = str_save,
-            plot = gridExtra:: marrangeGrob(purrr::flatten(plots), nrow = 1, ncol = 1),
+            plot = gridExtra:: marrangeGrob(rlang::squash(plots), nrow = 1, ncol = 1),
             dpi = "retina",
             width = save_width,
             height = save_height
         )
     } else {
-        return(purrr::flatten(plots))
+        return(rlang::squash(plots))
     }
 }
 
@@ -1178,10 +1178,10 @@ plt_age_coverage_multi_years <- function(
 plt_circ_age_ridge <- function(
     results_age,
     areas,
-    spec_year = last(results_age$year),
+    spec_years = last(results_age$year),
     area_levels = unique(results_age$area_level),
     spec_model = "No program data",
-    max_age = 30,
+    spec_ages = 0:30,
     str_save = NULL,
     save_width = 9,
     save_height = 7,
@@ -1195,8 +1195,8 @@ plt_circ_age_ridge <- function(
             type %in% c("MMC-nTs performed", "TMICs performed") ,
             area_level %in% area_levels,
             model == spec_model,
-            year == spec_year,
-            age <= max_age
+            year %in% spec_years,
+            age %in% spec_ages
             # area_level %in% c(0:1)# ,
             # model == "With program data"
         )
@@ -1226,85 +1226,89 @@ plt_circ_age_ridge <- function(
     tmp2 <- add_area_info(tmp2, areas)
 
     # split by area level and number of desired plots
-    tmp <- split_area_level(tmp, n_plots = n_plots)
-    tmp2 <- split_area_level(tmp2, n_plots = n_plots)
+    tmp <- split_area_level(tmp, n_plots = n_plots, years = TRUE)
+    tmp2 <- split_area_level(tmp2, n_plots = n_plots, years = TRUE)
 
     plots <- lapply(seq_along(tmp), function(i) {
         lapply(seq_along(tmp[[i]]), function(j) {
-
-            plt_data <- tmp[[i]][[j]]
-
+          lapply(seq_along(tmp[[i]][[j]]), function(k) {
+            
+            plt_data <- tmp[[i]][[j]][[k]]
+            plt_data2 <- tmp2[[i]][[j]][[k]]
+            
             spec_title <- paste(
-                plt_data$iso3[1],
-                plt_data$area_level[1],
-                plt_data$area_level_label[1],
-                sep = ", "
+              plt_data$year[1],
+              plt_data$iso3[1],
+              plt_data$area_level[1],
+              plt_data$area_level_label[1],
+              sep = ", "
             )
-
+            
             ggplot(plt_data,
                    aes(x = age,
                        y = area_name,
                        height = density,
                        fill = type,
                        color = type)) +
-                geom_density_ridges(stat = "identity",
-                                    scale = 1,
-                                    alpha = 0.7,
-                                    color = NA)  +
-                # Adding average age of circumcision
-                geom_point(data = tmp2[[i]][[j]],
-                           aes(x = average_age,
+              geom_density_ridges(stat = "identity",
+                                  scale = 1,
+                                  alpha = 0.7,
+                                  color = NA)  +
+              # Adding average age of circumcision
+              geom_point(data = plt_data2,
+                         aes(x = average_age,
+                             y = as.integer(area_name) - 0.05,
+                             color = type),
+                         inherit.aes = FALSE,
+                         show.legend = FALSE) +
+              # Adding uncertainty interval of average age of circumcision
+              geom_segment(data = plt_data2,
+                           aes(x = average_age_lower,
+                               xend = average_age_upper,
                                y = as.integer(area_name) - 0.05,
+                               yend = as.integer(area_name) - 0.05,
                                color = type),
                            inherit.aes = FALSE,
                            show.legend = FALSE) +
-                # Adding uncertainty interval of average age of circumcision
-                geom_segment(data =tmp2[[i]][[j]],
-                             aes(x = average_age_lower,
-                                 xend = average_age_upper,
-                                 y = as.integer(area_name) - 0.05,
-                                 yend = as.integer(area_name) - 0.05,
-                                 color = type),
-                             inherit.aes = FALSE,
-                             show.legend = FALSE) +
-                # Colour palette
-                scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
-                scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
-                # Setting theme
-                theme_minimal() +
-                # Splitting by circumcision type
-                # facet_grid(. ~ type) +
-                # Setting labels
-                ggtitle(spec_title) +
-                labs(y = NULL,
-                     x = "Age at circumcision",
-                     color = NULL,
-                     fill = NULL) +
-                # Changing plot themes
-                theme(
-                    axis.title = element_text(size = 24),
-                    axis.text = element_text(size = 16),
-                    plot.title = element_text(size = 40, hjust = 0.5),
-                    strip.text = element_text(size = 16),
-                    strip.background = element_blank(),
-                    legend.title = element_text(size = 16),
-                    legend.text = element_text(size = 24),
-                    legend.position = 'bottom',
-                    panel.spacing = unit(0.2, "lines")
-                )
+              # Colour palette
+              scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
+              scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
+              # Setting theme
+              theme_minimal() +
+              # Splitting by circumcision type
+              # facet_grid(. ~ type) +
+              # Setting labels
+              ggtitle(spec_title) +
+              labs(y = NULL,
+                   x = "Age at circumcision",
+                   color = NULL,
+                   fill = NULL) +
+              # Changing plot themes
+              theme(
+                axis.title = element_text(size = 24),
+                axis.text = element_text(size = 16),
+                plot.title = element_text(size = 40, hjust = 0.5),
+                strip.text = element_text(size = 16),
+                strip.background = element_blank(),
+                legend.title = element_text(size = 16),
+                legend.text = element_text(size = 24),
+                legend.position = 'bottom',
+                panel.spacing = unit(0.2, "lines")
+              )
+          })
         })
     })
 
     if (!is.null(str_save)) {
         ggsave(
             filename = str_save,
-            plot = gridExtra:: marrangeGrob(purrr::flatten(plots), nrow = 1, ncol = 1),
+            plot = gridExtra:: marrangeGrob(rlang::squash(plots), nrow = 1, ncol = 1),
             dpi = "retina",
             width = save_width,
             height = save_height
         )
     } else {
-        return(purrr::flatten(plots))
+        return(rlang::squash(plots))
     }
 }
 
@@ -1395,7 +1399,7 @@ plt_MC_modelfit_spec_age <- function(df_results, df_results_survey, mc_type_mode
   })
 
   # flatten nested list of plots
-  plots <- purrr::flatten(plots)
+  plots <- rlang::squash(plots)
   if (!is.null(str_save)) {
     # save
     plots <-  gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
@@ -1504,10 +1508,10 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   })
 
   # flatten nested list of plots
-  plots <- purrr::flatten(plots)
-  if (!"data.frame" %in% class(plots[[1]][[1]])) {
-    plots <- purrr::flatten(plots)
-  }
+  plots <- rlang::squash(plots)
+  # if (!"data.frame" %in% class(plots[[1]][[1]])) {
+  #   plots <- purrr::flatten(plots)
+  # }
 
   if (!is.null(str_save)) {
     # save
