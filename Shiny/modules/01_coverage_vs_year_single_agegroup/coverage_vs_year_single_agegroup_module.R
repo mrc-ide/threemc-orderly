@@ -42,7 +42,8 @@ single_plots_UI <- function(id) {
                  "Prevalence vs Year split by Type"              = "plt_4",
                  "Prevalence & Coverage vs Age split by Type"    = "plt_2",
                  "Prevalence Map"                                = "plt_3",
-                 "Coverage vs Age"                               = "plt_5"
+                 "Coverage vs Age"                               = "plt_5",
+                 "Ridge Plot of mean TMIC and MMC-nT age"        = "plt_6"
                 )
               ),
               selectInput(
@@ -78,6 +79,21 @@ single_plots_UI <- function(id) {
             #### Options specific to each plot ####
             tabPanel(
               strong("Plot Specific"),
+              # type selector for plot 5
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_5'",
+                ns        = ns,
+                selectInput(
+                  inputId  = ns("spec_type"),
+                  label    = "Select Circumcision Types",
+                  choices  = c(
+                    "Total Circumcision" = "MC coverage",
+                    "Medical Circumcision" = "MMC coverage",
+                    "Traditional Circumcision" = "TMC coverage"
+                  ),
+                  multiple = TRUE
+                ) 
+              ),
               # single choice for age group
               conditionalPanel(
                 condition = "input.plot_type == 'plt_1' || 
@@ -94,7 +110,8 @@ single_plots_UI <- function(id) {
               # slider choice for age
               conditionalPanel(
                 condition = "input.plot_type == 'plt_2' || 
-                input.plot_type == 'plt_5'",
+                input.plot_type == 'plt_5' || 
+                input.plot_type == 'plt_6'",
                 ns        = ns,
                 sliderInput(
                   inputId = ns("age_slider"),
@@ -123,7 +140,8 @@ single_plots_UI <- function(id) {
               # multiple selector for year
               conditionalPanel(
                 condition = "input.plot_type == 'plt_2' ||
-                input.plot_type == 'plt_5'",
+                input.plot_type == 'plt_5' ||
+                input.plot_type == 'plt_6'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("year_select"), # also updated below
@@ -248,7 +266,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
     )
     
     # load data 
-    if (input$plot_type %in% c("plt_2", "plt_5")) {
+    if (input$plot_type %in% c("plt_2", "plt_5", "plt_6")) {
       output <- results_reader(type = "age", dir_path = aggr_loc)
     } else {
       output <- results_reader(type = "age groups", dir_path = aggr_loc)
@@ -452,13 +470,36 @@ single_plots_server <- function(input, output, session, connection, selected = r
       
     } else if (input$plot_type == "plt_5") {
       
+      req(input$spec_types)
+      req(input$year_select)
+      req(input$area_levels)
+      req(input$age_slider)
+      
       plt_age_coverage_multi_years(
         results(),
-        data$areas,
-        # spec_years = c(2009, 2015, 2021),
-        spec_years  = sort(as.numeric(input$year_select)),
-        # spec_ages = c(0, 60)
-        spec_ages = as.numeric(input$age_slider)
+        data$areas, 
+        spec_types = input$spec_types,
+        spec_years  = sort(as.numeric(input$year_select)), 
+        area_levels = input$area_levels,
+        spec_model = "No program data",
+        spec_ages = as.numeric(input$age_slider), 
+        n_plots = 1
+      )
+      
+    } else if(input$plot_type == "plt_6") {
+      
+      req(input$year_select)
+      req(input$area_levels)
+      req(input$age_slider)
+      
+      plt_circ_age_ridge(
+        results_age = results(), 
+        areas = data$areas, 
+        spec_years = sort(as.numeric(input$year_select)), 
+        area_levels = input$area_levels, 
+        spec_model = "No program data", 
+        spec_ages = as.numeric(input$age_slider),
+        n_plots = 1
       )
       
     }
