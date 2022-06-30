@@ -18,10 +18,12 @@ single_plots_UI <- function(id) {
   ns <- NS(id)
   
   tagList(
-    fluidRow(
-      width = 12,
+    # fluidPage(
+    fillPage(
+      # width = 12,
       sidebarLayout(
         sidebarPanel(
+          width = 3,
           tabsetPanel(
             #### Options common between plots ####
             tabPanel(
@@ -38,8 +40,9 @@ single_plots_UI <- function(id) {
                 choices = c(
                  "Prevalence vs Year"                            = "plt_1",
                  "Prevalence vs Year split by Type"              = "plt_4",
-                 "Prevalence & Percentage vs Age split by Type"  = "plt_2",
-                 "Prevalence Map"                                = "plt_3"
+                 "Prevalence & Coverage vs Age split by Type"    = "plt_2",
+                 "Prevalence Map"                                = "plt_3",
+                 "Coverage vs Age"                               = "plt_5"
                 )
               ),
               selectInput(
@@ -47,7 +50,15 @@ single_plots_UI <- function(id) {
                 label    = "Plot Number",
                 choices  = NULL,
                 selected = NULL
-              ) # ,
+              ),
+              # numericInput(
+              #   inputId = ns("plot_height"),
+              #   label = "Plot Height (pixels)", 
+              #   value = 800, 
+              #   min = 400, 
+              #   max = 1600, 
+              #   step = 50 
+              # )
               # leave out for now
               # selectInput(
               #   inputId = ns("n_plot"),
@@ -82,7 +93,8 @@ single_plots_UI <- function(id) {
               ),
               # slider choice for age
               conditionalPanel(
-                condition = "input.plot_type == 'plt_2'",
+                condition = "input.plot_type == 'plt_2' || 
+                input.plot_type == 'plt_5'",
                 ns        = ns,
                 sliderInput(
                   inputId = ns("age_slider"),
@@ -110,7 +122,8 @@ single_plots_UI <- function(id) {
               ),
               # multiple selector for year
               conditionalPanel(
-                condition = "input.plot_type == 'plt_2'",
+                condition = "input.plot_type == 'plt_2' ||
+                input.plot_type == 'plt_5'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("year_select"), # also updated below
@@ -177,9 +190,10 @@ single_plots_UI <- function(id) {
             ),
           ),
         ),
-        # Output plot 
+        #### Output plot ####
         mainPanel(
-          plotOutput(outputId = ns("cov_vs_year_plt")) %>% 
+          width = 9, 
+          plotOutput(outputId = ns("cov_vs_year_plt"), height = 800) %>% 
             withSpinner(color = "#0dc5c1")
         ),
         position = "right"
@@ -234,7 +248,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
     )
     
     # load data 
-    if (input$plot_type %in% c("plt_2")) {
+    if (input$plot_type %in% c("plt_2", "plt_5")) {
       output <- results_reader(type = "age", dir_path = aggr_loc)
     } else {
       output <- results_reader(type = "age groups", dir_path = aggr_loc)
@@ -245,6 +259,14 @@ single_plots_server <- function(input, output, session, connection, selected = r
     
     return(output)
   })
+  
+  # # reactive value for plot height
+  # plotheight <- reactive({
+  #   req(input$plot_height())
+  #   
+  #   return(as.numeric(input$plot_height()))
+  # })
+  
   
   #### update plot options (from data) ####
   
@@ -427,6 +449,18 @@ single_plots_server <- function(input, output, session, connection, selected = r
                             input$year_select[1], "-", input$year_select[2],
                             " age ",  input$age_group_select, " years"),
       )
+      
+    } else if (input$plot_type == "plt_5") {
+      
+      plt_age_coverage_multi_years(
+        results(),
+        data$areas,
+        # spec_years = c(2009, 2015, 2021),
+        spec_years  = sort(as.numeric(input$year_select)),
+        # spec_ages = c(0, 60)
+        spec_ages = as.numeric(input$age_slider)
+      )
+      
     }
   })
   
@@ -448,7 +482,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
     req(input$plot_n)
     # if (input$plot_type == "plt_3") browser()
     plt_data()[[input$plot_n]]
-  }) 
+  })
   
   #### Downloads ####
   # Single plot
