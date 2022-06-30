@@ -38,17 +38,17 @@ orderly_root <- paste(orderly_root, collapse = "/")
 ssa_iso3 <- c("LSO")
 
 # shapefile
-areas_loc <- orderly::orderly_list_archive() %>% 
-  filter(name == "00a2_areas_join") %>% 
+areas_loc <- orderly::orderly_list_archive() %>%
+  filter(name == "00a2_areas_join") %>%
   slice(n()) %>% 
   pull(id)
 areas_loc <- file.path(
   orderly_root,
-  "archive/00a2_areas_join/", 
+  "archive/00a2_areas_join/",
   areas_loc, 
   "artefacts/areas.geojson"
 )
-areas <- read_circ_data(areas_loc) %>% 
+areas <- read_circ_data(areas_loc) %>%
   filter(iso3 %in% ssa_iso3)
 
 # data which is fed into Shiny app
@@ -61,8 +61,8 @@ single_plots_data <- list(
 # source function and module, respectively
 source(paste0(orderly_root, "/Shiny/src/functions.R"))
 source(paste0(
-  orderly_root, 
-  "/Shiny/modules/01_coverage_vs_year_single_agegroup/coverage_vs_year_single_agegroup_module.R"
+  orderly_root,
+  "/Shiny/modules/01_single_plots/single_plots_module.R"
 ))
 
 #### Shiny Instance ####
@@ -70,7 +70,7 @@ source(paste0(
 # UI
 ui <- fluidPage(
   fluidRow(
-    style = "padding: 20px;", 
+    style = "padding: 20px;",
     column(12, single_plots_UI(id = "single_plots_1"))
   )
 )
@@ -78,10 +78,10 @@ ui <- fluidPage(
 # Server
 server <- function(input, output, session) {
   callModule(
-    module = single_plots_server, 
-    id = "single_plots_1", 
+    module = single_plots_server,
+    id = "single_plots_1",
     selected = reactive("LSO"),
-    data = single_plots_data 
+    data = single_plots_data
   )
 }
 
