@@ -1199,14 +1199,12 @@ plt_circ_age_ridge <- function(
             age %in% spec_ages
             # area_level %in% c(0:1)# ,
             # model == "With program data"
-        )
-
+        ) %>% 
     # Getting density for the ridge plot
-    tmp <- tmp %>%
         # Grouping for normalising
         group_by(area_id, year, type) %>%
         # Estimating density
-        mutate(density = mean /(2 * sum(mean))) %>%
+        mutate(density = mean / (2 * sum(mean))) %>%
         ungroup() %>%
         # Altering labels for the plot
         mutate(type = ifelse(type %like% "MMC-nT", "Medical", "Traditional")) %>%
