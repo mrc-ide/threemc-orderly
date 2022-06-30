@@ -475,9 +475,10 @@ plt_mc_coverage_prevalence <- function(
 
 # fig 2 (circumcision coverage, split by type, across different discrete ages)
 plt_age_coverage_by_type <- function(
-  results_age, areas, spec_years, area_levels, spec_model,
+  results_age, areas, spec_years, area_levels, spec_model, spec_ages = c(0, 60),
   main = NULL, str_save = NULL, save_width, save_height, n_plots = 1
 ) {
+  
   # Subsetting
   tmp1 <- results_age %>%
     filter(
@@ -486,6 +487,7 @@ plt_age_coverage_by_type <- function(
       # year %in%     c(2009, 2015, 2021)# ,
       year %in% spec_years,
       area_level %in% area_levels,
+      age %in% seq(spec_ages[1], spec_ages[2], by = 1),
       model == spec_model
     ) %>%
     # rename columns
@@ -502,12 +504,12 @@ plt_age_coverage_by_type <- function(
     )
 
   # Dummy dataset for limits in each panel
-  dummy1 <- rbind(expand.grid(x = c(0, 60),
+  dummy1 <- rbind(expand.grid(x = spec_ages,
                               y = c(0, 0.2),
                               year = NA,
                               type2 = c("A", "B", "C"),
                               type1 = "Z"),
-                  expand.grid(x = c(0, 60),
+                  expand.grid(x = spec_ages,
                               y = c(0, 100),
                               year = NA,
                               type2 = c("A", "B", "C"),
@@ -562,7 +564,7 @@ plt_age_coverage_by_type <- function(
         geom_line(aes(y = mean.x),
                   size = 1) +
         # Setting for the axes
-        scale_x_continuous(breaks = seq(0, 60, by = 5)) +
+        scale_x_continuous(breaks = seq(spec_ages[1], spec_ages[2], by = 5)) +
         scale_y_continuous(breaks = scales::pretty_breaks(8), limits = c(0, NA)) +
         # Setting colour palette
         scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)) +

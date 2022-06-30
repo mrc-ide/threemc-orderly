@@ -68,10 +68,23 @@ single_plots_UI <- function(id) {
                 condition = "input.plot_type == 'plt_1'",
                 ns = ns,
                 selectInput(
-                  inputId = ns("age_group"),
+                  inputId = ns("age_group_single"),
                   label = "Select Age Group",
                   choices = NULL,
                   selected = NULL
+                ) 
+              ),
+              # slider choice for age
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_2'",
+                ns = ns,
+                sliderInput(
+                  inputId = ns("age_slider"),
+                  label = "Select Ages",
+                  min = 0, 
+                  max = 60, 
+                  step = 5,
+                  value = c(0, 60)
                 ) 
               ),
               # two-way slider for year
@@ -79,13 +92,25 @@ single_plots_UI <- function(id) {
                 condition = "input.plot_type == 'plt_1'",
                 ns = ns,
                 sliderInput(
-                  inputId = ns("years"), # also updated below
+                  inputId = ns("year_slider"), # also updated below
                   label = "Select Years",
                   min = 2009,
                   max = 2021,
                   value = c(2009, 2021)
                 )
-              )
+              ),
+              # multiple selector for year
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_2'",
+                ns = ns,
+                selectInput(
+                  inputId = ns("year_select"), # also updated below
+                  label = "Select Years",
+                  choices = NULL,
+                  selected = NULL, 
+                  multiple = TRUE
+                )
+              ),
             ),
             #### Options for saving plots ####
             tabPanel(
@@ -149,8 +174,9 @@ single_plots_server <- function(input, output, session, connection, selected = r
   
   #### Pull in data ####
   
-  results_agegroup <- reactive({
+  results <- reactive({
     req(input$country)
+    req(input$plot_type)
     
     # find report name for specific country
     report_name <- orderly::orderly_search(
@@ -166,7 +192,11 @@ single_plots_server <- function(input, output, session, connection, selected = r
     )
     
     # load data 
-    output <- results_reader(type = "age groups", dir_path = aggr_loc)
+    if (input$plot_type %in% c("plt_2")) {
+      output <- results_reader(type = "age", dir_path = aggr_loc)
+    } else {
+      output <- results_reader(type = "age groups", dir_path = aggr_loc)
+    }
     
     # order by area hierarchy
     output <- order_area_name(output, areas = data$areas)
@@ -178,35 +208,64 @@ single_plots_server <- function(input, output, session, connection, selected = r
   
   # update single age group selector
   observe({
-    req(results_agegroup())
+    req(results())
     
     updateSelectInput(
       session,
-      "age_group",
-      choices = unique(results_agegroup()$age_group),
+      "age_group_single",
+      choices = unique(results()$age_group),
       selected = "10+"
     )
   })
   
+  # update ages slider 
+  # observe({
+  #   req(results())
+  #   
+  #   updateSliderInput(
+  #     session,
+  #     "age_slider",
+  #     min = min(results()$age, na.rm = TRUE),
+  #     max = max(results()$age, na.rm = TRUE),
+  #     value = c(0, 60),
+  #     step = 5
+  #   )
+  # })
+  
   # update years slider 
   observe({
-    req(results_agegroup())
+    req(results())
     
     updateSliderInput(
       session,
-      "years",
-      min = min(results_agegroup()$year, na.rm = TRUE),
-      max = max(results_agegroup()$year, na.rm = TRUE),
+      "year_slider",
+      min = min(results()$year, na.rm = TRUE),
+      max = max(results()$year, na.rm = TRUE),
       value = c(2009, 2021), 
       step = 1
     )
   })
   
+  # update years selector
+  observe({
+    req(results())
+    
+    select <- c("2009", "2015", "2021")
+    select <- select[select %in% results()$year]
+    
+    updateSelectInput(
+      session,
+      "year_select",
+      choices = unique(results()$year),
+      selected = select
+    )
+  })
+  
   # update area levels selector
   observe({
-    req(results_agegroup())
+    req(results())
     
-    area_levs <- unique(results_agegroup()$area_level)
+    area_levs <- unique(results()$area_level)
     
     updateSelectInput(
       session,
@@ -219,23 +278,46 @@ single_plots_server <- function(input, output, session, connection, selected = r
   #### Plot ####
   # plot Circumcision Coverage vs Year 
   cov_vs_year_plt_data <- reactive({
-    req(results_agegroup())
-    req(input$age_group)
+    req(results())
+    req(input$plot_type)
+    if (input$plot_type == "plt_1") {
+      req(input$age_group_single)
+    } else if (input$plot_type == "plt_2") {
+      req(input$age_slider)
+    }
     
-    # browser()
-    
-    plt_mc_coverage_prevalence(
-      results_agegroup(),
-      data$areas,
-      spec_age_group = input$age_group,
-      spec_years = as.numeric(input$years[[1]]):as.numeric(input$years[[2]]),
-      # area_levels = unique(results_agegroup()$area_level), # use all area levels
-      area_levels = input$area_levels,
-      spec_model = "No program data",
-      main = "Circumcision Coverage vs Year, ",
-      n_plots = 1
-      # n_plots = as.numeric(input$n_plot)
-    )
+    # Prevalence vs year
+    if (input$plot_type == "plt_1") {
+      
+      plt_mc_coverage_prevalence(
+        results(),
+        data$areas,
+        spec_age_group = input$age_group_single,
+        spec_years = as.numeric(input$year_slider[[1]]):as.numeric(input$year_slider[[2]]),
+        # area_levels = unique(results()$area_level), # use all area levels
+        area_levels = as.numeric(input$area_levels),
+        spec_model = "No program data",
+        main = "Circumcision Coverage vs Year, ",
+        n_plots = 1
+        # n_plots = as.numeric(input$n_plot)
+      ) 
+      
+      # Prevalence vs age for each circumcision type
+    } else if (input$plot_type == "plt_2") {
+      
+      plt_age_coverage_by_type(
+        results(),
+        data$areas,
+        # spec_years = c(2009, 2015, 2021),
+        spec_years = as.numeric(input$year_select),
+        # area_levels = unique(results_age$area_level), # use all area levels
+        area_levels = as.numeric(input$area_levels), 
+        spec_ages = as.numeric(input$age_slider),
+        spec_model = "No program data", 
+        main = "Circumcision Coverage vs Age, ",
+        n_plots = 1
+      )
+    }
   })
   
   # Update plot selector
