@@ -28,23 +28,24 @@ single_plots_UI <- function(id) {
               strong("Common"),
               selectInput(
                 inputId = ns("country"),
-                label = "Select Country",
+                label   = "Select Country",
                 choices = NULL,
                 selected = NULL
               ),
               selectInput(
                 inputId = ns("plot_type"),
-                label = "Plot Type", 
+                label   = "Plot Type", 
                 choices = c(
-                 "Prevalence vs Year" = "plt_1",
-                 "Prevalence vs Age"  = "plt_2",
-                 "Prevalence Map"     = "plt_3"
+                 "Prevalence vs Year"                            = "plt_1",
+                 "Prevalence vs Year split by Type"              = "plt_4",
+                 "Prevalence & Percentage vs Age split by Type"  = "plt_2",
+                 "Prevalence Map"                                = "plt_3"
                 )
               ),
               selectInput(
-                inputId = ns("plot_n"),
-                label = "Plot Number",
-                choices = NULL,
+                inputId  = ns("plot_n"),
+                label    = "Plot Number",
+                choices  = NULL,
                 selected = NULL
               ) # ,
               # leave out for now
@@ -68,83 +69,87 @@ single_plots_UI <- function(id) {
               strong("Plot Specific"),
               # single choice for age group
               conditionalPanel(
-                condition = "input.plot_type == 'plt_1' || input.plot_type == 'plt_3'",
-                ns = ns,
+                condition = "input.plot_type == 'plt_1' || 
+                input.plot_type == 'plt_3' || 
+                input.plot_type == 'plt_4'",
+                ns        = ns,
                 selectInput(
-                  inputId = ns("age_group_single"),
-                  label = "Select Age Group",
-                  choices = NULL,
+                  inputId  = ns("age_group_single"),
+                  label    = "Select Age Group",
+                  choices  = NULL,
                   selected = NULL
                 ) 
               ),
               # slider choice for age
               conditionalPanel(
                 condition = "input.plot_type == 'plt_2'",
-                ns = ns,
+                ns        = ns,
                 sliderInput(
                   inputId = ns("age_slider"),
-                  label = "Select Ages",
-                  min = 0, 
-                  max = 60, 
-                  step = 5,
-                  value = c(0, 60)
+                  label   = "Select Ages",
+                  min     = 0, 
+                  max     = 60, 
+                  step    = 5,
+                  value   = c(0, 60)
                 ) 
               ),
               # two-way slider for year
               conditionalPanel(
-                condition = "input.plot_type == 'plt_1' || input.plot_type == 'plt_3'",
-                ns = ns,
+                condition = "input.plot_type == 'plt_1' || 
+                input.plot_type == 'plt_3' ||
+                input.plot_type == 'plt_4'",
+                ns        = ns,
                 sliderInput(
                   inputId = ns("year_slider"), # also updated below
-                  label = "Select Years",
-                  min = 2009,
-                  max = 2021, 
-                  value = c(2009, 2021),
-                  sep = ""
+                  label   = "Select Years",
+                  min     = 2009,
+                  max     = 2021, 
+                  value   = c(2009, 2021),
+                  sep     = ""
                 )
               ),
               # multiple selector for year
               conditionalPanel(
                 condition = "input.plot_type == 'plt_2'",
-                ns = ns,
+                ns        = ns,
                 selectInput(
-                  inputId = ns("year_select"), # also updated below
-                  label = "Select Years",
-                  choices = NULL,
+                  inputId  = ns("year_select"), # also updated below
+                  label    = "Select Years",
+                  choices  = NULL,
                   selected = NULL, 
                   multiple = TRUE
                 )
               ),
               # area level for non-map plots
               conditionalPanel(
-                condition = "input.plot_type != 'plt_3",
-                ns = ns,
+                condition = "input.plot_type != 'plt_3'",
+                ns        = ns,
                 selectInput(
-                  inputId = ns("area_levels"),
-                  label = "Select Area Levels",
-                  choices = NULL,
+                  inputId  = ns("area_levels"),
+                  label    = "Select Area Levels",
+                  choices  = NULL,
                   selected = NULL, 
                   multiple = TRUE
                 )
               ),
               # separate area level selectors for map plots
               conditionalPanel(
-                condition = "input.plot_type == 'plt_3",
-                ns = ns,
+                condition = "input.plot_type == 'plt_3'",
+                ns        = ns,
                 selectInput(
-                  inputId = ns("border_area_levels"),
-                  label = "Select Border Area Level",
-                  choices = NULL,
+                  inputId  = ns("border_area_level"),
+                  label    = "Select Border Area Level",
+                  choices  = NULL,
                   selected = NULL
                 )
               ),
               conditionalPanel(
-                condition = "input.plot_type != 'plt_3",
-                ns = ns,
+                condition = "input.plot_type == 'plt_3'",
+                ns        = ns,
                 selectInput(
-                  inputId = ns("results_area_levels"),
-                  label = "Select Results Area Level",
-                  choices = NULL,
+                  inputId  = ns("results_area_level"),
+                  label    = "Select Results Area Level",
+                  choices  = NULL,
                   selected = NULL
                 )
               )
@@ -306,7 +311,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
     
     updateSelectInput(
       session,
-      "results_area_levels",
+      "results_area_level",
       choices = area_levs,
       selected = max(area_levs)
     )
@@ -323,7 +328,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
     
     updateSelectInput(
       session,
-      "border_area_levels",
+      "border_area_level",
       choices = area_levs,
       selected = min(area_levs)
     )
@@ -333,15 +338,16 @@ single_plots_server <- function(input, output, session, connection, selected = r
   #### Plot ####
   # plot Circumcision Coverage vs Year 
   plt_data <- reactive({
+    
     req(results())
     req(input$plot_type)
-    if (input$plot_type %in% c("plt_1", "plt_3")) {
-    } 
     
     # Prevalence vs year
     if (input$plot_type == "plt_1") {
       
       req(input$age_group_single)
+      req(input$year_slider)
+      req(input$area_levels)
       
       plt_mc_coverage_prevalence(
         results(),
@@ -359,6 +365,8 @@ single_plots_server <- function(input, output, session, connection, selected = r
       # Prevalence vs age for each circumcision type
     } else if (input$plot_type == "plt_2") {
       
+      req(input$year_select)
+      req(input$area_levels)
       req(input$age_slider)
       
       plt_age_coverage_by_type(
@@ -397,10 +405,32 @@ single_plots_server <- function(input, output, session, connection, selected = r
         plot_type          = "single",
         n_plots            = 1
       )
+      
+    
+    } else if (input$plot_type == "plt_4") {
+      
+      req(input$year_select)
+      req(input$age_group_select)
+      req(input$area_levels)
+      
+      plt_area_facet_coverage(
+        results(),
+        data$areas, 
+        # spec_years = 2008:2020,
+        spec_years = input$year_select[1]:input$year_select[2],
+        # spec_age_group = "10-29",
+        spec_age_group = input$age_group_select,
+        # area_levels = unique(results()$area_level),
+        area_levels = input$area_levels,
+        spec_model = "No program data",
+        spec_title = paste0("Male Circumcision Coverage, ",
+                            input$year_select[1], "-", input$year_select[2],
+                            " age ",  input$age_group_select, " years"),
+      )
     }
   })
   
-  # Update plot selector
+  #### Update plot selector ####
   observe({
     req(plt_data())
 
