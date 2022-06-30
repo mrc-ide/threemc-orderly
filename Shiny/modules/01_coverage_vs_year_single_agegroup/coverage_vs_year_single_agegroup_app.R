@@ -15,8 +15,8 @@ library(geofacet)
 library(scales)
 library(ggridges)
 library(orderly)
-# library(threemc)
-devtools::load_all("~/imperial_repos/threemc")
+library(threemc)
+# devtools::load_all("~/imperial_repos/threemc")
 
 #### Data ####
 
@@ -35,7 +35,7 @@ orderly_root <- paste(orderly_root, collapse = "/")
 # )
 
 # temp use a few countries to test
-ssa_iso3 <- c("LSO", "RWA", "NAM")
+ssa_iso3 <- c("LSO")
 
 # shapefile
 areas_loc <- orderly::orderly_list_archive() %>% 

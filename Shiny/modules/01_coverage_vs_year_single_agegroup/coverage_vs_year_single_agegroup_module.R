@@ -14,18 +14,18 @@ colourPalette <- rev(colorRampPalette(
 #### UI ####
 
 single_plots_UI <- function(id) {
+  
   ns <- NS(id)
+  
   tagList(
-    # titlePanel("Circumcision Coverage vs Year for Single Age Group"),
     fluidRow(
       width = 12,
       sidebarLayout(
         sidebarPanel(
           tabsetPanel(
-            # # Main Options
+            #### Options common between plots ####
             tabPanel(
-              strong("Options"),
-              chooseSliderSkin("Modern", color = "#b2b2b2"),
+              strong("Common"),
               selectInput(
                 inputId = ns("country"),
                 label = "Select Country",
@@ -33,20 +33,63 @@ single_plots_UI <- function(id) {
                 selected = NULL
               ),
               selectInput(
-                inputId = ns("plot"),
-                label = "Select Plot",
+                inputId = ns("plot_type"),
+                label = "Plot Type", 
+                choices = c(
+                 "Prevalence vs Year" = "plt_1",
+                 "Prevalence vs Age"  = "plt_2"
+                )
+              ),
+              selectInput(
+                inputId = ns("plot_n"),
+                label = "Plot Number",
                 choices = NULL,
                 selected = NULL
               ),
               selectInput(
-                inputId = ns("age_group"),
-                label = "Select Age Group",
+                inputId = ns("n_plot"),
+                label = "Number of Countries to Display",
+                choices = 1:10, 
+                selected = 1
+              ),
+              selectInput(
+                inputId = ns("area_levels"),
+                label = "Select Area Levels",
                 choices = NULL,
-                selected = NULL
+                selected = NULL, 
+                multiple = TRUE
+              ),
+            ),
+            #### Options specific to each plot ####
+            tabPanel(
+              strong("Plot Specific"),
+              # single choice for age group
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_1'",
+                ns = ns,
+                selectInput(
+                  inputId = ns("age_group"),
+                  label = "Select Age Group",
+                  choices = NULL,
+                  selected = NULL
+                ) 
+              ),
+              # two-way slider for year
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_1'",
+                ns = ns,
+                sliderInput(
+                  inputId = ns("years"), # also updated below
+                  label = "Select Years",
+                  min = 2009,
+                  max = 2021,
+                  value = c(2009, 2021)
+                )
               )
             ),
+            #### Options for saving plots ####
             tabPanel(
-              strong("Save Options"),
+              strong("Save"),
               chooseSliderSkin("Modern", color = "#b2b2b2"),
               selectInput(
                 inputId = ns("units"),
@@ -54,24 +97,21 @@ single_plots_UI <- function(id) {
                 choices = c("in", "cm", "mm", "px"),
                 selected = "in"
               ),
-              selectInput(
+              numericInput(
                 inputId = ns("width"),
-                label = "Plot Width",
-                choices = seq(0, 2000),
-                selected = 15
+                label   = "Plot Width",
+                value   = 15
               ),
-              selectInput(
+              numericInput(
                 inputId = ns("height"),
-                label = "Plot Height",
-                choices = seq(0, 1000),
-                selected = 11
-              )
+                label   = "Plot Height",
+                value   = 11
+              ),
             ),
           ),
         ),
-        # plot
+        # Output plot 
         mainPanel(
-          # reactableOutput(ns("mytable"), height = "700px", width = "100%") %>% withSpinner(color = "#0dc5c1")
           plotOutput(outputId = ns("cov_vs_year_plt")) %>% 
             withSpinner(color = "#0dc5c1")
         ),
@@ -136,7 +176,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
   
   #### update plot options (from data) ####
   
-  # update age group selector
+  # update single age group selector
   observe({
     req(results_agegroup())
     
@@ -147,7 +187,35 @@ single_plots_server <- function(input, output, session, connection, selected = r
       selected = "10+"
     )
   })
-
+  
+  # update years slider 
+  observe({
+    req(results_agegroup())
+    
+    updateSliderInput(
+      session,
+      "years",
+      min = min(results_agegroup()$year, na.rm = TRUE),
+      max = max(results_agegroup()$year, na.rm = TRUE),
+      value = c(2009, 2021), 
+      step = 1
+    )
+  })
+  
+  # update area levels selector
+  observe({
+    req(results_agegroup())
+    
+    area_levs <- unique(results_agegroup()$area_level)
+    
+    updateSelectInput(
+      session,
+      "area_levels",
+      choices = area_levs,
+      selected = area_levs
+    )
+  })
+  
   #### Plot ####
   # plot Circumcision Coverage vs Year 
   cov_vs_year_plt_data <- reactive({
@@ -158,14 +226,13 @@ single_plots_server <- function(input, output, session, connection, selected = r
       results_agegroup(),
       data$areas,
       spec_age_group = input$age_group,
-      spec_years = 2009:2021,
-      area_levels = unique(results_agegroup()$area_level), # use all area levels
+      spec_years = as.numeric(input$years[[1]]):as.numeric(input$years[[2]]),
+      # area_levels = unique(results_agegroup()$area_level), # use all area levels
+      area_levels = input$area_levels,
       spec_model = "No program data",
       main = "Circumcision Coverage vs Year, ",
-      # str_save = save_loc_1,
-      # save_width = 16,
-      # save_height = 7.5,
-      n_plots = 1
+      # n_plots = 1
+      n_plots = input$n_plot
     )
   })
   
@@ -175,22 +242,18 @@ single_plots_server <- function(input, output, session, connection, selected = r
 
     updateSelectInput(
       session,
-      "plot",
+      "plot_n",
       choices = seq_len(length(cov_vs_year_plt_data())),
       selected = 1
     )
   })
-
+  
   #### Output Plot ####
   output$cov_vs_year_plt <- renderPlot({
     req(cov_vs_year_plt_data())
-    req(input$plot)
+    req(input$plot_n)
     
-    print(input$units)
-    print(input$width)
-    print(input$height)
-     
-    cov_vs_year_plt_data()[[input$plot]]
+    cov_vs_year_plt_data()[[input$plot_n]]
   }) 
   
   #### Downloads ####
@@ -200,7 +263,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
       paste0("01_", tolower(input$country), "_coverage_prevalence.png")
     },
     content = function(file) {
-      temp <- cov_vs_year_plt_data()[[input$plot]]
+      temp <- cov_vs_year_plt_data()[[input$plot_n]]
       ggplot2::ggsave(
         filename = file, 
         plot = temp, 
