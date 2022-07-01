@@ -449,9 +449,15 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       
     } else if (input$plot_type == "plt_2") {
       
-      req(input$area_levels)
-      req(input$age_group_multiple)
-      req(input$year_select)
+      # req(input$area_levels)
+      # req(input$age_group_multiple)
+      # req(input$year_select)
+      
+      # last year in DMPPT2 data
+      DMPPT2_last_year <- max(add_data()$dmppt2_data$year)
+      # also include 2013, or whatever is later
+      year_2013 <- max(2013, min(add_data()$dmppt2_data$year))
+      plt_years <- sort(unique(c(DMPPT2_last_year, year_2013)))
       
       main_title <- "Circumcision Coverage by Age Group - "
       
@@ -460,13 +466,14 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         add_data()$dmppt2_data,
         # survey_data = survey_data,
         survey_data = NULL, 
-        area_levels = as.numeric(input$area_levels),
-        # age_per = c(
-        #   "0-4",   "5-9",   "10-14", "15-19", "20-24", "25-29", "30-34",
-        #   "35-39", "40-44", "45-49", "50-54", "54-59", "60-64"
-        # ),
-        age_per = input$age_group_multiple,
-        years = input$year_select, 
+        # area_levels = as.numeric(input$area_levels),
+        age_per = c(
+          "0-4",   "5-9",   "10-14", "15-19", "20-24", "25-29", "30-34",
+          "35-39", "40-44", "45-49", "50-54", "54-59", "60-64"
+        ),
+        # age_per = input$age_group_multiple,
+        years = plt_years,
+        # years = input$year_select, 
         xlab = "Age Group",
         ylab = "Circumcision Coverage",
         title = main_title,
