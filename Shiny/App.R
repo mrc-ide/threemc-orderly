@@ -89,16 +89,12 @@ ui = fluidPage(
           br(),
           br(),
           single_plots_UI("single_plots1"),
-          br(),
-          br()
         ),
         tabPanel(
           "SSA",
           br(),
           br(),
           ssa_plots_UI("ssa_plots1"),
-          br(), 
-          br()
         )
       )
     )
