@@ -26,15 +26,15 @@ orderly_root <- unlist(stringr::str_split(orderly_root, "/"))
 orderly_root <- orderly_root[1:which(orderly_root == "threemc-orderly")]
 orderly_root <- paste(orderly_root, collapse = "/")
 
-# comparison_iso3 <- c(
-#   "AGO", "BDI", "BEN", "BFA", "BWA", "CAF", "CIV", "CMR", "COD", 
-#   "COG", "ETH", "GAB", "GHA", "GIN", "GMB", "GNB", "GNQ", "KEN", 
-#   "LBR", "LSO", "MLI", "MOZ", "MWI", "NAM", "NER", "NGA", "RWA", 
-#   "SEN", "SLE", "SWZ", "TCD", "TGO", "TZA", "UGA", "ZAF", "ZMB", "ZWE"
-# )
+comparison_iso3 <- sort(c(
+  "AGO", "BDI", "BEN", "BFA", "BWA", "CAF", "CIV", "CMR", "COD",
+  "COG", "ETH", "GAB", "GHA", "GIN", "GMB", "GNB", "GNQ", "KEN",
+  "LBR", "LSO", "MLI", "MOZ", "MWI", "NAM", "NER", "NGA", "RWA",
+  "SEN", "SLE", "SWZ", "TCD", "TGO", "TZA", "UGA", "ZAF", "ZMB", "ZWE"
+))
 
 # temp use a few countries to test
-comparison_iso3 <- c("LSO")
+# comparison_iso3 <- c("LSO")
 
 # shapefiles
 areas_loc <- orderly::orderly_list_archive() %>%
@@ -60,7 +60,7 @@ areas_join <- areas %>%
 
 # DMPPT2 data
 dmppt2_data <- readr::read_csv(
-  paste0(orderly_root, "/global/dmppt2-2021_circumcision_coverage.csv.gz")
+  paste0(orderly_root, "/Shiny/global/dmppt2-2021_circumcision_coverage.csv.gz")
 )
 
 # only use iso3s with DMPPT2 data (?)
@@ -68,7 +68,7 @@ comparison_iso3 <- comparison_iso3[comparison_iso3 %in% dmppt2_data$iso3]
 
 # survey_data
 survey_data <- read_circ_data(
-  paste0(orderly_root, "/global/survey-circumcision-coverage.csv.gz"),
+  paste0(orderly_root, "/Shiny/global/survey-circumcision-coverage.csv.gz"),
   filters = c("sex" = "male")
 ) %>% 
   filter(

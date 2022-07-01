@@ -229,6 +229,8 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   circ_data <- reactive({
     req(input$country)
     
+    # browser()
+    
     # find report name for specific country
     report_name <- orderly::orderly_search(
       name = "02_aggregations",
@@ -254,6 +256,9 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   })
   
   add_data <- reactive({
+    req(input$country)
+    
+    # browser()
     
     dmppt2_data <- data$dmppt2_data %>% 
       filter(iso3 == input$country)
