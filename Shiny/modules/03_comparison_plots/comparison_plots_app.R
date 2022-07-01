@@ -72,13 +72,13 @@ survey_data <- read_circ_data(
   filters = c("sex" = "male")
 ) %>% 
   filter(
-    iso3 %in% comparison_iso3,
+    iso3 %in% comparison_iso3 # ,
     # for LSO DMPPT2 data is for all circumcisions, except for in LSO
-    (indicator == "circumcised" & iso3 != "LSO") | 
-    (indicator == "circ_medical" & iso3 == "LSO")
+    # (indicator == "circumcised" & iso3 != "LSO") | 
+    # (indicator == "circ_medical" & iso3 == "LSO")
   )
 
-# change naming convention of survey data
+# change naming convention of survey data (not working currently!)
 if ("survey_mid_calendar_quarter" %in% names(survey_data)) {
   survey_data <- survey_data %>%
     rename(

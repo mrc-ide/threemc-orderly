@@ -31,10 +31,11 @@ comparison_plots_UI <- function(id) {
                 label   = "Plot Type", 
                 choices = c(
                   # DMPPT2 Comparison Plots
-                  "DMPPT2 - Circumcision Prevalence vs Year" = "plt_1",
-                  "DMPPT2 - Barchart"                        = "plt_2",
-                  "DMPPT2 Coverage vs Model Coverage"        = "plt_3"
+                  "Coverage vs Year"                  = "plt_1",
+                  "DMPPT2 - Barchart"                 = "plt_2",
+                  "DMPPT2 Coverage vs Model Coverage" = "plt_3",
                   # Survey Comparison Plots
+                  "Surveys - Prevalence vs Age Group" = "plt_4"
                 )
               ),
               selectInput(
@@ -386,6 +387,27 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     req(add_data())
     req(input$plot_type)
     
+    # ensure survey_data has the right type
+    if (input$plot_type %in% c("plt_1", "plt_2", "plt_3")) {
+      
+      survey_data <- add_data()$survey_data %>% 
+        filter(
+          (indicator == "circumcised" & iso3 != "LSO") | 
+          (indicator == "circ_medical" & iso3 == "LSO")
+        )
+    } else if (input$plot_type == "plt_4") {
+      
+      survey_data <- add_data()$survey_data %>% 
+        rename(type = indicator) %>% 
+        mutate(
+          type = case_when(
+            type == "circumcised"  ~ "Total",
+            type == "circ_medical" ~ "Medical",
+            TRUE                   ~ "Traditional"
+          )
+        )
+    }
+    
     # Prevalence vs year
     if (input$plot_type == "plt_1") {
       
@@ -401,7 +423,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       main_title <- paste0(
         # "15-49 Prevalence ",
         input$age_group_single,
-        " Prevalence ",
+        " Coverage ",
         "(", years, ")",
         " - Black line denotes DMPPT2 coverage,",
         " Blue dots denote Surveyed coverage - "
@@ -412,14 +434,15 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       plt_dmppt2_compare_year(
         circ_data(),
         add_data()$dmppt2_data,
-        add_data()$survey_data,
+        # add_data()$survey_data,
+        survey_data,
         # age_per = "15-49",
         age_per = input$age_group_single,
         # years = plt_start_year : 2021,
         years = as.numeric(input$year_slider[[1]]):as.numeric(input$year_slider[[2]]), 
         area_levels = as.numeric(input$area_levels),
         xlab = "Year",
-        ylab = "Circumcision Prevalence",
+        ylab = "Circumcision Coverage",
         title = main_title,
         n_plots = 1
       )
@@ -430,12 +453,12 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       req(input$age_group_multiple)
       req(input$year_select)
       
-      main_title <- "Circumcision Prevalence by Age Group - "
+      main_title <- "Circumcision Coverage by Age Group - "
       
       plt_dmppt2_compare_age_group(
         circ_data(),
         add_data()$dmppt2_data,
-        # survey_data = add_data()$survey_data,
+        # survey_data = survey_data,
         survey_data = NULL, 
         area_levels = as.numeric(input$area_levels),
         # age_per = c(
@@ -445,7 +468,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         age_per = input$age_group_multiple,
         years = input$year_select, 
         xlab = "Age Group",
-        ylab = "Circumcision Prevalence",
+        ylab = "Circumcision Coverage",
         title = main_title,
         n_plots = 1
       )
@@ -458,7 +481,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       # main_title <- paste0("10-29 DMPPT2 Prevalence vs threemc Prevalence, ")
       main_title <- paste0(
         input$age_group_single,
-        " DMPPT2 Prevalence vs threemc Prevalence, "
+        " DMPPT2 Coverage vs threemc Coverage, "
       )
       
       # take for maximum dmppt2 year, and (at least) 2013
@@ -475,10 +498,38 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         # years =  spec_years, 
         years = input$year_select,
         area_levels = input$area_levels,
-        xlab = "DMPPT2 Prevalence",
-        ylab = "threemc Prevalence",
+        xlab = "DMPPT2 Coverage",
+        ylab = "threemc Coverage",
         title = main_title
       ))
+    } else if (input$plot_type == "plt_4") {
+      
+      years <- unique(add_data()$survey_data$year)
+      
+      main_title = "Circumcision Coverage by Age Group (Black dots denote sampled coverage) - "
+      
+      plt_MC_modelfit(
+        # df_results = results_agegroup,
+        df_results = circ_data(),
+        # df_results_survey = results_survey,
+        df_results_survey = survey_data,
+        # mc_type_model = names(types)[x],
+        mc_type_model = "MMC coverage",
+        # mc_type_survey = types[[x]][[1]],
+        mc_type_survey = "Medical",
+        age_per = c(
+          "0-4",   "5-9",   "10-14", "15-19", "20-24", "25-29", "30-34",
+           "35-39", "40-44", "45-49", "50-54", "54-59", "60-64"
+        ),
+        # survey_years =  years[years %in% results_agegroup$year],
+        survey_years =  years[years %in% circ_data()$year],
+        model_type = "No program data",
+        xlab = "Age Group",
+        ylab = "Circumcision Coverage",
+        # title = paste(types[[x]][[1]], main_title),
+        title = paste("Medical", main_title),
+        n_plots = 1
+      )
     }
   })
   

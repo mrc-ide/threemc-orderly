@@ -1420,6 +1420,9 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
                             save_width = NULL, 
                             save_height = NULL, 
                             n_plots = 12) {
+  
+  # browser()
+  
   # Preparing dataset for plots
   initial_filter <- function(.data, spec_type) {
     .data <- .data %>%
@@ -1441,7 +1444,17 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   # make sure areas are the same for both
   tmp2 <- filter(tmp2, area_name %in% tmp1$area_name)
   tmp1 <- filter(tmp1, year %in% tmp2$year) # make sure years are the same
-
+  
+  # replace NAs with "NA" in parent_area_name
+  tmp1 <- tmp1 %>%
+    mutate(
+      parent_area_name = ifelse(
+        is.na(parent_area_name),
+        "NA",
+        parent_area_name
+      )
+   ) 
+  
   # split results by area level, year and number of plots desired
   tmp1 <- split_area_level(tmp1, year = T, n_plots = n_plots)
   tmp2 <- split_area_level(tmp2, year = T, n_plots = n_plots)
@@ -1573,7 +1586,7 @@ plt_dmppt2_compare_year <- function(circ_data,
                                     years = NULL,
                                     model_type = NULL,
                                     xlab = "Year",
-                                    ylab = "Circumcision Prevalence",
+                                    ylab = "Circumcision Coverage",
                                     title,
                                     str_save = NULL,
                                     save_width = NULL,
@@ -1629,7 +1642,7 @@ plt_dmppt2_compare_year <- function(circ_data,
       )
     )
   
-  # For LSO, DMPPT2 models medical, not traditional circumcision
+  # For LSO, DMPPT2 models medical, not all circumcision
   if (all(circ_data$iso3 == "LSO")) {
     circ_data <- circ_data %>% 
       filter(type == "MMC coverage")
@@ -1803,6 +1816,15 @@ plt_dmppt2_compare_age_group <- function(circ_data,
     if (!is.null(survey_data)) survey_data <- initial_filter(survey_data,
                                                              cols[i],
                                                              vals[[i]])
+  }
+  
+  # For LSO, DMPPT2 models medical, not all circumcision
+  if (all(circ_data$iso3 == "LSO")) {
+    circ_data <- circ_data %>% 
+      filter(type == "MMC coverage")
+  } else {
+    circ_data <- circ_data %>% 
+      filter(type == "MC coverage")
   }
   
   # join data
@@ -1998,6 +2020,15 @@ plt_dmppt2_compare_fits <- function(circ_data,
   for (i in seq_along(cols)) {
     circ_data <- initial_filter(circ_data, cols[i], vals[[i]])
     dmppt2_data <- initial_filter(dmppt2_data, cols[i], vals[[i]])
+  }
+  
+  # For LSO, DMPPT2 models medical, not all circumcision
+  if (all(circ_data$iso3 == "LSO")) {
+    circ_data <- circ_data %>% 
+      filter(type == "MMC coverage")
+  } else {
+    circ_data <- circ_data %>% 
+      filter(type == "MC coverage")
   }
   
   # join datasets
