@@ -52,19 +52,10 @@ single_plots_UI <- function(id) {
                 choices  = NULL,
                 selected = NULL
               ),
-              # # leave out for now
-              # numericInput(
-              #   inputId = ns("plot_height"),
-              #   label = "Plot Height (pixels)", 
-              #   value = 800, 
-              #   min = 400, 
-              #   max = 1600, 
-              #   step = 50 
-              # )
               # selectInput(
               #   inputId = ns("n_plot"),
               #   label = "Number of Areas to Display",
-              #   choices = 1:10, 
+              #   choices = 1:15,
               #   selected = 1
               # ),
               # move to plot-specific options
@@ -476,28 +467,28 @@ single_plots_server <- function(input, output, session, connection, selected = r
     
     } else if (input$plot_type == "plt_4") {
       
-      req(input$year_select)
-      req(input$age_group_select)
+      req(input$year_slider)
+      req(input$age_group_single)
       req(input$area_levels)
       
       plt_area_facet_coverage(
         results(),
         data$areas, 
         # spec_years = 2008:2020,
-        spec_years = input$year_select[1]:input$year_select[2],
+        spec_years = input$year_slider[1]:input$year_slider[2],
         # spec_age_group = "10-29",
-        spec_age_group = input$age_group_select,
+        spec_age_group = input$age_group_single,
         # area_levels = unique(results()$area_level),
         area_levels = input$area_levels,
         spec_model = "No program data",
         spec_title = paste0("Male Circumcision Coverage, ",
-                            input$year_select[1], "-", input$year_select[2],
-                            " age ",  input$age_group_select, " years"),
+                            input$year_slider[1], "-", input$year_slider[2],
+                            " age ",  input$age_group_single, " years"),
       )
       
     } else if (input$plot_type == "plt_5") {
       
-      req(input$spec_types)
+      req(input$spec_type)
       req(input$year_select)
       req(input$area_levels)
       req(input$age_slider)
@@ -505,7 +496,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
       plt_age_coverage_multi_years(
         results(),
         data$areas, 
-        spec_types = input$spec_types,
+        spec_types = input$spec_type,
         spec_years  = sort(as.numeric(input$year_select)), 
         area_levels = input$area_levels,
         spec_model = "No program data",

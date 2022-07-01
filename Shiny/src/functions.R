@@ -904,7 +904,7 @@ plt_area_facet_coverage <- function(
     save_height = 21,
     n_plots = 12
 ) {
-
+  
     # Subsetting
     tmp <- results_agegroup %>%
         filter(
@@ -1188,6 +1188,11 @@ plt_circ_age_ridge <- function(
     save_height = 7,
     n_plots = 8
 ) {
+    
+    # temp fix
+    if (!all(spec_ages == 0:30)) {
+      spec_ages <- 0:30
+    }
 
     # Keeping relevant information
     tmp <- results_age %>%
@@ -1231,6 +1236,8 @@ plt_circ_age_ridge <- function(
     plots <- lapply(seq_along(tmp), function(i) {
         lapply(seq_along(tmp[[i]]), function(j) {
           lapply(seq_along(tmp[[i]][[j]]), function(k) {
+            
+            # browser()
             
             plt_data <- tmp[[i]][[j]][[k]]
             plt_data2 <- tmp2[[i]][[j]][[k]]
@@ -1297,17 +1304,19 @@ plt_circ_age_ridge <- function(
           })
         })
     })
-
+    # browser()
+    
+    plots <- rlang::squash(plots)
     if (!is.null(str_save)) {
         ggsave(
             filename = str_save,
-            plot = gridExtra:: marrangeGrob(rlang::squash(plots), nrow = 1, ncol = 1),
+            plot = gridExtra:: marrangeGrob(plots, nrow = 1, ncol = 1),
             dpi = "retina",
             width = save_width,
             height = save_height
         )
     } else {
-        return(rlang::squash(plots))
+        return(plots)
     }
 }
 
