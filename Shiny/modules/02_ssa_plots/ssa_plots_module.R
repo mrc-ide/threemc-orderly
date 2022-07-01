@@ -13,7 +13,7 @@ colourPalette <- rev(colorRampPalette(
 
 #### UI ####
 
-single_plots_UI <- function(id) {
+ssa_plots_UI <- function(id) {
   
   ns <- NS(id)
   
@@ -173,7 +173,7 @@ single_plots_UI <- function(id) {
 }
 
 #### Server ####
-single_plots_server <- function(input, output, session, data) {
+ssa_plots_server <- function(input, output, session, data) {
 
   #### update picker options (initial) ####
   

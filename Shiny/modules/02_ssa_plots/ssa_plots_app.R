@@ -71,14 +71,14 @@ source(paste0(
 ui <- fluidPage(
   fluidRow(
     style = "padding: 20px;", 
-    column(12, single_plots_UI(id = "ssa_plots_1"))
+    column(12, ssa_plots_UI(id = "ssa_plots_1"))
   )
 )
 
 # Server
 server <- function(input, output, session) {
   callModule(
-    module = single_plots_server, 
+    module = ssa_plots_server, 
     id = "ssa_plots_1", 
     data = ssa_plots_data # same as single_plots data
   )
