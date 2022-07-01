@@ -51,21 +51,7 @@ single_plots_UI <- function(id) {
                 label    = "Plot Number",
                 choices  = NULL,
                 selected = NULL
-              ),
-              # selectInput(
-              #   inputId = ns("n_plot"),
-              #   label = "Number of Areas to Display",
-              #   choices = 1:15,
-              #   selected = 1
-              # ),
-              # move to plot-specific options
-              # selectInput(
-              #   inputId = ns("area_levels"),
-              #   label = "Select Area Levels",
-              #   choices = NULL,
-              #   selected = NULL, 
-              #   multiple = TRUE
-              # )
+              )
             ),
             #### Options specific to each plot ####
             tabPanel(
@@ -174,6 +160,17 @@ single_plots_UI <- function(id) {
                   label    = "Select Results Area Level",
                   choices  = NULL,
                   selected = NULL
+                )
+              ),
+              conditionalPanel(
+                condition = "input.plot_type != 'plt_1' || 
+                input.plot_type != 'plt_2'",
+                ns        = ns,
+                selectInput(
+                  inputId = ns("n_plot"),
+                  label = "Number of Areas to Display",
+                  choices = 1:15,
+                  selected = 1
                 )
               )
             ),
@@ -393,6 +390,24 @@ single_plots_server <- function(input, output, session, connection, selected = r
     )
   })
   
+  # update n_plots selector
+  observe({
+    req(input$plot_type)
+    
+    default <- switch(
+      input$plot_type,
+      "plt_4" = 12,
+      "plt_5" = 12,
+      "plt_6" = 8,
+      1
+    )
+    
+    updateSelectInput(
+      session, 
+      "n_plot",
+      selected = default
+    )
+  })
   
   #### Plot ####
   # plot Circumcision Coverage vs Year 
@@ -407,6 +422,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
       req(input$age_group_single)
       req(input$year_slider)
       req(input$area_levels)
+      req(input$n_plot)
       
       plt_mc_coverage_prevalence(
         results(),
@@ -470,6 +486,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
       req(input$year_slider)
       req(input$age_group_single)
       req(input$area_levels)
+      req(input$n_plot)
       
       plt_area_facet_coverage(
         results(),
@@ -484,6 +501,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
         spec_title = paste0("Male Circumcision Coverage, ",
                             input$year_slider[1], "-", input$year_slider[2],
                             " age ",  input$age_group_single, " years"),
+        n_plots = as.numeric(input$n_plot)
       )
       
     } else if (input$plot_type == "plt_5") {
@@ -492,6 +510,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
       req(input$year_select)
       req(input$area_levels)
       req(input$age_slider)
+      req(input$n_plot)
       
       plt_age_coverage_multi_years(
         results(),
@@ -501,7 +520,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
         area_levels = input$area_levels,
         spec_model = "No program data",
         spec_ages = as.numeric(input$age_slider), 
-        n_plots = 1
+        n_plots = as.numeric(input$n_plot)
       )
       
     } else if(input$plot_type == "plt_6") {
@@ -509,6 +528,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
       req(input$year_select)
       req(input$area_levels)
       req(input$age_slider)
+      req(input$n_plot)
       
       plt_circ_age_ridge(
         results_age = results(), 
@@ -517,7 +537,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
         area_levels = input$area_levels, 
         spec_model = "No program data", 
         spec_ages = as.numeric(input$age_slider),
-        n_plots = 1
+        n_plots = as.numeric(input$n_plot)
       )
       
     }

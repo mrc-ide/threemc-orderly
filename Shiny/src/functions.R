@@ -71,147 +71,6 @@ change_agegroup_convention <- function(.data) {
     return(.data)
 }
 
-
-# circumcision coverage, split by type, across different discrete ages #
-plt_age_coverage_by_type <- function(
-  results_age, areas, spec_years, area_levels, spec_model,
-  str_save = NULL, save_width, save_height, n_plots = 1
-  ) {
-  # Subsetting
-  tmp1 <- results_age %>%
-    filter(
-      type %in%     c("MC probability", "MMC probability", "TMC probability",
-                      "MC coverage",    "MMC coverage",    "TMC coverage"),
-      # year %in%     c(2009, 2015, 2021)# ,
-      year %in% spec_years,
-      area_level %in% area_levels,
-      model == spec_model
-    ) %>%
-    # rename columns
-    summary_col_renamer() %>%
-    dplyr::mutate(
-      # multiply prevalence by 100
-      across(c(mean.x, lower.x, upper.x), ~ ifelse(type %like% "coverage",
-                                                   . * 100,
-                                                   .)),
-      # relabel for plot
-      type1 = ifelse(type %like% "coverage", "Y", "Z"),
-      type2 = ifelse(type %like% "MMC", "B",
-                     ifelse(type %like% "TMC", "C", "A")) # A for MC
-    )
-
-  # Dummy dataset for limits in each panel
-  dummy1 <- rbind(expand.grid(x = c(0, 60),
-                              y = c(0, 0.2),
-                              year = NA,
-                              type2 = c("A", "B", "C"),
-                              type1 = "Z"),
-                  expand.grid(x = c(0, 60),
-                              y = c(0, 100),
-                              year = NA,
-                              type2 = c("A", "B", "C"),
-                              type1 = "Y"))
-
-  # Dummy dataset to add 80% target
-  dummy2 = data.frame(type2 = c("A", "B", "C"),
-                      type1 = "Y",
-                      year = NA,
-                      y = c(80, 80, 80))
-
-  # add in required columns from areas and order area names
-  tmp1 <- add_area_info(tmp1, areas)
-
-  # split tmp by area level and number of desired plots
-  tmp1 <- split_area_level(tmp1, n_plots = n_plots)
-
-  plots <- lapply(tmp1, function(a) {
-    lapply(a, function(b) {
-
-      # title displaying area level and label
-      spec_title <- paste(
-        b$iso3[1],
-        b$area_name[1],
-        b$area_level[1],
-        b$area_level_label[1],
-        sep = ", "
-      )
-      ggplot(b,
-             aes(x = age,
-                 group = as.factor(year),
-                 fill = as.factor(year),
-                 colour = as.factor(year))) +
-        # Adding fake limits to the plot
-        geom_point(data = dummy1,
-                   aes(x = x,
-                       y = y),
-                   colour = NA) +
-        # Adding target line to prevalence
-        geom_hline(data = dummy2,
-                   aes(yintercept = y),
-                   size = 2,
-                   linetype = "dashed",
-                   colour = "grey50") +
-        # Prevalence as area plot
-        geom_ribbon(aes(ymin = lower.x,
-                        ymax = upper.x),
-                    colour = NA,
-                    alpha = 0.5) +
-        # Prevalence as area plot
-        geom_line(aes(y = mean.x),
-                  size = 1) +
-        # Setting for the axes
-        scale_x_continuous(breaks = seq(0, 60, by = 5)) +
-        scale_y_continuous(breaks = scales::pretty_breaks(8), limits = c(0, NA)) +
-        # Setting colour palette
-        scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)) +
-        scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)) +
-        # Plotting labels
-        ggtitle(spec_title) +
-        labs(x = "Age",
-             y = "",
-             colour = "",
-             fill = "") +
-        # Minimal theme
-        theme_bw() +
-        # Facet wrapping
-        facet_grid(type1 ~ type2,
-                   scales = "free",
-                   labeller = as_labeller(c(
-                     A = "Total",
-                     B = "Medical",
-                     C = "Traditional",
-                     Y = "Circumcision coverage (%)",
-                     Z = "Annual probability of circumcision")),
-                   switch = "y") +
-        # Extra options on the plot
-        theme(axis.text = element_text(size = 16),
-              strip.text = element_text(size = 16),
-              panel.grid = element_blank(),
-              strip.background = element_blank(),
-              legend.text = element_text(size = 16),
-              axis.title = element_text(size = 18),
-              plot.title = element_text(size = 26, hjust = 0.5),
-              strip.placement = "outside",
-              legend.position = "bottom")
-    })
-  })
-
-  if (!is.null(str_save)) {
-    ggsave(
-      # filename = paste0("Runs/plots/", cntry, "_Figure2.pdf"),
-      filename = str_save,
-      plot = gridExtra:: marrangeGrob(rlang::squash(plots), nrow = 1, ncol = 1),
-      dpi = "retina",
-      # width = 15,
-      width = save_width,
-      # height = 11
-      height = save_height
-    )
-  } else {
-    return(rlang::squash(plots))
-  }
-}
-
 #### appends summary column names with letter of choice ####
 summary_col_renamer <- function(.data, letter = "x") {
   .data <- .data %>%
@@ -380,7 +239,7 @@ plt_mc_coverage_prevalence <- function(
 
   # split tmp by area level and number of desired plots
   tmp <- split_area_level(tmp, n_plots = n_plots)
-
+  
   plots <- lapply(tmp, function(a) {
     lapply(a, function(b) {
 
@@ -388,7 +247,7 @@ plt_mc_coverage_prevalence <- function(
       spec_title <- paste(
         b$iso3[1],
         b$area_name[1],
-        b$area_level[1],
+        paste0("Area Level: ", b$area_level[1]),
         b$area_level_label[1],
         paste0(b$age_group[1], " years old"),
         sep = ", "
@@ -436,7 +295,6 @@ plt_mc_coverage_prevalence <- function(
         theme_bw() +
         ggtitle(spec_title) +
         # Facet wrapping
-        # facet_wrap(. ~ test ,
         facet_wrap(vars(test),
                    strip.position = "left",
                    scales = "free",
@@ -444,6 +302,8 @@ plt_mc_coverage_prevalence <- function(
                      A = "Circumcision coverage (%)",
                      # B = "Number of circumcisions performed (in 1000s)"))) +
                      B = "Number of circumcisions performed"))) +
+        # facet_wrap again by area_name
+        # facet_wrap(~ area_name) +
         # Extra options on the plot
         theme(axis.text = element_text(size = 15),
               strip.text = element_text(size = 16),
@@ -541,7 +401,7 @@ plt_age_coverage_by_type <- function(
       spec_title <- paste(
         b$iso3[1],
         b$area_name[1],
-        b$area_level[1],
+        paste0("Area Level: ", b$area_level[1]),
         b$area_level_label[1],
         sep = ", "
       )
@@ -778,6 +638,9 @@ plt_coverage_map <- function(
                           "years old")
                 )
         })
+        
+        # insert something to join these plots here!
+        
     } else if (plot_type == "map") {
         # create plot for each specific type
         plots <- lapply(tmp1, function(x) {
