@@ -1416,7 +1416,10 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
                             mc_type_survey, age_per, survey_years, model_type,
                             # area_level_select,
                             xlab, ylab, title,
-                            str_save, save_width, save_height, n_plots = 12) {
+                            str_save = NULL, 
+                            save_width = NULL, 
+                            save_height = NULL, 
+                            n_plots = 12) {
   # Preparing dataset for plots
   initial_filter <- function(.data, spec_type) {
     .data <- .data %>%
@@ -1572,10 +1575,10 @@ plt_dmppt2_compare_year <- function(circ_data,
                                     xlab = "Year",
                                     ylab = "Circumcision Prevalence",
                                     title,
-                                    str_save,
-                                    save_width,
-                                    save_height,
-                                    n_plots) {
+                                    str_save = NULL,
+                                    save_width = NULL,
+                                    save_height = NULL,
+                                    n_plots = 1) {
   
   # circ_data_test <- circ_data
   # dmppt2_data_test <- dmppt2_data
@@ -1597,7 +1600,6 @@ plt_dmppt2_compare_year <- function(circ_data,
   #     "Black line denotes DMPPT2 coverage, Blue dots denote Surveyed coverage - "
   # )
   
-  
   # initial filtering
   cols <- c("age_group", "area_level", "year", "model")
   vals <- list(age_per, area_levels, years, model_type)
@@ -1609,29 +1611,42 @@ plt_dmppt2_compare_year <- function(circ_data,
   
   # join data together
   circ_data <- circ_data %>%
-    left_join((dmppt2_data %>%
-                 select(area_id, year, age_group,
-                        dmppt2_circumcision_coverage))) %>%
-    # left_join((survey_data %>%
-    #                select(area_id, year, age_group, p_ind))) %>%
-    # full_join((survey_data %>%
-    #              select(
-    #                names(circ_data)[names(circ_data) %in% names(survey_data)]
-    #             ))
-    # ) %>%
-    left_join((survey_data %>%
-                 select(area_id, year, age_group, p_ind = mean, sd_ind = sd)
-    )) %>%
-    # tidyr::pivot_longer(c(mean, dmppt2_circumcision_coverage, p_ind),
-    #                     names_to = "source") %>%
-    # mutate(
-    #     across(sd:upper, ~ifelse(source == "mean", ., NA)),
-    #     source = ifelse(source == "mean", "threemc",
-    #                     ifelse(source == "p_ind", "Survey",
-    #                            "DMPPT2"))
-    # ) %>%
-    identity()
+    left_join(
+      select(dmppt2_data, 
+             area_id, 
+             year, 
+             age_group,
+             dmppt2_circumcision_coverage)
+    ) %>%
+    left_join(
+      select(
+        survey_data, 
+        area_id, 
+        year, 
+        age_group, 
+        p_ind = mean, 
+        sd_ind = sd
+      )
+    )
   
+  # For LSO, DMPPT2 models medical, not traditional circumcision
+  if (all(circ_data$iso3 == "LSO")) {
+    circ_data <- circ_data %>% 
+      filter(type == "MMC coverage")
+  } else {
+    circ_data <- circ_data %>% 
+      filter(type == "MC coverage")
+  }
+  
+  # replace NAs with "NA" in parent_area_name
+  circ_data <- circ_data %>%
+    mutate(
+      parent_area_name = ifelse(
+        is.na(parent_area_name),
+        "NA",
+        parent_area_name
+      )
+    )
   
   # split results by area level, and number of plots desired
   circ_data <- split_area_level(circ_data, n_plots = n_plots)
@@ -1650,10 +1665,7 @@ plt_dmppt2_compare_year <- function(circ_data,
         sep = ", "
       )
       
-      # cols <- hue
-      
       p <- ggplot(spec_circ_data, aes(x = year)) +
-        # ggplot(df_results[[i]], aes(x = year)) +
         # Credible interval
         geom_ribbon(aes(ymin = lower, ymax = upper, fill = parent_area_name),
                     # colour  = NA,
@@ -1662,8 +1674,7 @@ plt_dmppt2_compare_year <- function(circ_data,
         geom_line(aes(y = mean, col = parent_area_name),
                   show.legend = FALSE,
                   size = 1) +
-        # geom_point(data = dmppt2_data[[i]][[j]],
-        geom_line(# data = dmppt2_data[[i]][[j]],
+        geom_line(
           aes(y = dmppt2_circumcision_coverage, col = "black"),
           colour = "black"
         ) # +
@@ -1718,7 +1729,7 @@ plt_dmppt2_compare_year <- function(circ_data,
     })
   })
   
-  plots <- purrr::flatten(plots)
+  plots <- rlang::squash(plots)
   if (!is.null(str_save)) {
     # save
     plots <-  gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
@@ -1743,10 +1754,10 @@ plt_dmppt2_compare_age_group <- function(circ_data,
                                          xlab = "Year",
                                          ylab = "Circumcision Prevalence",
                                          title,
-                                         str_save,
-                                         save_width,
-                                         save_height,
-                                         n_plots) {
+                                         str_save = NULL,
+                                         save_width = NULL,
+                                         save_height = NULL,
+                                         n_plots = 1) {
   
   
   # circ_data_test <- circ_data
@@ -1773,6 +1784,16 @@ plt_dmppt2_compare_age_group <- function(circ_data,
   # save_height = 12
   # n_plots = 6
   
+  
+  # ensure age_per is ordered properly
+  age_per <- age_per[
+    order(as.numeric(sapply(stringr::str_split(age_per, "-"), `[[`, 2)))
+  ]
+  
+  # take age above age_per as last label for plot
+  final_label <- last(age_per)
+  final_label <- as.numeric(stringr::str_split(final_label, "-")[[1]][[2]])
+  final_label <- paste0(final_label + 1, "+")
   
   cols <- c("age_group", "area_level", "year", "model")
   vals <- list(age_per, area_levels, years, model_type)
@@ -1818,6 +1839,16 @@ plt_dmppt2_compare_age_group <- function(circ_data,
     ) %>%
     filter(!is.na(value))
   
+  # replace NAs with "NA" in parent_area_name
+  circ_data <- circ_data %>%
+    mutate(
+      parent_area_name = ifelse(
+        is.na(parent_area_name),
+        "NA",
+        parent_area_name
+      )
+  )
+  
   # split results by area level, year and number of plots desired
   circ_data <- split_area_level(circ_data, year = T, n_plots = n_plots)
   
@@ -1848,10 +1879,12 @@ plt_dmppt2_compare_age_group <- function(circ_data,
           ) +
           scale_fill_brewer(palette = "Dark2") +
           scale_x_continuous(
-            breaks = 1:14,
-            labels = c("0-4","5-9","10-14","14-19","20-24","25-29",
-                       "30-34","35-39","40-44","45-49","50-54",
-                       "55-59","60-64","65+")
+            # breaks = 1:14,
+            # labels = c("0-4","5-9","10-14","14-19","20-24","25-29",
+            #            "30-34","35-39","40-44","45-49","50-54",
+            #            "55-59","60-64","65+")
+            breaks = 1:(length(age_per) + 1),
+            labels = c(age_per, final_label),
           ) +
           scale_y_continuous(breaks = seq(0, 1,  by =  0.2),
                              limits = c(0, 1),
@@ -1868,7 +1901,7 @@ plt_dmppt2_compare_age_group <- function(circ_data,
                                        vjust = 0.5,
                                        size = 10),
             legend.position = "bottom") +
-          facet_wrap(~area_name)
+          facet_wrap(~ area_name)
         
         # ggplot(spec_circ_data, aes(x = age_group)) +
         #     geom_ribbon(aes(ymin = lower, ymax = upper, fill = parent_area_name),
@@ -1906,11 +1939,7 @@ plt_dmppt2_compare_age_group <- function(circ_data,
     })
   })
   
-  plots <- purrr::flatten(plots)
-  if (!"data.frame" %in% class(plots[[1]][[1]])) {
-    plots <- purrr::flatten(plots)
-  }
-  
+  plots <- rlang::squash(plots)
   if (!is.null(str_save)) {
     # save
     plots <-  gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
@@ -1937,9 +1966,9 @@ plt_dmppt2_compare_fits <- function(circ_data,
                                     xlab = "Year",
                                     ylab = "Circumcision Prevalence",
                                     title,
-                                    str_save,
-                                    save_width,
-                                    save_height) {
+                                    str_save = NULL,
+                                    save_width = NULL,
+                                    save_height = NULL) {
   
   # circ_data_test <- circ_data
   # dmppt2_data_test <- dmppt2_data
@@ -1976,6 +2005,16 @@ plt_dmppt2_compare_fits <- function(circ_data,
     left_join((dmppt2_data %>%
                  select(area_id, year, age_group,
                         dmppt2_circumcision_coverage)))
+  
+  # replace NAs with "NA" in parent_area_name
+  circ_data <- circ_data %>%
+    mutate(
+      parent_area_name = ifelse(
+        is.na(parent_area_name),
+        "NA",
+        parent_area_name
+      )
+    )
   
   # split results by area level, year and number of plots desired (no need
   # for area level)
