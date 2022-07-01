@@ -19,7 +19,7 @@ ssa_plots_UI <- function(id) {
   
   tagList(
     # fluidPage(
-    fillPage(
+    fluidPage(
       # width = 12,
       sidebarLayout(
         sidebarPanel(
