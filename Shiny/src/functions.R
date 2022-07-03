@@ -13,6 +13,7 @@ results_reader <- function(cntry = NULL, type, dir_path, pattern = NULL,
   if (!is.null(pattern)) f <- f[grepl(pattern, f)]
 
   if (length(f) < 3) message("some data is missing!")
+  if (length(f) > 3) message("some unexpected data may be present!")
 
   # load files and append them together. Return this appended df
   results_age <- as.data.frame(rbindlist(
