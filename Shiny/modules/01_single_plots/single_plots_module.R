@@ -394,18 +394,19 @@ single_plots_server <- function(input, output, session, connection, selected = r
   observe({
     req(input$plot_type)
     
-    default <- switch(
-      input$plot_type,
-      "plt_4" = 12,
-      "plt_5" = 12,
-      "plt_6" = 8,
-      1
-    )
+    # default <- switch(
+    #   input$plot_type,
+    #   "plt_4" = 12,
+    #   "plt_5" = 12,
+    #   "plt_6" = 8,
+    #   1
+    # )
     
     updateSelectInput(
       session, 
       "n_plot",
-      selected = default
+      # selected = default
+      selected = 1
     )
   })
   
@@ -422,7 +423,6 @@ single_plots_server <- function(input, output, session, connection, selected = r
       req(input$age_group_single)
       req(input$year_slider)
       req(input$area_levels)
-      req(input$n_plot)
       
       plt_mc_coverage_prevalence(
         results(),
