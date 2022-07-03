@@ -21,8 +21,8 @@ iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
 # countries whose populations are pulled from other orderly tasks
 orderly_iso3 <-  c(
   "bdi", "ben", "cod", "cog", "gab", "gha", "gin", "lbr", 
-  # "mli", "moz", "ner", "sen", "sle", "tcd", "tgo" 
-  "mli", "ner", "sen", "sle", "tcd", "tgo" # temp remove MOZ
+  "mli", "moz", "ner", "sen", "sle", "tcd", "tgo" 
+  # "mli", "ner", "sen", "sle", "tcd", "tgo" # temp remove MOZ
 )
 
 # individual file names for each country (just need for names in this script)
@@ -149,11 +149,23 @@ zaf_pop_orderly <- readr::read_csv(
 moz_pop_orderly <- readr::read_csv(
   paste0("resources/", "aaa_scale_pop_moz.csv.gz")
 )
+# pop_orderly <- c(
+#   pop_orderly, 
+#   list(eth_pop_orderly, mwi_pop_orderly, zaf_pop_orderly, moz_pop_orderly)
+# )
+# names(pop_orderly) <- c(orderly_iso3, "eth", "mwi", "zaf", "moz")
+
 pop_orderly <- c(
   pop_orderly, 
-  list(eth_pop_orderly, mwi_pop_orderly, zaf_pop_orderly, moz_pop_orderly)
+  list(eth_pop_orderly, mwi_pop_orderly, zaf_pop_orderly)
 )
-names(pop_orderly) <- c(orderly_iso3, "eth", "mwi", "zaf", "moz")
+pop_orderly[[which(orderly_iso3 == "moz")]] <- rbind(
+  pop_orderly[[which(orderly_iso3 == "moz")]], moz_pop_orderly
+) %>% 
+  distinct(area_id, year, sex, age_group, .keep_all = TRUE)
+
+names(pop_orderly) <- c(orderly_iso3, "eth", "mwi", "zaf") # , "moz")
+
 
 # join area name into pop_orderly
 pop_orderly <- pop_orderly %>% 
@@ -198,27 +210,32 @@ pop_raw <- pop_raw %>%
 #   filter(area_id_circ != area_id_pop) %>%
 #   print(n = Inf)
 
+# Recode MOZ areas
 
-moz_id_recode <- c("MOZ_2_1209" = "MOZ_2_0101",
-                   "MOZ_2_1210" = "MOZ_2_0102",
-                   "MOZ_2_1211" = "MOZ_2_0103",
-                   "MOZ_2_1212" = "MOZ_2_0104",
-                   "MOZ_2_1213" = "MOZ_2_0105",
-                   "MOZ_2_1214" = "MOZ_2_0106",
-                   "MOZ_2_1215" = "MOZ_2_0107",
-                   "MOZ_2_1206" = "MOZ_2_0201",
-                   "MOZ_2_1208" = "MOZ_2_0202",
-                   "MOZ_2_1202" = "MOZ_2_0203",
-                   "MOZ_2_1201" = "MOZ_2_0204",
-                   "MOZ_2_1205" = "MOZ_2_0205",
-                   "MOZ_2_1207" = "MOZ_2_0206",
-                   "MOZ_2_1204" = "MOZ_2_0207",
-                   "MOZ_2_1203" = "MOZ_2_0208")
+## POT: Don't do this anymore!!! ## 
 
-pop_raw <- pop_raw %>%
-  mutate(
-    area_id = recode(area_id, !!!moz_id_recode)
-  )
+# moz_id_recode <- c("MOZ_1_11"   = "MOZ_1_01",
+#                    "MOZ_1_12"   = "MOZ_1_02",
+#                    "MOZ_2_1209" = "MOZ_2_0101",
+#                    "MOZ_2_1210" = "MOZ_2_0102",
+#                    "MOZ_2_1211" = "MOZ_2_0103",
+#                    "MOZ_2_1212" = "MOZ_2_0104",
+#                    "MOZ_2_1213" = "MOZ_2_0105",
+#                    "MOZ_2_1214" = "MOZ_2_0106",
+#                    "MOZ_2_1215" = "MOZ_2_0107",
+#                    "MOZ_2_1206" = "MOZ_2_0201",
+#                    "MOZ_2_1208" = "MOZ_2_0202",
+#                    "MOZ_2_1202" = "MOZ_2_0203",
+#                    "MOZ_2_1201" = "MOZ_2_0204",
+#                    "MOZ_2_1205" = "MOZ_2_0205",
+#                    "MOZ_2_1207" = "MOZ_2_0206",
+#                    "MOZ_2_1204" = "MOZ_2_0207",
+#                    "MOZ_2_1203" = "MOZ_2_0208")
+# 
+# pop_raw <- pop_raw %>%
+#   mutate(
+#     area_id = recode(area_id, !!!moz_id_recode)
+#   )
 
 # pop_raw %>%
 #   distinct(iso3, area_id, area_name) %>%
