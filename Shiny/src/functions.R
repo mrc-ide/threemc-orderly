@@ -1184,18 +1184,21 @@ plt_circ_age_ridge <- function(
 }
 
 #### Plots for comparing survey points with model fit ####
-plt_MC_modelfit_spec_age <- function(df_results, df_results_survey, mc_type_model,
-                                  mc_type_survey, age_per, years, model_type,
-                                  # area_level_select,
-                                  xlab, ylab, title, str_save,
-                                  save_width, save_height, n_plots = 12) {
+plt_MC_modelfit_spec_age <- function(
+  df_results, df_results_survey, 
+  mc_type_model, mc_type_survey, 
+  age_per, years, area_level_select = unique(df_results$area_level), 
+  model_type = "No program data",
+  xlab, ylab, title, str_save = NULL,
+  save_width = NULL, save_height = NULL, n_plots = 12) {
 
+  # browser()
   # filter data accordingly
   initial_filter <- function(.data, type_filter) {
     .data <- .data %>%
       filter(
         year %in% years,
-        # area_level == area_level_select,
+        area_level %in% area_level_select,
         age_group %in% age_per,
         type == type_filter
       )
@@ -1463,7 +1466,7 @@ plt_dmppt2_compare_year <- function(circ_data,
                                     str_save = NULL,
                                     save_width = NULL,
                                     save_height = NULL,
-                                    n_plots = 1) {
+                                    n_plots = 12) {
   
   # circ_data_test <- circ_data
   # dmppt2_data_test <- dmppt2_data
@@ -1744,7 +1747,16 @@ plt_dmppt2_compare_age_group <- function(circ_data,
   )
   
   # split results by area level, year and number of plots desired
-  circ_data <- split_area_level(circ_data, year = T, n_plots = n_plots)
+  # browser()
+  circ_data <- split_area_level(circ_data, year = TRUE, n_plots = n_plots)
+  
+  # if (n_plots > 1) {
+  #  circ_data <- 
+  # }
+  
+  # remove one list level from circ_data
+  # circ_data <- purrr::flatten(circ_data)
+  # circ_data <- lapply(circ_data, purrr::flatten)
   
   # plot for each (nested) loop
   plots <- lapply(seq_along(circ_data), function(i) { # area
@@ -1752,11 +1764,12 @@ plt_dmppt2_compare_age_group <- function(circ_data,
       lapply(seq_along(circ_data[[i]][[j]]), function(k) { # cap n plots
         
         spec_circ_data <- circ_data[[i]][[j]][[k]]
+        # spec_circ_data <- circ_data[[i]][[j]]
         
         # get specific title for each plot page
         add_title <- paste(
           spec_circ_data$iso3[1],
-          spec_circ_data$area_level[1],
+          paste0("area_level: ", spec_circ_data$area_level[1]),
           spec_circ_data$area_level_label[1],
           spec_circ_data$year[1],
           sep = ", "
@@ -1796,6 +1809,7 @@ plt_dmppt2_compare_age_group <- function(circ_data,
                                        size = 10),
             legend.position = "bottom") +
           facet_wrap(~ area_name)
+          # facet_wrap(~ area_name + year)
         
         # ggplot(spec_circ_data, aes(x = age_group)) +
         #     geom_ribbon(aes(ymin = lower, ymax = upper, fill = parent_area_name),
@@ -1862,7 +1876,8 @@ plt_dmppt2_compare_fits <- function(circ_data,
                                     title,
                                     str_save = NULL,
                                     save_width = NULL,
-                                    save_height = NULL) {
+                                    save_height = NULL,
+                                    n_plots = 1) {
   
   # circ_data_test <- circ_data
   # dmppt2_data_test <- dmppt2_data
@@ -1921,7 +1936,12 @@ plt_dmppt2_compare_fits <- function(circ_data,
   
   # split results by area level, year and number of plots desired (no need
   # for area level)
-  circ_data <- purrr::flatten(split_area_level(circ_data, years = T))
+  circ_data <- purrr::flatten(
+    lapply(
+      split_area_level(circ_data, years = TRUE, n_plots = n_plots),
+      purrr::flatten
+    )
+  )
   
   plots <- lapply(seq_along(circ_data), function(i) { # area
     
