@@ -297,9 +297,9 @@ single_plots_server <- function(input, output, session, connection, selected = r
       output <- filter(data$results_agegroup, iso3 == input$country)
     }
     
-    print("Here! 1")
     return(output)
-  })
+  }) %>% 
+    bindCache(input$country, input$plot_type)
   
   # # reactive value for plot height
   # plotheight <- reactive({
@@ -387,7 +387,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
       session,
       "results_area_level",
       choices = area_levs,
-      selected = max(area_levs)
+      selected = max(area_levs, na.rm = TRUE)
     )
   })
   
@@ -478,8 +478,10 @@ single_plots_server <- function(input, output, session, connection, selected = r
     # Map plot for prevalence   
     } else if (input$plot_type == "plt_3") {
       
+      # browser()
+      
       req(input$age_group_single)
-      req(input$year_select)
+      req(input$year_slider)
       req(input$results_area_level)
       req(input$border_area_level)
       
@@ -491,7 +493,8 @@ single_plots_server <- function(input, output, session, connection, selected = r
         # spec_age_group   = "15-49", 
         spec_age_group     =  input$age_group_single,
         # spec_years = c("2010", "2021"),
-        spec_years         = as.numeric(c(input$year_select[1], input$year_select[3])), 
+        # spec_years         = as.numeric(c(input$year_select[1], input$year_select[2])), 
+        spec_years         = as.numeric(input$year_slider),
         results_area_level = input$results_area_level, 
         country_area_level = input$border_area_level,
         spec_model         = "No program data", 
@@ -579,7 +582,6 @@ single_plots_server <- function(input, output, session, connection, selected = r
     req(plt_data())
     req(input$plot_n)
     
-    # if (input$plot_type == "plt_3") browser()
     plt_data()[[as.numeric(input$plot_n)]]
   })
   
