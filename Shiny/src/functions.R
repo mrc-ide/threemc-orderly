@@ -99,6 +99,7 @@ order_area_name <- function(.data, areas = NULL) {
 
     # join area_sort_order into data
     .data <- .data %>%
+      select(-matches("area_name")) %>% 
       left_join(areas, by = c("area_id", "area_name"))
   }
   # get age column present in data
@@ -122,7 +123,7 @@ add_area_info <- function(.data, areas) {
     ) %>%
     distinct()
 
-  left_join(.data, areas_join)
+  left_join(select(.data, -matches("area_name")), areas_join)
 }
 
 #### split_area_level ####
@@ -489,6 +490,7 @@ plt_age_coverage_by_type <- function(
 plt_coverage_map <- function(
     results_agegroup, areas, colourPalette, spec_age_group, spec_years,
     spec_model, plot_type, # = c("single", "map", "split"),
+    spec_main_title = NULL,
     spec_countries = NULL, results_area_level = NULL, country_area_level = NULL,
     str_save = NULL, save_width, save_height, n_plots = 1
 ) {
@@ -496,6 +498,8 @@ plt_coverage_map <- function(
     # To Do:
     # 1. Maybe add warning if there are missing iso3 codes?
     # 2. Get working for faceted plots for all/several countries (use cowplot)
+  
+    # browser()
 
     # if we just want to look at a single country
     if (plot_type == "single" & is.null(spec_countries)) {
@@ -535,6 +539,7 @@ plt_coverage_map <- function(
             model ==        spec_model,
             type %in%       c("MC coverage", "MMC coverage", "TMC coverage")
         ) %>%
+        select(-matches("area_name")) %>% 
         # Merging to shapefiles
         left_join(areas_join) %>%
         # filter out areas with missing iso3, which cause errors with below
@@ -629,12 +634,17 @@ plt_coverage_map <- function(
     if (plot_type == "single") {
         areas_plot <- areas_plot %>%
             filter(iso3 %in% tmp$iso3)
+        
+        if (is.null(spec_main_title)) {
+          spec_main_title <- "Circumcision Coverage, "
+        }
+        
         plots <- lapply(tmp1, function(x) {
             map_plot(x, areas_plot, colourPalette) +
                 ggtitle(
                     paste(x$iso3[1],
                           x$type[1],
-                          "Circumcision Coverage,",
+                          spec_main_title,
                           x$age_group[1],
                           "years old")
                 )
@@ -644,6 +654,11 @@ plt_coverage_map <- function(
         
     } else if (plot_type == "map") {
         # create plot for each specific type
+      
+      if (is.null(spec_main_title)) {
+        spec_main_title <- "Circumcision"
+      }
+      
         plots <- lapply(tmp1, function(x) {
             # change year to factor, to change facet titles
             x$year <- factor(x$year,
@@ -656,7 +671,7 @@ plt_coverage_map <- function(
             map_plot(x, areas_plot, colourPalette)
         })
     } else if (plot_type == "split") {
-
+      
         plots <- lapply(tmp1, function(a) {
             lapply(a, function(b) {
                 spec_areas <- filter(areas_plot, iso3 %in% b$iso3)
@@ -734,6 +749,12 @@ plt_coverage_map <- function(
             plots[[i]] <- plots2
         }
         plots <- rlang::squash(plots)
+        
+        if (!is.null(spec_main_title)) {
+          plots <- lapply(plots, function(x) {
+            x + ggtitle(spec_main_title)
+          })
+        }
     }
 
     # If desired, save plots, else, return them ("ungrobbed")
