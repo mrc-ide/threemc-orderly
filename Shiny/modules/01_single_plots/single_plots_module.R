@@ -38,12 +38,12 @@ single_plots_UI <- function(id) {
                 inputId = ns("plot_type"),
                 label   = "Plot Type", 
                 choices = c(
-                 "Coverage & Prevalence vs Year"                 = "plt_1",
-                 "Prevalence & Coverage vs Age by Type"          = "plt_2",
-                 "Prevalence Map"                                = "plt_3",
-                 "Prevalence vs Year by Type"                    = "plt_4",
-                 "Coverage vs Age"                               = "plt_5",
-                 "Ridge Plot of mean TMIC and MMC-nT age"        = "plt_6"
+                 "Coverage & Prevalence vs Year"                  = "plt_1",
+                 "Probability & Coverage vs Age by Type"          = "plt_2",
+                 "Coverage Map"                                   = "plt_3",
+                 "Coverage vs Year by Type"                       = "plt_4",
+                 "Coverage vs Age"                                = "plt_5",
+                 "Ridge Plot of mean TMIC and MMC-nT age"         = "plt_6"
                 )
               ),
               selectInput(
@@ -163,8 +163,9 @@ single_plots_UI <- function(id) {
                 )
               ),
               conditionalPanel(
-                condition = "input.plot_type != 'plt_1' || 
-                input.plot_type != 'plt_2'",
+                condition = "input.plot_type == 'plt_4' ||
+                input.plot_type == 'plt_5' || 
+                input.plot_type == 'plt_6",
                 ns        = ns,
                 selectInput(
                   inputId = ns("n_plot"),
@@ -403,7 +404,8 @@ single_plots_server <- function(input, output, session, connection, selected = r
       session,
       "border_area_level",
       choices = area_levs,
-      selected = min(area_levs)
+      # selected = min(area_levs)
+      selected = 1
     )
   })
   
@@ -418,12 +420,12 @@ single_plots_server <- function(input, output, session, connection, selected = r
     #   "plt_6" = 8,
     #   1
     # )
+    default <- 12
     
     updateSelectInput(
       session, 
       "n_plot",
-      # selected = default
-      selected = 1
+      selected = default
     )
   })
   
