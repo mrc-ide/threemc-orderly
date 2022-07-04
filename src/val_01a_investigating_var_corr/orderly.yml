@@ -1,0 +1,70 @@
+script: script.R
+
+artefacts:
+ # - data:
+ #      description:
+ #      - Details surveys used and removed
+ #      filenames:
+ #      - artefacts/used_survey_info.csv
+ - data:
+      description: naomi fit object with fixed variance and covariance.
+      filenames:
+      - artefacts/models/TMBObjects_DistrictAgeTime_ByType_test.rds
+ - data:
+      description: Modelling results for area level of interest, including quantiles
+      filenames:
+      - artefacts/models/Results_DistrictAgeTime_ByType_test.csv.gz
+ - data:
+      description: 
+      - Aggregated Probabilities of Circumcision for Age Groups
+      filenames: 
+      - artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+ - data:
+      description: 
+      - Aggregated Circumcision Incidences for Age Groups
+      filenames: 
+      - artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+ - data:
+      description: 
+      - Aggregated Circumcision Prevalences for Age Groups
+      filenames: 
+      - artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz 
+      
+  
+displayname: |
+  - Fit model with variance and covariance ?. 
+
+parameters:
+  cntry:
+    default: ~
+
+packages:
+  - threemc
+  - sf
+  - data.table
+  - dplyr
+  - Matrix
+  - TMB
+  - rlang
+  - ggplot2
+  
+# move to pull from 00 orderly task series
+global_resources:
+  depends/threemc_hyperpars.csv: threemc_hyperpars.csv
+  
+depends:
+  # areas file
+  - 00a2_areas_join:
+      id: latest
+      use:
+        depends/areas.geojson: artefacts/areas.geojson
+  # surveys
+  - 00b3_survey_join:
+      id: latest
+      use: 
+        depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
+  # populations
+  - 00c4_pops_aggregate:
+      id: latest
+      use: 
+        depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
