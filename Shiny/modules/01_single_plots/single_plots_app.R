@@ -37,8 +37,31 @@ orderly_root <- paste(orderly_root, collapse = "/")
 # temp use a few countries to test
 ssa_iso3 <- c("LSO")
 
+# results for age groups and single ages
+archives <- orderly::orderly_list_archive()
+dir_name <- orderly::orderly_list_archive() %>% 
+  filter(name == "03_shiny_consolidation") %>%
+  slice(n()) %>% 
+  pull(id)
+results_agegroup <- readr::read_csv(paste0(
+  orderly_root, 
+  "/archive/03_shiny_consolidation/",
+  dir_name,
+  "/artefacts/results_agegroup.csv.gz"
+)) %>% 
+  filter(iso3 %in% ssa_iso3)
+results_age <- readr::read_csv(paste0(
+  orderly_root, 
+  "/archive/03_shiny_consolidation/",
+  dir_name,
+  "/artefacts/results_age.csv.gz"
+)) %>% 
+  filter(iso3 %in% ssa_iso3)
+
+ssa_iso3 <- ssa_iso3[ssa_iso3 %in% results_age$iso3]
+
 # shapefile
-areas_loc <- orderly::orderly_list_archive() %>%
+areas_loc <- archives %>%
   filter(name == "00a2_areas_join") %>%
   slice(n()) %>% 
   pull(id)
@@ -53,9 +76,11 @@ areas <- read_circ_data(areas_loc) %>%
 
 # data which is fed into Shiny app
 single_plots_data <- list(
-  "ssa_iso3" = ssa_iso3,
-  "orderly_root" = orderly_root,
-  "areas"    = areas
+  "results_age"      = results_age,
+  "results_agegroup" = results_agegroup,
+  "ssa_iso3"         = ssa_iso3,
+  "orderly_root"     = orderly_root,
+  "areas"            = areas
 )
 
 # source function and module, respectively

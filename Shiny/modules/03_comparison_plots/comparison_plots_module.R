@@ -44,13 +44,13 @@ comparison_plots_UI <- function(id) {
                 label    = "Plot Number",
                 choices  = NULL,
                 selected = NULL
-              ),
-              selectInput(
-                inputId = ns("n_plot"),
-                label = "Number of Areas to Display",
-                choices = 1:15,
-                selected = 1
-              )
+              ) # ,
+              # selectInput(
+              #   inputId = ns("n_plot"),
+              #   label = "Number of Areas to Display",
+              #   choices = 1:15,
+              #   selected = 1
+              # )
             ),
             #### Options specific to each plot ####
             tabPanel(
@@ -152,8 +152,18 @@ comparison_plots_UI <- function(id) {
                   choices  = NULL,
                   selected = NULL, 
                   multiple = TRUE
-                )
+                ),
               # )
+              conditionalPanel(
+                condition = "input.plot_type != 'plt_3'",
+                ns        = ns,
+                selectInput(
+                  inputId = ns("n_plot"),
+                  label = "Number of Areas to Display",
+                  choices = 1:15,
+                  selected = 1
+                )
+              )
             ),
             #### Options for saving plots ####
             tabPanel(
@@ -200,10 +210,17 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
 
   #### update picker options (initial) ####
   observe({
+    req(input$plot_type)
+    if (input$plot_type %in% c("plt_1", "plt_2", "plt_3")) {
+      choices <- unique(data$dmppt2_iso3)
+    } else {
+      choices = data$ssa_iso3
+    }
+    
     updateSelectInput(
       session,
       "country",
-      choices = data$comparison_iso3 # convert to country name?
+      choices = choices
     )
 
     # update select input based on plot selection
@@ -234,77 +251,77 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   #   )
   # })
   
-  # update n_plots selector
-  observe({
-    req(input$plot_type)
-    
-    default <- switch(
-      input$plot_type,
-      "plt_1" = 12,
-      # "plt_2" = 4,
-      # "plt_4" = 12,
-      # "plt_5" = 12,
-      # "plt_6" = 8,
-      1
-    )
-    
-    updateSelectInput(
-      session, 
-      "n_plot",
-      selected = default
-    )
-  })
- 
-  
   #### Pull in data ####
   
   # aggregated model data
+  # circ_data <- reactive({
+  #   req(input$country)
+  #   
+  #   # browser()
+  #   
+  #   # find report name for specific country
+  #   report_name <- orderly::orderly_search(
+  #     name = "02_aggregations",
+  #     query = "latest(parameter:cntry == cntry)",
+  #     parameters = list(cntry = as.character(input$country)), 
+  #     root = data$orderly_root
+  #   )
+  #   
+  #   # location of aggregations to load
+  #   aggr_loc <- file.path(
+  #     data$orderly_root, dir_path, report_name, "artefacts/"
+  #   )
+  #   
+  #   # load data 
+  #   output <- readr::read_csv(
+  #     paste0(aggr_loc, "Results_AgeGroup_Prevalence.csv.gz")
+  #   )
+  #   
+  #   # order by area
+  #   output <- order_area_name(left_join(output, data$areas_join))
+  #   
+  #   return(output)
+  # })
+  
+  # circumcision estimates
   circ_data <- reactive({
     req(input$country)
     
-    # browser()
-    
-    # find report name for specific country
-    report_name <- orderly::orderly_search(
-      name = "02_aggregations",
-      query = "latest(parameter:cntry == cntry)",
-      parameters = list(cntry = as.character(input$country)), 
-      root = data$orderly_root
-    )
-    
-    # location of aggregations to load
-    aggr_loc <- file.path(
-      data$orderly_root, dir_path, report_name, "artefacts/"
-    )
-    
-    # load data 
-    output <- readr::read_csv(
-      paste0(aggr_loc, "Results_AgeGroup_Prevalence.csv.gz")
-    )
-    
-    # order by area
-    output <- order_area_name(left_join(output, data$areas_join))
-    
-    return(output)
+    return(filter(data$results_agegroup_comparison, iso3 == input$country))
   })
   
+  # add_data <- reactive({
+  #   req(input$country)
+  #   
+  #   # browser()
+  #   
+  #   dmppt2_data <- data$dmppt2_data %>% 
+  #     filter(iso3 == input$country)
+  #   survey_data <- data$survey_data %>% 
+  #     filter(iso3 == input$country)
+  #   
+  #   # order by area
+  #   dmppt2_data <- order_area_name(left_join(dmppt2_data, data$areas_join))
+  #   survey_data <- order_area_name(left_join(survey_data, data$areas_join))
+  #   
+  #   # convert dmpppt2 (and survey) age group to our convention
+  #   dmppt2_data <- change_agegroup_convention(dmppt2_data)
+  #   survey_data <- change_agegroup_convention(survey_data)
+  #   
+  #   output <- list(
+  #     "dmppt2_data" = dmppt2_data,
+  #     "survey_data" = survey_data
+  #   )
+  #   
+  #   return(output)
+  # })
+  
+  # survey and dmppt2 circumcision estimates
   add_data <- reactive({
     req(input$country)
     
-    # browser()
-    
-    dmppt2_data <- data$dmppt2_data %>% 
-      filter(iso3 == input$country)
-    survey_data <- data$survey_data %>% 
-      filter(iso3 == input$country)
-    
-    # order by area
-    dmppt2_data <- order_area_name(left_join(dmppt2_data, data$areas_join))
-    survey_data <- order_area_name(left_join(survey_data, data$areas_join))
-    
-    # convert dmpppt2 (and survey) age group to our convention
-    dmppt2_data <- change_agegroup_convention(dmppt2_data)
-    survey_data <- change_agegroup_convention(survey_data)
+    dmppt2_data <- filter(data$dmppt2_data, iso3 == input$country)
+    survey_data <- filter(data$survey_data, iso3 == input$country)
     
     output <- list(
       "dmppt2_data" = dmppt2_data,
@@ -315,6 +332,29 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   })
   
   #### update plot options (from data) ####
+  
+  # update n_plots selector
+  observe({
+    req(input$plot_type)
+    req(circ_data())
+    req(add_data())
+    
+    default <- switch(
+      input$plot_type,
+      "plt_1" = 12,
+      "plt_2" = 4,
+      # "plt_4" = 12,
+      "plt_4" = 1,
+      "plt_5" = 12,
+      1
+    )
+    
+    updateSelectInput(
+      session, 
+      "n_plot",
+      selected = default
+    )
+  })
   
   # update single age group selector
   observe({
@@ -327,7 +367,12 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     #   "plt_1" = "15-49"
     #   "plt_4" = "10-29"
     # )
-    default <- "10-29"
+    # temp: ages 10-29 is not in survey_data aggregations!
+    if (input$plot_type %in% c(paste0("plt_", c(1:2, 4:5))))  {
+      default <- "15-49"
+    } else {
+      default <- "10-29"
+    }
     
     updateSelectInput(
       session,
@@ -412,14 +457,16 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   observe({
     req(circ_data())
     req(add_data())
+    req(input$plot_type)
     
-    area_levs <- unique(add_data()$dmppt2_data$area_level)
+    area_levs <- defaults <- unique(add_data()$dmppt2_data$area_level)
+    if (input$plot_type == "plt_3") defaults <- defaults[defaults != 0]
     
     updateSelectInput(
       session,
       "area_levels",
       choices = area_levs,
-      selected = area_levs
+      selected = defaults
     )
   })
   
@@ -547,7 +594,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       #   max(2013, min(add_data()$dmppt2_data$year))
       # )))
       
-      rev(plt_dmppt2_compare_fits(
+      plt_dmppt2_compare_fits(
         circ_data(),
         add_data()$dmppt2_data,
         # age_per = "10-29",
@@ -558,7 +605,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         xlab = "DMPPT2 Coverage",
         ylab = "threemc Coverage",
         title = main_title
-      ))
+      )
       
     } else if (input$plot_type == "plt_4") {
       
@@ -567,6 +614,9 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       req(input$year_slider)
       req(input$n_plot)
       
+      main_title = "Circumcision Coverage vs Year (Black dots denote sampled coverage) - "
+      
+      # browser()
       plt_MC_modelfit_spec_age(
         df_results = circ_data(),
         df_results_survey = survey_data,

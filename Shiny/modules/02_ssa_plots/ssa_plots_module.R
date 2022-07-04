@@ -179,43 +179,46 @@ ssa_plots_server <- function(input, output, session, data) {
   
   #### Pull in data ####
   
-  results <- reactive({
-    
-    # req(input$plot_type)
-    
-    # find report names for all countries
-    report_names <- sapply(data$ssa_iso3, function(x) {
-      orderly::orderly_search( 
-        name = "02_aggregations",
-        query = "latest(parameter:cntry == cntry)",
-        parameters = list(cntry = x), 
-        root = data$orderly_root
-      )
-    })
-    # order and remove nas
-    report_names <- report_names[order(names(report_names))]
-    report_names <- report_names[!is.na(report_names)]
-    
-    # location of aggregation files to load
-    aggr_loc <- file.path(
-      data$orderly_root, dir_path, report_names, "artefacts/"
-    )
-    files <- list.files(aggr_loc, full.names = TRUE, pattern = "AgeGroup_Prevalence")
-    
-    # load data 
-    output <- bind_rows(lapply(files, readr::read_csv, show_col_types = FALSE))
-    
-    # order by area hierarchy
-    # output <- order_area_name(output, areas = data$areas)
-    
-    return(output)
-  })
+  # results <- reactive({
+  #   
+  #   # req(input$plot_type)
+  #   
+  #   # find report names for all countries
+  #   report_names <- sapply(data$ssa_iso3, function(x) {
+  #     orderly::orderly_search( 
+  #       name = "02_aggregations",
+  #       query = "latest(parameter:cntry == cntry)",
+  #       parameters = list(cntry = x), 
+  #       root = data$orderly_root
+  #     )
+  #   })
+  #   # order and remove nas
+  #   report_names <- report_names[order(names(report_names))]
+  #   report_names <- report_names[!is.na(report_names)]
+  #   
+  #   # location of aggregation files to load
+  #   aggr_loc <- file.path(
+  #     data$orderly_root, dir_path, report_names, "artefacts/"
+  #   )
+  #   files <- list.files(aggr_loc, full.names = TRUE, pattern = "AgeGroup_Prevalence")
+  #   
+  #   # load data 
+  #   output <- bind_rows(lapply(files, readr::read_csv, show_col_types = FALSE))
+  #   
+  #   # order by area hierarchy
+  #   # output <- order_area_name(output, areas = data$areas)
+  #   
+  #   return(output)
+  # })
+  
+  # results <- data$results_agegroup %>% 
+  #   filter(type %in% c("MC coverage", "MMC coverage", "TMC coverage"))
   
   #### update plot options (from data) ####
   
   # update single age group selector
   observe({
-    req(results())
+    # req(results())
     req(input$plot_type)
     
     # default <- switch(
@@ -228,7 +231,7 @@ ssa_plots_server <- function(input, output, session, data) {
     updateSelectInput(
       session,
       "age_group_single",
-      choices = unique(results()$age_group),
+      choices = unique(data$results_agegroup$age_group),
       selected = "15-49"
     )
   })
@@ -236,13 +239,13 @@ ssa_plots_server <- function(input, output, session, data) {
   
   # update years slider 
   observe({
-    req(results())
+    # req(results())
     
     updateSliderInput(
       session,
       "year_slider",
-      min = min(results()$year, na.rm = TRUE),
-      max = max(results()$year, na.rm = TRUE),
+      min = min(data$results_agegroup$year, na.rm = TRUE),
+      max = max(data$results_agegroup$year, na.rm = TRUE),
       value = c(2009, 2021), 
       step = 1
     )
@@ -250,9 +253,9 @@ ssa_plots_server <- function(input, output, session, data) {
   
   # update "results" area levels selector
   observe({
-    req(results())
+    # req(results())
     
-    # area_levs <- unique(results()$area_level)
+    # area_levs <- unique(results$area_level)
     
     updateSelectInput(
       session,
@@ -292,7 +295,7 @@ ssa_plots_server <- function(input, output, session, data) {
   # plot Circumcision Coverage vs Year 
   plt_data <- reactive({
     
-    req(results())
+    # req(results())
     req(input$plot_type)
     
     # Prevalence vs year
@@ -307,7 +310,7 @@ ssa_plots_server <- function(input, output, session, data) {
       # browser()
       
       plt_coverage_map(
-        results(),
+        data$results_agegroup,
         data$areas,
         colourPalette = colourPalette,
         spec_age_group = input$age_group_single,

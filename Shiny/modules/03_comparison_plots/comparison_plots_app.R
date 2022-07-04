@@ -26,7 +26,7 @@ orderly_root <- unlist(stringr::str_split(orderly_root, "/"))
 orderly_root <- orderly_root[1:which(orderly_root == "threemc-orderly")]
 orderly_root <- paste(orderly_root, collapse = "/")
 
-comparison_iso3 <- sort(c(
+ssa_iso3 <- sort(c(
   "AGO", "BDI", "BEN", "BFA", "BWA", "CAF", "CIV", "CMR", "COD",
   "COG", "ETH", "GAB", "GHA", "GIN", "GMB", "GNB", "GNQ", "KEN",
   "LBR", "LSO", "MLI", "MOZ", "MWI", "NAM", "NER", "NGA", "RWA",
@@ -36,8 +36,22 @@ comparison_iso3 <- sort(c(
 # temp use a few countries to test
 # comparison_iso3 <- c("LSO")
 
+# results for age groups for comparisons
+archives <- orderly::orderly_list_archive()
+dir_name <- orderly::orderly_list_archive() %>% 
+  filter(name == "03_shiny_consolidation") %>%
+  slice(n()) %>% 
+  pull(id)
+results_agegroup_comparison <- readr::read_csv(paste0(
+  orderly_root, 
+  "/archive/03_shiny_consolidation/",
+  dir_name,
+  "/artefacts/results_agegroup_comparison.csv.gz"
+)) %>% 
+  filter(iso3 %in% ssa_iso3)
+
 # shapefiles
-areas_loc <- orderly::orderly_list_archive() %>%
+areas_loc <- archives %>%
   filter(name == "00a2_areas_join") %>%
   slice(n()) %>% 
   pull(id)
@@ -50,54 +64,43 @@ areas_loc <- file.path(
 areas <- read_circ_data(areas_loc) %>%
   filter(iso3 %in% comparison_iso3)
 
-areas_join <- areas %>%
-  sf::st_drop_geometry() %>%
-  dplyr::select(
-    iso3,       area_id,          area_name,
-    area_level, area_level_label, area_sort_order
-  ) %>%
-  distinct()
-
 # DMPPT2 data
-dmppt2_data <- readr::read_csv(
-  paste0(orderly_root, "/Shiny/global/dmppt2-2021_circumcision_coverage.csv.gz")
-)
+# dmppt2_data <- readr::read_csv(
+#   paste0(orderly_root, "/Shiny/global/dmppt2-2021_circumcision_coverage.csv.gz")
+# )
 
-# only use iso3s with DMPPT2 data (?)
-comparison_iso3 <- comparison_iso3[comparison_iso3 %in% dmppt2_data$iso3]
+dmppt2_data <- readr::read_csv(paste0(
+  orderly_root, 
+  "/archive/03_shiny_consolidation/",
+  dir_name,
+  "/artefacts/dmppt2-2021_circumcision_coverage_shiny.csv.gz"
+)) %>% 
+  filter(iso3 %in% ssa_iso3)
+
+dmppt2_iso3 <- unique(dmppt2_data$iso3)
 
 # survey_data
-survey_data <- read_circ_data(
-  paste0(orderly_root, "/Shiny/global/survey-circumcision-coverage.csv.gz"),
-  filters = c("sex" = "male")
-) %>% 
-  filter(
-    iso3 %in% comparison_iso3 # ,
-    # for LSO DMPPT2 data is for all circumcisions, except for in LSO
-    # (indicator == "circumcised" & iso3 != "LSO") | 
-    # (indicator == "circ_medical" & iso3 == "LSO")
-  )
-
-# change naming convention of survey data (not working currently!)
-if ("survey_mid_calendar_quarter" %in% names(survey_data)) {
-  survey_data <- survey_data %>%
-    rename(
-      year = survey_mid_calendar_quarter,
-      mean = estimate,
-      sd = std_error,
-      lower = ci_lower,
-      upper = ci_upper
-    )
-}
+# survey_data <- read_circ_data(
+#   paste0(orderly_root, "/Shiny/global/survey-circumcision-coverage.csv.gz"),
+#   filters = c("sex" = "male")
+# ) %>% 
+#   filter(iso3 %in% comparison_iso3)
+survey_data <- readr::read_csv(paste0(
+  orderly_root, 
+  "/archive/03_shiny_consolidation/",
+  dir_name,
+  "/artefacts/survey-circumcision-coverage_shiny.csv.gz"
+)) %>% 
+  filter(iso3 %in% ssa_iso3)
 
 # data which is fed into Shiny app
 comparison_plots_data <- list(
-  "comparison_iso3" = comparison_iso3,
-  "dmppt2_data"     = dmppt2_data,
-  "survey_data"     = survey_data,
-  "orderly_root"    = orderly_root,
-  "areas"           = areas,
-  "areas_join"      = areas_join
+  "ssa_iso3"                    = ssa_iso3,
+  "results_agegroup_comparison" = results_agegroup_comparison,
+  "dmppt2_iso3"                 = dmppt2_iso3,
+  "dmppt2_data"                 = dmppt2_data,
+  "survey_data"                 = survey_data,
+  "orderly_root"                = orderly_root
 )
 
 # source function and module, respectively

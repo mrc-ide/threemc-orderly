@@ -255,33 +255,48 @@ single_plots_server <- function(input, output, session, connection, selected = r
   
   #### Pull in data ####
   
+  # results <- reactive({
+  #   req(input$country)
+  #   req(input$plot_type)
+  #   
+  #   # find report name for specific country
+  #   report_name <- orderly::orderly_search(
+  #     name = "02_aggregations",
+  #     query = "latest(parameter:cntry == cntry)",
+  #     parameters = list(cntry = as.character(input$country)), 
+  #     root = data$orderly_root
+  #   )
+  #   
+  #   # location of aggregations to load
+  #   aggr_loc <- file.path(
+  #     data$orderly_root, dir_path, report_name, "artefacts/"
+  #   )
+  #   
+  #   # load data 
+  #   if (input$plot_type %in% c("plt_2", "plt_5", "plt_6")) {
+  #     output <- results_reader(type = "age", dir_path = aggr_loc)
+  #   } else {
+  #     output <- results_reader(type = "age groups", dir_path = aggr_loc)
+  #   }
+  #   
+  #   # order by area hierarchy
+  #   output <- order_area_name(output, areas = data$areas)
+  #   
+  #   return(output)
+  # })
+  
   results <- reactive({
     req(input$country)
     req(input$plot_type)
     
-    # find report name for specific country
-    report_name <- orderly::orderly_search(
-      name = "02_aggregations",
-      query = "latest(parameter:cntry == cntry)",
-      parameters = list(cntry = as.character(input$country)), 
-      root = data$orderly_root
-    )
-    
-    # location of aggregations to load
-    aggr_loc <- file.path(
-      data$orderly_root, dir_path, report_name, "artefacts/"
-    )
-    
-    # load data 
+    # load data
     if (input$plot_type %in% c("plt_2", "plt_5", "plt_6")) {
-      output <- results_reader(type = "age", dir_path = aggr_loc)
+      output <- filter(data$results_age, iso3 == input$country)
     } else {
-      output <- results_reader(type = "age groups", dir_path = aggr_loc)
+      output <- filter(data$results_agegroup, iso3 == input$country)
     }
     
-    # order by area hierarchy
-    output <- order_area_name(output, areas = data$areas)
-    
+    print("Here! 1")
     return(output)
   })
   
@@ -300,12 +315,14 @@ single_plots_server <- function(input, output, session, connection, selected = r
     req(results())
     req(input$plot_type)
     
-    default <- switch(
-      input$plot_type,
-      "plt_1" = "10+",
-      "plt_3" = "15-49",
-      "plt_4" = "15-49"
-    )
+    # default <- switch(
+    #   input$plot_type,
+    #   "plt_1" = "10+",
+    #   "plt_3" = "15-49",
+    #   "plt_4" = "15-49"
+    # )
+    
+    default <- "10-29"
     
     updateSelectInput(
       session,

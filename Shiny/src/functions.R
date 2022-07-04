@@ -511,7 +511,7 @@ plt_coverage_map <- function(
         areas <- areas %>%
             filter(iso3 %in% spec_countries)
         results_agegroup <- results_agegroup %>%
-            filter(area_id %like% paste(spec_countries, collapse = "|"))
+            filter(grepl(paste(spec_countries, collapse = "|"), area_id))
         if (nrow(results_agegroup) == 0) {
             stop ("No records present for given iso3 code(s)")
         }
@@ -1053,6 +1053,8 @@ plt_circ_age_ridge <- function(
     n_plots = 8
 ) {
     
+    # browser()
+  
     # temp fix
     if (!all(spec_ages == 0:30)) {
       spec_ages <- 0:30
@@ -1077,8 +1079,8 @@ plt_circ_age_ridge <- function(
         mutate(density = mean / (2 * sum(mean))) %>%
         ungroup() %>%
         # Altering labels for the plot
-        mutate(type = ifelse(type %like% "MMC-nT", "Medical", "Traditional")) %>%
-        order_area_name()
+        mutate(type = ifelse(type %like% "MMC-nT", "Medical", "Traditional")) #  %>%
+        # order_area_name()
 
     tmp2 <- tmp %>%
         group_by(area_id, area_name, type, year) %>%
@@ -1212,14 +1214,16 @@ plt_MC_modelfit_spec_age <- function(
   # make sure areas are the same for both
   df_results_survey <- df_results_survey %>%
       filter(area_name %in% df_results$area_name)
-
+  
+  # browser()
+  
   # split results by area level, and number of plots desired
   df_results <- split_area_level(df_results, n_plots = n_plots)
   df_results_survey <- split_area_level(df_results_survey, n_plots = n_plots)
 
   # plot for each (nested) loop
   plots <- lapply(seq_along(df_results), function(i) {
-    lapply(seq_along(df_results[i]), function(j) {
+    lapply(seq_along(df_results[[i]]), function(j) {
 
       plt_data1 <- df_results[[i]][[j]]
       plt_data2 <- df_results_survey[[i]][[j]]
@@ -1272,7 +1276,7 @@ plt_MC_modelfit_spec_age <- function(
               legend.position = "none")
     })
   })
-
+  
   # flatten nested list of plots
   plots <- rlang::squash(plots)
   if (!is.null(str_save)) {
@@ -1488,6 +1492,8 @@ plt_dmppt2_compare_year <- function(circ_data,
   #     "15-29 Prevalence - ",
   #     "Black line denotes DMPPT2 coverage, Blue dots denote Surveyed coverage - "
   # )
+  
+  # browser()
   
   # initial filtering
   cols <- c("age_group", "area_level", "year", "model")
@@ -1878,6 +1884,7 @@ plt_dmppt2_compare_fits <- function(circ_data,
                                     str_save = NULL,
                                     save_width = NULL,
                                     save_height = NULL,
+                                    # n_plots = 1) {
                                     n_plots = 1) {
   
   # circ_data_test <- circ_data
@@ -1937,12 +1944,14 @@ plt_dmppt2_compare_fits <- function(circ_data,
   
   # split results by area level, year and number of plots desired (no need
   # for area level)
-  circ_data <- purrr::flatten(
-    lapply(
-      split_area_level(circ_data, years = TRUE, n_plots = n_plots),
-      purrr::flatten
-    )
-  )
+  # circ_data <- purrr::flatten(
+  #   lapply(
+  #     split_area_level(circ_data, years = TRUE, n_plots = n_plots),
+  #     purrr::flatten
+  #   )
+  # )
+  # don't use n_plots arg here
+  circ_data <- purrr::flatten(split_area_level(circ_data, years = TRUE))
   
   plots <- lapply(seq_along(circ_data), function(i) { # area
     

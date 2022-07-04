@@ -34,6 +34,20 @@ ssa_iso3 <- c(
   "SEN", "SLE", "SWZ", "TCD", "TGO", "TZA", "UGA", "ZAF", "ZMB", "ZWE"
 )
 
+# results for age groups
+archives <- orderly::orderly_list_archive()
+dir_name <- orderly::orderly_list_archive() %>% 
+  filter(name == "03_shiny_consolidation") %>%
+  slice(n()) %>% 
+  pull(id)
+results_agegroup <- readr::read_csv(paste0(
+  orderly_root, 
+  "/archive/03_shiny_consolidation/",
+  dir_name,
+  "/artefacts/results_agegroup.csv.gz"
+)) %>% 
+  filter(iso3 %in% ssa_iso3)
+
 # shapefile
 areas_loc <- orderly::orderly_list_archive() %>% 
   filter(name == "00a2_areas_join") %>% 
@@ -53,9 +67,10 @@ areas <- read_circ_data(areas_loc) %>%
 
 # data which is fed into Shiny app
 ssa_plots_data <- list(
-  "ssa_iso3" = ssa_iso3,
-  "orderly_root" = orderly_root,
-  "areas"    = areas
+  "results_agegroup" = results_agegroup,
+  "ssa_iso3"         = ssa_iso3,
+  "orderly_root"     = orderly_root,
+  "areas"            = areas
 )
 
 # source function and module, respectively
