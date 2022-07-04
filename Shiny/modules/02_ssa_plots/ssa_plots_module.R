@@ -11,6 +11,9 @@ colourPalette <- rev(colorRampPalette(
   )
 )(100))
 
+# ESA - WCA key for SSA countries
+esa_wca_regions <- threemc::esa_wca_regions
+
 #### UI ####
 
 ssa_plots_UI <- function(id) {
@@ -50,7 +53,8 @@ ssa_plots_UI <- function(id) {
                 inputId = ns("plot_type"),
                 label   = "Plot Type",
                 choices = c(
-                 "SSA Circumcision Coverage" = "plt_1"
+                 "SSA Circumcision Coverage "        = "plt_1",
+                 "SSA Circumcision Coverage (Split)" = "plt_2"
                 )
               ),
               selectInput(
@@ -86,9 +90,22 @@ ssa_plots_UI <- function(id) {
             #### Options specific to each plot ####
             tabPanel(
               strong("Plot Specific"),
-              # single choice for age group
+              # country choice for plot 2
               conditionalPanel(
-                condition = "input.plot_type == 'plt_1'",
+                condition = "input.plot_type == 'plt_2'",
+                ns        = ns,
+                selectInput(
+                  inputId = ns("country_multiple"),
+                  label   = "Select Countries",
+                  choices = NULL,
+                  selected = NULL, 
+                  multiple = TRUE
+                )
+              ),
+              # single choice for age group (this can actually be on the first tab!)
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_1' || 
+                input.plot_type == 'plt_2'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("age_group_single"),
@@ -97,9 +114,10 @@ ssa_plots_UI <- function(id) {
                   selected = NULL
                 ) 
               ),
-              # two-way slider for year
+              # two-way slider for year (also on first tab!)
               conditionalPanel(
-                condition = "input.plot_type == 'plt_1'",
+                condition = "input.plot_type == 'plt_1' ||
+                input.plot_type == 'plt_2'",
                 ns        = ns,
                 sliderInput(
                   inputId = ns("year_slider"), # also updated below
@@ -112,7 +130,8 @@ ssa_plots_UI <- function(id) {
               ),
               # separate area level selectors for map plots
               conditionalPanel(
-                condition = "input.plot_type == 'plt_1'",
+                condition = "input.plot_type == 'plt_1' ||
+                input$plot_type == 'plt_2'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("border_area_level"),
@@ -122,13 +141,24 @@ ssa_plots_UI <- function(id) {
                 )
               ),
               conditionalPanel(
-                condition = "input.plot_type == 'plt_1'",
+                condition = "input.plot_type == 'plt_1' ||
+                input$plot_type == 'plt_2'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("results_area_level"),
                   label    = "Select Results Area Level",
                   choices  = NULL,
                   selected = NULL
+                )
+              ),
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_2'",
+                ns        = ns,
+                selectInput(
+                  inputId = ns("n_plot"),
+                  label = "Number of Areas to Display",
+                  choices = 1:15,
+                  selected = 1
                 )
               )
             ),
@@ -176,6 +206,46 @@ ssa_plots_UI <- function(id) {
 ssa_plots_server <- function(input, output, session, data) {
 
   #### update picker options (initial) ####
+  
+  observe({
+    
+    countries <- data$ssa_iso3
+    
+    updateSelectInput(
+      session,
+      "country_multiple",
+      choices = c("West & Central Africa", "Eastern & Southern Africa", countries),
+      selected = countries
+    )
+  })
+  
+  observe({
+    if ("West & Central Africa" %in% input$country_multiple) {
+      default <- c(
+        # input$select, 
+        "West & Central Africa",
+        esa_wca_regions %>% 
+          filter(region == "WCA") %>% 
+          distinct(iso3) %>% 
+          pull()
+      )
+    } else if ("Eastern & Southern Africa" %in% input$country_multiple) {
+      default <- c(
+        # input$select, 
+        "Eastern & Southern Africa",
+        esa_wca_regions %>% 
+          filter(region == "ESA") %>% 
+          distinct(iso3) %>% 
+          pull()
+      )
+    } else default <- input$country_multiple
+    
+    updateSelectInput(
+      session,
+      "country_multiple",
+      selected = default
+    )
+  })
   
   #### Pull in data ####
   
@@ -232,7 +302,7 @@ ssa_plots_server <- function(input, output, session, data) {
       session,
       "age_group_single",
       choices = unique(data$results_agegroup$age_group),
-      selected = "15-49"
+      selected = "10-29"
     )
   })
   
@@ -291,6 +361,27 @@ ssa_plots_server <- function(input, output, session, data) {
   })
   
   
+   # update n_plots selector
+  observe({
+    req(input$plot_type)
+    
+    # default <- switch(
+    #   input$plot_type,
+    #   "plt_4" = 12,
+    #   "plt_5" = 12,
+    #   "plt_6" = 8,
+    #   1
+    # )
+    default <- 9
+    
+    updateSelectInput(
+      session, 
+      "n_plot",
+      selected = default
+    )
+  })
+ 
+  
   #### Plot ####
   # plot Circumcision Coverage vs Year 
   plt_data <- reactive({
@@ -306,9 +397,6 @@ ssa_plots_server <- function(input, output, session, data) {
       req(input$results_area_level)
       req(input$border_area_level)
       
-      
-      # browser()
-      
       plt_coverage_map(
         data$results_agegroup,
         data$areas,
@@ -321,7 +409,36 @@ ssa_plots_server <- function(input, output, session, data) {
         country_area_level = input$border_area_level, 
         n_plots = 1
       )
-    }   
+    } else if (input$plot_type == "plt_2") {
+      
+      req(input$country_multiple)
+      req(input$age_group_single)
+      req(input$year_slider)
+      req(input$results_area_level)
+      req(input$border_area_level)
+      req(input$n_plot)
+      
+      if ("West & Central Africa" %in% input$country_multiple) {
+        title <- "West & Central Africa" 
+      } else if ("Eastern & Southern Africa" %in% input$country_multiple) {
+        title <- "Eastern & Southern Africa"
+      } else title <- NULL
+      
+      plt_coverage_map(
+        filter(data$results_agegroup, iso3 %in% input$country_multiple),
+        data$areas,
+        colourPalette = colourPalette,
+        spec_age_group = input$age_group_single,
+        spec_years = c(as.numeric(input$year_slider[[1]]), as.numeric(input$year_slider[[2]])),
+        spec_model = "No program data",
+        plot_type = "split",
+        spec_main_title = title,
+        results_area_level = input$results_area_level,
+        country_area_level = input$border_area_level, 
+        n_plots = as.numeric(input$n_plot)
+      )
+      
+    }
   })
   
   #### Update plot selector ####
