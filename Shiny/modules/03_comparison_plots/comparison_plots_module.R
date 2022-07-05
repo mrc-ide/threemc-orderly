@@ -217,10 +217,15 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       choices = data$ssa_iso3
     }
     
+    if (!is.null(input$country)) {
+      selected <- input$country
+    } else selected <- NULL
+    
     updateSelectInput(
       session,
       "country",
-      choices = choices
+      choices = choices, 
+      selected = selected
     )
 
     # update select input based on plot selection
@@ -378,7 +383,9 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       session,
       "age_group_single",
       # choices = unique(circ_data()$age_group),
-      choices = unique(add_data()$dmppt2_data$age_group),
+      # choices = unique(add_data()$dmppt2_data$age_group),
+      # choices = unique(circ_data()$age_group),
+      choices = c(unique(add_data()$survey_data$age_group), "10-29"),
       selected = default
     )
   })
@@ -419,9 +426,9 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       session,
       "year_slider",
       # min = min(circ_data()$year, na.rm = TRUE),
-      min = min(add_data()$dmppt2_data$year, na.rm = TRUE),
+      min = min(circ_data()$year, na.rm = TRUE),
       # max = max(circ_data()$year, na.rm = TRUE),
-      max = max(add_data()$dmppt2_data$year, na.rm = TRUE),
+      max = max(circ_data()$year, na.rm = TRUE),
       value = c(2009, 2021), 
       step = 1
     )
@@ -438,8 +445,11 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     if (input$plot_type %in% c("plt_2", "plt_3")) {
       # last year in DMPPT2 data
       DMPPT2_last_year <- max(add_data()$dmppt2_data$year)
+      DMPPT2_first_year <- min(add_data()$dmppt2_data$year)
+      if (is.infinite(DMPPT2_last_year)) DMPPT2_last_year <- NULL
+      if (is.infinite(DMPPT2_first_year)) DMPPT2_first_year <- NULL
       # also include 2013, or whatever is later
-      year_2013 <- max(2013, min(add_data()$dmppt2_data$year))
+      year_2013 <- max(2013, min(DMPPT2_first_year))
       plt_years <- sort(unique(c(DMPPT2_last_year, year_2013)))
     } else {
       plt_years <- c(min(circ_data()$year), max(circ_data()$year))
@@ -625,7 +635,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         # age_per = "15-49",
         age_per = input$age_group_single,
         # years = plt_start_year:2021,
-        years = as.numeric(input$year_slider[[1]]):as.numeric(input$year_slider[[2]]),
+        years = as.numeric(input$year_slider[[1]]):as.numeric(last(input$year_slider)),
         model_type = "No program data",
         xlab = "Year",
         ylab = "Total Circumcision Coverage",
