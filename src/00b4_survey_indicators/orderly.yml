@@ -1,0 +1,26 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: Survey circumcision coverage estimates by age groups
+      filenames:
+        - artefacts/survey-circumcision-coverage.csv.gz
+
+displayname: Survey circumcision coverage aggregate estimates
+
+packages:
+  - dplyr
+  - naomi.utils
+  - readr
+  - sf
+  - tidyr
+
+depends:
+  00a2_areas_join:
+    id: latest
+    use:
+      depends/areas.geojson: artefacts/areas.geojson
+  00b3_survey_join:      
+    id: latest
+    use:
+      depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
