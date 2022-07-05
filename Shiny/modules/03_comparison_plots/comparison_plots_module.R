@@ -259,36 +259,6 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   
   #### Pull in data ####
   
-  # aggregated model data
-  # circ_data <- reactive({
-  #   req(input$country)
-  #   
-  #   # browser()
-  #   
-  #   # find report name for specific country
-  #   report_name <- orderly::orderly_search(
-  #     name = "02_aggregations",
-  #     query = "latest(parameter:cntry == cntry)",
-  #     parameters = list(cntry = as.character(input$country)), 
-  #     root = data$orderly_root
-  #   )
-  #   
-  #   # location of aggregations to load
-  #   aggr_loc <- file.path(
-  #     data$orderly_root, dir_path, report_name, "artefacts/"
-  #   )
-  #   
-  #   # load data 
-  #   output <- readr::read_csv(
-  #     paste0(aggr_loc, "Results_AgeGroup_Prevalence.csv.gz")
-  #   )
-  #   
-  #   # order by area
-  #   output <- order_area_name(left_join(output, data$areas_join))
-  #   
-  #   return(output)
-  # })
-  
   # circumcision estimates
   circ_data <- reactive({
     req(input$country)
@@ -331,7 +301,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         "spec_type",
         choices = choices, 
         selected = "MC coverage"
-      )
+    )
   })
   
   # update n_plots selector
@@ -378,9 +348,6 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     updateSelectInput(
       session,
       "age_group_single",
-      # choices = unique(circ_data()$age_group),
-      # choices = unique(add_data()$dmppt2_data$age_group),
-      # choices = unique(circ_data()$age_group),
       choices = c(unique(add_data()$survey_data$age_group), "10-29"),
       selected = default
     )
@@ -418,14 +385,26 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     req(circ_data())
     req(add_data())
     
+    # ensure defaults are lowest & highest years needed for each plot
+    defaults <- c(
+      min(c(
+        min(circ_data()$year, na.rm = TRUE),
+        min(add_data()$survey_data$year, na.rm = TRUE),
+        min(c(suppressWarnings(circ_data()$dmppt2_data$year), 2500), na.rm = TRUE)
+      )), 
+      max(c(
+        max(circ_data()$year, na.rm = TRUE),
+        max(add_data()$survey_data$year, na.rm = TRUE),
+        max(c(suppressWarnings(circ_data()$dmppt2_data$year), 1), na.rm = TRUE)
+      ))
+    )
+    
     updateSliderInput(
       session,
       "year_slider",
-      # min = min(circ_data()$year, na.rm = TRUE),
-      min = min(circ_data()$year, na.rm = TRUE),
-      # max = max(circ_data()$year, na.rm = TRUE),
-      max = max(circ_data()$year, na.rm = TRUE),
-      value = c(2009, 2021), 
+      min = defaults[1],
+      max = defaults[2],
+      value = defaults,
       step = 1
     )
   })
@@ -614,6 +593,8 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       )
       
     } else if (input$plot_type == "plt_4") {
+      
+      # if (input$country == "SEN") browser()
       
       req(input$spec_type)
       req(input$age_group_single)
