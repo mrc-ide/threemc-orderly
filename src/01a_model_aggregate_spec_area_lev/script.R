@@ -42,7 +42,7 @@ cens_year <- max(as.numeric(
 survey_circumcision <- prepare_survey_data(
   areas               = areas,
   # remove area_level column to avoid duplicating columns in prepare_survey_data
-  survey_circumcision = select(survey_circumcision, -area_level),
+  survey_circumcision = select(survey_circumcision, -matches("area_level")),
   area_lev            = area_lev,
   start_year          = start_year,
   cens_year           = cens_year,
@@ -273,9 +273,9 @@ lapply(seq_along(age_vars$inputs), function(i) {
     readr::write_csv(
       x = spec_results,
       file = paste0(
-        save_loc, "Results_",
+        save_dir, "Results_",
         age_vars$names[[i]], "_", stringr::str_to_title(types[j]),
-        "_OOS.csv.gz"
+        ".csv.gz"
       )
     )
     
