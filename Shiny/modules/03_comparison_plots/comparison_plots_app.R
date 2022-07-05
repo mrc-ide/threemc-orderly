@@ -50,6 +50,8 @@ results_agegroup_comparison <- readr::read_csv(paste0(
 )) %>% 
   filter(iso3 %in% ssa_iso3)
 
+ssa_iso3 <- ssa_iso3[ssa_iso3 %in% results_agegroup_comparison$iso3]
+
 # shapefiles
 areas_loc <- archives %>%
   filter(name == "00a2_areas_join") %>%
@@ -125,7 +127,7 @@ server <- function(input, output, session) {
   callModule(
     module = comparison_plots_server,
     id = "comparison_plots1",
-    selected = reactive("LSO"),
+    selected = reactive(NULL),
     data = comparison_plots_data
   )
 }
