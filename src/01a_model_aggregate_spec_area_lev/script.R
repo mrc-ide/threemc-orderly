@@ -250,8 +250,7 @@ fit_no_prog <- fit
 rm(fit); gc()
 
 # want to aggregate for both discrete ages and "binned" age groups
-# age_vars <- list("inputs" = c("age", "age_group"), "names" = c("Age", "AgeGroup"))
-age_vars <- list("inputs" = c("age_group"), "names" = c("AgeGroup"))
+age_vars <- list("inputs" = c("age", "age_group"), "names" = c("Age", "AgeGroup"))
 # want to aggregate for various types
 types <- c("probability", "incidence", "prevalence")
 
