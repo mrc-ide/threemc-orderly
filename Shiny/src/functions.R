@@ -1393,8 +1393,8 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
    ) 
   
   # split results by area level, year and number of plots desired
-  tmp1 <- split_area_level(tmp1, year = T, n_plots = n_plots)
-  tmp2 <- split_area_level(tmp2, year = T, n_plots = n_plots)
+  tmp1 <- split_area_level(tmp1, year= TRUE, n_plots = n_plots)
+  tmp2 <- split_area_level(tmp2, year= TRUE, n_plots = n_plots)
 
   # plot for each (nested) loop
   plots <- lapply(seq_along(tmp1), function(i) { # area
