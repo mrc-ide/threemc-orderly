@@ -63,12 +63,13 @@ comparison_plots_UI <- function(id) {
                 selectInput(
                   inputId  = ns("spec_type"),
                   label    = "Select Circumcision Types",
-                  choices  = c(
-                    "Total Circumcision" = "MC coverage",
-                    "Medical Circumcision" = "MMC coverage",
-                    "Traditional Circumcision" = "TMC coverage"
-                  ),
-                  selected = "MC coverage" # ,
+                  # choices  = c(
+                  #   "Total Circumcision" = "MC coverage",
+                  #   "Medical Circumcision" = "MMC coverage",
+                  #   "Traditional Circumcision" = "TMC coverage"
+                  # ),
+                  choices = NULL,
+                  # selected = "MC coverage" # ,
                   # multiple = TRUE
                 ) 
               ),
@@ -295,32 +296,6 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     return(filter(data$results_agegroup_comparison, iso3 == input$country))
   })
   
-  # add_data <- reactive({
-  #   req(input$country)
-  #   
-  #   # browser()
-  #   
-  #   dmppt2_data <- data$dmppt2_data %>% 
-  #     filter(iso3 == input$country)
-  #   survey_data <- data$survey_data %>% 
-  #     filter(iso3 == input$country)
-  #   
-  #   # order by area
-  #   dmppt2_data <- order_area_name(left_join(dmppt2_data, data$areas_join))
-  #   survey_data <- order_area_name(left_join(survey_data, data$areas_join))
-  #   
-  #   # convert dmpppt2 (and survey) age group to our convention
-  #   dmppt2_data <- change_agegroup_convention(dmppt2_data)
-  #   survey_data <- change_agegroup_convention(survey_data)
-  #   
-  #   output <- list(
-  #     "dmppt2_data" = dmppt2_data,
-  #     "survey_data" = survey_data
-  #   )
-  #   
-  #   return(output)
-  # })
-  
   # survey and dmppt2 circumcision estimates
   add_data <- reactive({
     req(input$country)
@@ -337,6 +312,27 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   })
   
   #### update plot options (from data) ####
+  
+  # update spec_type selector based on whether country has only MC coverage or not
+  observe({
+    req(circ_data())
+    
+    if (all(add_data()$survey_data$indicator == "circumcised")) {
+      choices <- c("Total Circumcision" = "MC coverage")
+    } else {
+      choices <- c(
+        "Total Circumcision" = "MC coverage",
+        "Medical Circumcision" = "MMC coverage",
+        "Traditional Circumcision" = "TMC coverage"
+      )
+    }
+    updateSelectInput(
+        session,
+        "spec_type",
+        choices = choices, 
+        selected = "MC coverage"
+      )
+  })
   
   # update n_plots selector
   observe({
