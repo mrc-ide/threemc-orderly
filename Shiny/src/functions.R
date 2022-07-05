@@ -1216,7 +1216,7 @@ plt_MC_modelfit_spec_age <- function(
   xlab, ylab, title, str_save = NULL,
   save_width = NULL, save_height = NULL, n_plots = 12) {
 
-  # browser()
+  # if (df_results$iso3[1] == "ETH") browser()
   # filter data accordingly
   initial_filter <- function(.data, type_filter) {
     .data <- .data %>%
@@ -1234,7 +1234,23 @@ plt_MC_modelfit_spec_age <- function(
 
   # make sure areas are the same for both
   df_results_survey <- df_results_survey %>%
-      filter(area_name %in% df_results$area_name)
+      filter(
+        area_name %in% df_results$area_name,
+        year %in% df_results$year  
+      )
+  
+  # do the same for model estimates if they don't align with surveys
+  if (
+    length(unique(df_results$area_id)) != 
+    length(unique(df_results_survey$area_id))
+  ) {
+    message("Area IDs in model estimates and surveys are misaligned") 
+    df_results <- df_results %>%
+      filter(
+        area_name %in% df_results_survey$area_name # ,
+        # year %in% df_results_survey$year  
+      )
+  }
   
   # browser()
   
@@ -1337,6 +1353,26 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   }
   tmp1 <- initial_filter(df_results, mc_type_model)
   tmp2 <- initial_filter(df_results_survey, mc_type_survey)
+  
+  # make sure surveys and model estimates are aligned
+  tmp2 <- tmp2 %>%
+    filter(
+      area_name %in% tmp1$area_name,
+      year %in% tmp1$year  
+    )
+  
+  if (
+    length(unique(tmp1$area_id)) != 
+    length(unique(tmp2$area_id))
+  ) {
+    message("Area IDs in model estimates and surveys are misaligned") 
+    tmp1 <- tmp1 %>%
+      filter(
+        area_name %in% tmp2$area_name,
+        year %in% tmp2$year  
+      )
+  }
+ 
 
   # Ordering age groups (needed??)
   tmp1$age_group <- as.numeric(factor(tmp1$age_group, levels = age_per))
