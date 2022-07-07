@@ -65,12 +65,17 @@ areas <- read_circ_data(areas_loc) %>%
   dplyr::mutate(space = row_number()) %>%
   ungroup()
 
+last_surveys <- readr::read_csv(
+  file.path(orderly_root, "global/most_recent_surveys.csv")
+)
+
 # data which is fed into Shiny app
 ssa_plots_data <- list(
   "results_agegroup" = results_agegroup,
   "ssa_iso3"         = ssa_iso3,
   "orderly_root"     = orderly_root,
-  "areas"            = areas
+  "areas"            = areas,
+  "last_surveys"     = last_surveys
 )
 
 # source function and module, respectively

@@ -2092,6 +2092,7 @@ plt_dmppt2_compare_fits <- function(circ_data,
 plt_coverage_year_national <- function(
   results_agegroup, 
   areas, 
+  last_surveys,
   spec_age_group, 
   spec_years, 
   spec_model = "No program data",
@@ -2101,6 +2102,8 @@ plt_coverage_year_national <- function(
   save_height = NULL, 
   n_plots = 1
 ) {
+  
+  # browser()
   
   # Subset results
   tmp <- results_agegroup %>%
@@ -2121,7 +2124,7 @@ plt_coverage_year_national <- function(
                     ifelse(type %like% "TMC",
                            "Traditional Male Circumcision (TMC)",
                            "Medical Circumcision (MC)")),
-      area_name = ifelse(area_name %like% "Tanzania", "Tanzania", area_name)
+      area_name = ifelse(grepl("Tanzania", area_name), "Tanzania", area_name)
     )
   
   # add last surveys for each country
@@ -2155,11 +2158,11 @@ plt_coverage_year_national <- function(
     "NAM", "ZAF", "SWZ", "LSO"
   )
   missing_levs <- unique(ordered_areas$area_id[!ordered_areas$area_id %in% levs])
-  if (length(missing_levs) > 0) {
-    message(
-      paste0("No geographical order present for ", paste(missing_levs, collapse = ", "))
-    )
-  }
+  # if (length(missing_levs) > 0) {
+  #   message(
+  #     paste0("No geographical order present for ", paste(missing_levs, collapse = ", "))
+  #   )
+  # }
   levs <- levs[levs %in% ordered_areas$area_id]
   
   ordered_areas$area_id <-  factor(
@@ -2181,7 +2184,7 @@ plt_coverage_year_national <- function(
     filter(type != "Medical Circumcision (MC)") %>%
     mutate(
       light = factor(light, levels = c("Surveyed", "Projected")),
-      type = fct_drop(type)
+      type = forcats::fct_drop(type)
     )
   
   # temp

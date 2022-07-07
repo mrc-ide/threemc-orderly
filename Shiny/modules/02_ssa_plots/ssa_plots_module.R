@@ -53,8 +53,9 @@ ssa_plots_UI <- function(id) {
                 inputId = ns("plot_type"),
                 label   = "Plot Type",
                 choices = c(
-                 "SSA Circumcision Coverage "        = "plt_1",
-                 "SSA Circumcision Coverage (Split)" = "plt_2"
+                 "SSA Circumcision Coverage "                    = "plt_1",
+                 "SSA Circumcision Coverage (Split)"             = "plt_2",
+                 "National Level Circumcision Coverage vs Year"  = "plt_3"
                 )
               ),
               selectInput(
@@ -92,7 +93,8 @@ ssa_plots_UI <- function(id) {
               strong("Plot Specific"),
               # country choice for plot 2
               conditionalPanel(
-                condition = "input.plot_type == 'plt_2'",
+                condition = "input.plot_type == 'plt_2' | 
+                input.plot_type == 'plt_3'",
                 ns        = ns,
                 selectInput(
                   inputId = ns("country_multiple"),
@@ -105,7 +107,8 @@ ssa_plots_UI <- function(id) {
               # single choice for age group (this can actually be on the first tab!)
               conditionalPanel(
                 condition = "input.plot_type == 'plt_1' || 
-                input.plot_type == 'plt_2'",
+                input.plot_type == 'plt_2' || 
+                input.plot_type == 'plt_3'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("age_group_single"),
@@ -117,7 +120,8 @@ ssa_plots_UI <- function(id) {
               # two-way slider for year (also on first tab!)
               conditionalPanel(
                 condition = "input.plot_type == 'plt_1' ||
-                input.plot_type == 'plt_2'",
+                input.plot_type == 'plt_2' || 
+                input.plot_type == 'plt_3",
                 ns        = ns,
                 sliderInput(
                   inputId = ns("year_slider"), # also updated below
@@ -152,7 +156,8 @@ ssa_plots_UI <- function(id) {
                 )
               ),
               conditionalPanel(
-                condition = "input.plot_type == 'plt_2'",
+                condition = "input.plot_type == 'plt_2' || 
+                input.plot_type == 'plt_3'",
                 ns        = ns,
                 selectInput(
                   inputId = ns("n_plot"),
@@ -438,6 +443,22 @@ ssa_plots_server <- function(input, output, session, data) {
         n_plots = as.numeric(input$n_plot)
       )
       
+    } else if (input$plot_type == "plt_3") {
+      
+      req(input$country_multiple)
+      req(input$age_group_single)
+      req(input$year_slider)
+      req(input$n_plot)
+      
+      plt_coverage_year_national(
+        results_agegroup = filter(data$results_agegroup, iso3 %in% input$country_multiple), 
+        areas            = data$areas, 
+        last_surveys = data$last_surveys,
+        spec_age_group = input$age_group_single, 
+        spec_years = as.numeric(input$year_slider[[1]]):as.numeric(input$year_slider[[2]]),
+        spec_model = "No program data",
+        n_plots = as.numeric(input$n_plot)
+      )
     }
   })
   
