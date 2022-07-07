@@ -18,6 +18,22 @@ artefacts:
       - artefacts/results_agegroup_comparison.csv.gz
   - data: 
       description:
+      - Results for age groups at the national level. 
+      filenames:
+      - artefacts/results_agegroup_national.csv.gz
+  - data: 
+      description:
+      - Results for single ages at the national level. 
+      filenames:
+      - artefacts/results_age_national.csv.gz
+  - data:
+      description: 
+      - Results for age groups for comparison plots at the national level. 
+      filenames:
+      - artefacts/results_agegroup_comparison_national.csv.gz
+ 
+  - data: 
+      description:
       - Survey circumcision estimates with associated error bounds. 
       filenames:
       - artefacts/survey-circumcision-coverage_shiny.csv.gz
