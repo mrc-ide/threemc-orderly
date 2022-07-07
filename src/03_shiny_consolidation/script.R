@@ -25,11 +25,17 @@ areas <- sf::read_sf(paste0(dir_path, "areas.geojson")) %>%
 #### Single Plots #### 
 
 # load and save single age and age group results
-agg_results_saver <- function(spec_type, dir_path, save_loc = NULL) {
+agg_results_saver <- function(
+  spec_type, dir_path, save_loc = NULL, national = FALSE
+) {
   
   # files location
   files <- list.files(dir_path,full.names = TRUE)
   files <- files[grepl(toupper(paste0(spec_type, "_")), toupper(files))]
+  
+  if (national == FALSE) {
+    files <- files[!grepl(toupper("national"), toupper(files))]
+  }
   
   # load results
   message("loading ...")
@@ -78,6 +84,20 @@ readr::write_csv(
   file = paste0(save_loc, "results_agegroup.csv.gz")
 )
 
+# for national level models
+results_age_national <- agg_results_saver("age", dir_path, national = TRUE)
+readr::write_csv( 
+  x = results_age_national,
+  file = paste0(save_loc, "results_age_national.csv.gz")
+)
+rm(results_age); gc()
+
+results_agegroup_national <- agg_results_saver("agegroup", dir_path, national = TRUE)
+readr::write_csv( 
+  x = results_agegroup_national, 
+  file = paste0(save_loc, "results_agegroup_national.csv.gz")
+)
+
 #### Comparison Plots ####
 
 # areas for surveys and dmppt2 Shiny data
@@ -104,10 +124,21 @@ readr::write_csv(
   paste0(save_loc, "results_agegroup_comparison.csv.gz")
 )
 
+results_agegroup_national<- results_agegroup_national %>% 
+  filter(grepl("coverage", type)) %>% 
+  select(-area_name) %>% 
+  left_join(areas_join)
+
+readr::write_csv(
+  results_agegroup_national,
+  paste0(save_loc, "results_agegroup_comparison_national.csv.gz")
+)
+
 # only keep areas in results_agegroup in below
 spec_areas <- unique(results_agegroup$area_id)
 
 rm(results_agegroup); gc()
+rm(results_agegroup_national); gc()
 
 
 # DMPPT2 data
