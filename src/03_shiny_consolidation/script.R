@@ -97,8 +97,7 @@ readr::write_csv(
 #### Comparison Plots ####
 
 # areas for surveys and dmppt2 Shiny data
-areas_join <- areas %>%
-  sf::st_drop_geometry() %>%
+areas_join <- sf::st_drop_geometry(areas) %>%
   dplyr::select(
     iso3,       area_id,          area_name,
     area_level, area_level_label, area_sort_order
