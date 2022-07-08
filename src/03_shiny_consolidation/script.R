@@ -9,12 +9,6 @@ save_loc <- "artefacts/"
 # ensure save loc exists
 threemc::create_dirs_r(save_loc)
 
-# Specify orderly_root
-orderly_root <- here::here()
-orderly_root <- unlist(stringr::str_split(orderly_root, "/"))
-orderly_root <- orderly_root[1:which(orderly_root == "threemc-orderly")]
-orderly_root <- paste(orderly_root, collapse = "/")
-
 # shapefile
 areas <- sf::read_sf(paste0(dir_path, "areas.geojson")) %>% 
   group_by(area_level) %>%
@@ -90,7 +84,7 @@ readr::write_csv(
   x = results_age_national,
   file = paste0(save_loc, "results_age_national.csv.gz")
 )
-rm(results_age); gc()
+rm(results_age_national); gc()
 
 results_agegroup_national <- agg_results_saver("agegroup", dir_path, national = TRUE)
 readr::write_csv( 
@@ -124,7 +118,7 @@ readr::write_csv(
   paste0(save_loc, "results_agegroup_comparison.csv.gz")
 )
 
-results_agegroup_national<- results_agegroup_national %>% 
+results_agegroup_national <- results_agegroup_national %>% 
   filter(grepl("coverage", type)) %>% 
   select(-area_name) %>% 
   left_join(areas_join)

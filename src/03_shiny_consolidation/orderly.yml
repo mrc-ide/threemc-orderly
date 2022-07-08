@@ -60,7 +60,7 @@ sources:
   - source.R
 
 global_resources:
-  depends/survey-circumcision-coverage.csv.gz: survey-circumcision-coverage.csv.gz
+  # depends/survey-circumcision-coverage.csv.gz: survey-circumcision-coverage.csv.gz
   depends/dmppt2-2021_circumcision_coverage.csv.gz: dmppt2-2021_circumcision_coverage.csv.gz
   
 depends:
@@ -69,6 +69,11 @@ depends:
       id: latest
       use:
         depends/areas.geojson: artefacts/areas.geojson
+  # aggregated surveys, including error bounds
+  - 00b4_survey_indicators:
+      id: latest 
+      use: 
+        depends/survey-circumcision-coverage.csv.gz: artefacts/survey-circumcision-coverage.csv.gz
   # aggregations for every country
   - 02_aggregations:      
       id: latest(parameter:cntry == "AGO")
