@@ -129,6 +129,16 @@ single_plots_UI <- function(id) {
                   multiple = TRUE
                 )
               ),
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_3'",
+                ns        = ns,
+                checkboxInput(
+                  inputId  = ns("inc_difference"),
+                  label    = strong("Include Difference"), 
+                  value = TRUE, 
+                  width = 4
+                )
+              ),
               # area level for non-map plots
               conditionalPanel(
                 condition = "input.plot_type != 'plt_3'",
@@ -497,6 +507,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
         spec_years         = as.numeric(input$year_slider),
         results_area_level = input$results_area_level, 
         country_area_level = input$border_area_level,
+        inc_difference     = input$inc_difference,
         spec_model         = "No program data", 
         plot_type          = "single",
         n_plots            = 1

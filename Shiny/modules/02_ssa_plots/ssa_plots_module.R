@@ -104,6 +104,16 @@ ssa_plots_UI <- function(id) {
                   multiple = TRUE
                 )
               ),
+              conditionalPanel(
+                condition = "input.plot_type != 'plt_3'",
+                ns        = ns,
+                checkboxInput(
+                  inputId  = ns("inc_difference"),
+                  label    = strong("Include Difference"), 
+                  value = TRUE, 
+                  width = 4
+                )
+              ),
               # single choice for age group (this can actually be on the first tab!)
               conditionalPanel(
                 condition = "input.plot_type == 'plt_1' || 
@@ -412,6 +422,7 @@ ssa_plots_server <- function(input, output, session, data) {
         plot_type = "map",
         results_area_level = input$results_area_level,
         country_area_level = input$border_area_level, 
+        inc_difference = input$inc_difference,
         n_plots = 1
       )
     } else if (input$plot_type == "plt_2") {
@@ -440,6 +451,7 @@ ssa_plots_server <- function(input, output, session, data) {
         spec_main_title = title,
         results_area_level = input$results_area_level,
         country_area_level = input$border_area_level, 
+        inc_difference = input$inc_difference,
         n_plots = as.numeric(input$n_plot)
       )
       

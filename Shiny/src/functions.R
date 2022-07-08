@@ -134,12 +134,12 @@ split_area_level <- function(.data, years = FALSE, n_plots = NULL) {
   # find unique areas. Only want "n_plots" areas on each page of the plot
   if (!is.null(n_plots)) {
       distinct_areas <- .data %>%
-          distinct(area_name, area_level) %>%
+          distinct(area_id, area_level) %>%
           group_by(area_level) %>%
           dplyr::mutate(split = ceiling(row_number() / n_plots)) %>%
           ungroup()
       .data <- .data %>%
-          left_join(distinct_areas, by = c("area_name", "area_level"))
+          left_join(distinct_areas, by = c("area_id", "area_level"))
   }
 
   # split by area level
@@ -492,6 +492,7 @@ plt_coverage_map <- function(
     spec_model, plot_type, # = c("single", "map", "split"),
     spec_main_title = NULL,
     spec_countries = NULL, results_area_level = NULL, country_area_level = NULL,
+    inc_difference = FALSE,
     str_save = NULL, save_width, save_height, n_plots = 1
 ) {
 
@@ -615,6 +616,24 @@ plt_coverage_map <- function(
         } else {
             p <- p + facet_wrap(type ~ year)
         }
+    }
+    
+    # browser()
+    
+    # Add difference, if specified
+    tmp$year <- as.factor(tmp$year)
+    if (inc_difference == TRUE) {
+      diff_df <- tmp %>% 
+        arrange(year) %>% 
+        group_split(area_id, model, type, age_group) %>% 
+        purrr::map(~ slice(
+          .data = mutate(.x, across(mean:upper, ~ max(0, diff(.)))),
+          n()
+        )) %>% 
+        bind_rows() %>% 
+        mutate(year = "Difference")
+      
+      tmp <- bind_rows(tmp, diff_df)
     }
 
     # split by type
@@ -1324,7 +1343,11 @@ plt_MC_modelfit_spec_age <- function(
                            label = scales::label_percent(accuracy = 1)) +
         theme_bw() +
         guides(colour = guide_legend(nrow = 2)) +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
+        theme(axis.text = element_text(size = 14),
+              strip.text = element_text(size = 12),
+              axis.title = element_text(size = 18),
+              legend.text = element_text(size = 18),
+              axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10),
               legend.position = "bottom")
     })
   })
@@ -2173,6 +2196,7 @@ plt_coverage_year_national <- function(
   spec_age_group, 
   spec_years, 
   spec_model = "No program data",
+  # esa_wca_split = FALSE,
   main = NULL, 
   str_save = NULL, 
   save_width = NULL, 
@@ -2200,7 +2224,7 @@ plt_coverage_year_national <- function(
                     "Medical Male Circumcision (MMC)",
                     ifelse(type %like% "TMC",
                            "Traditional Male Circumcision (TMC)",
-                           "Medical Circumcision (MC)")),
+                           "Male Circumcision (MC)")),
       area_name = ifelse(grepl("Tanzania", area_name), "Tanzania", area_name)
     )
   
@@ -2214,7 +2238,13 @@ plt_coverage_year_national <- function(
     filter(year == survey_year) %>%
     mutate(light = "Projected")
   tmp <- rbind(tmp, extra_rows) %>%
-    arrange(area_id, type, year)
+    arrange(area_id, type, year) %>% 
+    # ensure area_name is consistent
+    mutate(
+      area_name = countrycode::countrycode(
+        area_id, origin = "iso3c", destination = "country.name"
+      )
+    )
   
   # add in required columns from areas and order area names
   tmp <- add_area_info(tmp, areas)
@@ -2234,7 +2264,7 @@ plt_coverage_year_national <- function(
     "ETH", "KEN", "UGA", "TZA", "RWA", "BDI", "MOZ", "MWI", "ZMB", "ZWE", "BWA", 
     "NAM", "ZAF", "SWZ", "LSO"
   )
-  missing_levs <- unique(ordered_areas$area_id[!ordered_areas$area_id %in% levs])
+  # missing_levs <- unique(ordered_areas$area_id[!ordered_areas$area_id %in% levs])
   # if (length(missing_levs) > 0) {
   #   message(
   #     paste0("No geographical order present for ", paste(missing_levs, collapse = ", "))
@@ -2249,16 +2279,45 @@ plt_coverage_year_national <- function(
   ordered_areas <- ordered_areas[order(ordered_areas$area_id), ]
   tmp$area_name <- factor(
     tmp$area_name,
+    # stringr::str_to_title(tmp$area_name),
+    # countrycode::countrycode(tmp$area_id, origin = "iso3c", destination = "country.name"),
     levels = ordered_areas$area_name
   )
   
+  # allow for ESA-WCA Split
+  # if (esa_wca_split == TRUE) {
+  #   tmp <- tmp %>% 
+  #     left_join(
+  #       select(threemc::esa_wca_regions, -matches("four_region")),
+  #       by = "iso3"
+  #     )
+  # }
+  
   # data for specific total circumcision, to add to plot labels
   tmp1 <- tmp %>%
-    filter(type == "Medical Circumcision (MC)")
+    filter(type == "Male Circumcision (MC)") %>% 
+    arrange(area_name)
   
   dat_all <- tmp %>%
     # plot TMC in front of MC, relabel MC to MMC
-    filter(type != "Medical Circumcision (MC)") %>%
+    filter(
+      type != "Male Circumcision (MC)",
+      mean.y > 0
+    )
+  
+  # browser()
+  
+  missing_type_iso3 <- unique(tmp1$iso3)
+  missing_type_iso3 <- missing_type_iso3[!missing_type_iso3 %in% unique(dat_all$iso3)]
+  if (length(missing_type_iso3) > 0) {
+    missing_dat_all <- tmp1 %>% 
+      filter(iso3 %in% missing_type_iso3) %>% 
+      mutate(type = "Unknown")
+    dat_all <- bind_rows(dat_all, missing_dat_all)
+  }
+  
+  dat_all <- dat_all %>% 
+    arrange(area_name) %>% 
     mutate(
       light = factor(light, levels = c("Surveyed", "Projected")),
       type = forcats::fct_drop(type)
@@ -2275,6 +2334,8 @@ plt_coverage_year_national <- function(
   
   plot_fun <- function(all_data, medical_data, spec_years, spec_age_group, n_plots) {
     
+    # browser()
+    
     spec_title = paste0(
       "Male Circumcision Coverage, ",
       spec_years[1],
@@ -2284,6 +2345,10 @@ plt_coverage_year_national <- function(
       spec_age_group, 
       " years"
     )
+    
+    if ("Unknown" %in% all_data$type) {
+      manual_fill <- wesanderson::wes_palette("Zissou1", 5)[c(1, 3, 5)]
+    } else manual_fill <- wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
     
     all_data %>%
       ggplot(
@@ -2296,7 +2361,8 @@ plt_coverage_year_national <- function(
       ) +
       # Adding target line to prevalence
       geom_hline(
-        yintercept = 80,
+        # yintercept = 80,
+        yintercept = 90,
         size = 1,
         linetype = "dashed",
         colour = "grey50"
@@ -2319,7 +2385,7 @@ plt_coverage_year_national <- function(
       ) +
       geom_text(
         data = medical_data %>%
-          filter(type == "Medical Circumcision (MC)", year == spec_years[1]) %>%
+          filter(type == "Male Circumcision (MC)", year == spec_years[1]) %>%
           select(area_id, area_name, year, mean.y),
         aes(x = spec_years[1],
             y = 100 * mean.y,
@@ -2336,7 +2402,7 @@ plt_coverage_year_national <- function(
       ) +
       geom_text(
         data = medical_data %>%
-          filter(type == "Medical Circumcision (MC)", year == last(spec_years)) %>%
+          filter(type == "Male Circumcision (MC)", year == last(spec_years)) %>%
           select(area_id, area_name, year, mean.y),
         aes(x = last(spec_years),
             y = 100 * mean.y,
@@ -2363,7 +2429,8 @@ plt_coverage_year_national <- function(
       ) +
       # Setting colour palette
       scale_fill_manual(
-        values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
+        # values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
+        values = manual_fill
       ) +
       # Plotting labels
       ggtitle(spec_title) +
