@@ -29,6 +29,8 @@ agg_results_saver <- function(
   
   if (national == FALSE) {
     files <- files[!grepl(toupper("national"), toupper(files))]
+  } else {
+    files <- files[grepl(toupper("national"), toupper(files))]
   }
   
   # load results
@@ -79,12 +81,12 @@ readr::write_csv(
 )
 
 # for national level models
-results_age_national <- agg_results_saver("age", dir_path, national = TRUE)
-readr::write_csv( 
-  x = results_age_national,
-  file = paste0(save_loc, "results_age_national.csv.gz")
-)
-rm(results_age_national); gc()
+# results_age_national <- agg_results_saver("age", dir_path, national = TRUE)
+# readr::write_csv( 
+#   x = results_age_national,
+#   file = paste0(save_loc, "results_age_national.csv.gz")
+# )
+# rm(results_age_national); gc()
 
 results_agegroup_national <- agg_results_saver("agegroup", dir_path, national = TRUE)
 readr::write_csv( 
@@ -125,7 +127,7 @@ results_agegroup_national <- results_agegroup_national %>%
 
 readr::write_csv(
   results_agegroup_national,
-  paste0(save_loc, "results_agegroup_comparison_national.csv.gz")
+  paste0(save_loc, "results_agegroup_national_comparison.csv.gz")
 )
 
 # only keep areas in results_agegroup in below
