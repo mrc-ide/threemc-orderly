@@ -165,15 +165,15 @@ depends:
         depends/Results_COG_AgeGroup_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
         depends/Results_COG_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
         depends/Results_COG_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
-  # - 02_aggregations:      
-  #     id: latest(parameter:cntry == "ETH")
-  #     use: 
-  #       depends/Results_ETH_Age_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
-  #       depends/Results_ETH_Age_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
-  #       depends/Results_ETH_Age_Probability.csv.gz: artefacts/Results_Age_Probability.csv.gz
-  #       depends/Results_ETH_AgeGroup_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
-  #       depends/Results_ETH_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
-  #       depends/Results_ETH_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
+  - 02_aggregations:
+      id: latest(parameter:cntry == "ETH")
+      use:
+        depends/Results_ETH_Age_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
+        depends/Results_ETH_Age_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
+        depends/Results_ETH_Age_Probability.csv.gz: artefacts/Results_Age_Probability.csv.gz
+        depends/Results_ETH_AgeGroup_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
+        depends/Results_ETH_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
+        depends/Results_ETH_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
   - 02_aggregations:      
       id: latest(parameter:cntry == "GAB")
       use: 
@@ -192,15 +192,15 @@ depends:
         depends/Results_GHA_AgeGroup_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
         depends/Results_GHA_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
         depends/Results_GHA_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
-  # - 02_aggregations:      
-  #     id: latest(parameter:cntry == "GIN")
-  #     use: 
-  #       depends/Results_GIN_Age_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
-  #       depends/Results_GIN_Age_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
-  #       depends/Results_GIN_Age_Probability.csv.gz: artefacts/Results_Age_Probability.csv.gz
-  #       depends/Results_GIN_AgeGroup_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
-  #       depends/Results_GIN_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
-  #       depends/Results_GIN_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
+  - 02_aggregations:
+      id: latest(parameter:cntry == "GIN")
+      use:
+        depends/Results_GIN_Age_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
+        depends/Results_GIN_Age_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
+        depends/Results_GIN_Age_Probability.csv.gz: artefacts/Results_Age_Probability.csv.gz
+        depends/Results_GIN_AgeGroup_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
+        depends/Results_GIN_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
+        depends/Results_GIN_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
   - 02_aggregations:      
       id: latest(parameter:cntry == "GMB")
       use: 
@@ -255,15 +255,15 @@ depends:
         depends/Results_LSO_AgeGroup_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
         depends/Results_LSO_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
         depends/Results_LSO_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
-  # - 02_aggregations:      
-  #     id: latest(parameter:cntry == "MLI")
-  #     use: 
-  #       depends/Results_MLI_Age_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
-  #       depends/Results_MLI_Age_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
-  #       depends/Results_MLI_Age_Probability.csv.gz: artefacts/Results_Age_Probability.csv.gz
-  #       depends/Results_MLI_AgeGroup_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
-  #       depends/Results_MLI_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
-  #       depends/Results_MLI_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
+  - 02_aggregations:
+      id: latest(parameter:cntry == "MLI")
+      use:
+        depends/Results_MLI_Age_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
+        depends/Results_MLI_Age_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
+        depends/Results_MLI_Age_Probability.csv.gz: artefacts/Results_Age_Probability.csv.gz
+        depends/Results_MLI_AgeGroup_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
+        depends/Results_MLI_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
+        depends/Results_MLI_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
   - 02_aggregations:      
       id: latest(parameter:cntry == "MOZ")
       use: 
@@ -527,15 +527,15 @@ depends:
         depends/Results_GHA_AgeGroup_National_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
         depends/Results_GHA_AgeGroup_National_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
         depends/Results_GHA_AgeGroup_National_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
-  # - 01a_model_aggregate_spec_area_lev:      
-  #     id: latest(parameter:cntry == "GIN" && parameter:area_lev == 0)
-  #     use: 
-  #       depends/Results_GIN_Age_National_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
-  #       depends/Results_GIN_Age_National_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
-  #       depends/Results_GIN_Age_National_Probability.csv.gz: artefacts/Results_Age_Probability.csv.gz
-  #       depends/Results_GIN_AgeGroup_National_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
-  #       depends/Results_GIN_AgeGroup_National_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
-  #       depends/Results_GIN_AgeGroup_National_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
+  - 01a_model_aggregate_spec_area_lev:
+      id: latest(parameter:cntry == "GIN" && parameter:area_lev == 0)
+      use:
+        # depends/Results_GIN_Age_National_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
+        # depends/Results_GIN_Age_National_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
+        # depends/Results_GIN_Age_National_Probability.csv.gz: artefacts/Results_Age_Probability.csv.gz
+        depends/Results_GIN_AgeGroup_National_Incidence.csv.gz: artefacts/Results_AgeGroup_Incidence.csv.gz
+        depends/Results_GIN_AgeGroup_National_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
+        depends/Results_GIN_AgeGroup_National_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
   - 01a_model_aggregate_spec_area_lev:      
       id: latest(parameter:cntry == "GMB" && parameter:area_lev == 0)
       use: 
