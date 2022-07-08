@@ -1179,7 +1179,7 @@ plt_circ_age_ridge <- function(
                 strip.background = element_blank(),
                 legend.title = element_text(size = 16),
                 legend.text = element_text(size = 24),
-                legend.position = 'bottom',
+                legend.position = "bottom",
                 panel.spacing = unit(0.2, "lines")
               )
           })
@@ -1206,10 +1206,13 @@ plt_MC_modelfit_spec_age <- function(
   mc_type_model, mc_type_survey, 
   age_per, years, area_level_select = unique(df_results$area_level), 
   model_type = "No program data",
+  facet_vars = "area_name",
+  col_fill_vars = "parent_area_name",
   xlab, ylab, title, str_save = NULL,
   save_width = NULL, save_height = NULL, n_plots = 12) {
 
-  if (df_results$iso3[1] == "GNB") browser()
+  # if (df_results$iso3[1] == "GNB") browser()
+  # browser()
   
   # filter data accordingly
   initial_filter <- function(.data, type_filter) {
@@ -1246,14 +1249,26 @@ plt_MC_modelfit_spec_age <- function(
       )
   }
   
+  # manipulate facet variables
+  # by_expr <- rlang::enexpr(facet_vars)
+  # if(length(by_expr) == 1) {
+  #   args_vars <- as.list(by_expr)
+  # } else {
+  #   args_vars <- as.list(by_expr)[-1]
+  # }
+  # quoted_args_vars <- sapply(args_vars, rlang::quo_name)
+  
+  # by <- rlang::enexpr(facet_vars) %>%
+  #   tidyselect::eval_select(df_results)
+  
   # split results by area level, and number of plots desired
   df_results <- split_area_level(df_results, n_plots = n_plots)
   df_results_survey <- split_area_level(df_results_survey, n_plots = n_plots)
-
+  
   # plot for each (nested) loop
   plots <- lapply(seq_along(df_results), function(i) {
     lapply(seq_along(df_results[[i]]), function(j) {
-
+      
       plt_data1 <- df_results[[i]][[j]]
       plt_data2 <- df_results_survey[[i]][[j]]
 
@@ -1268,30 +1283,38 @@ plt_MC_modelfit_spec_age <- function(
         plt_data1$area_level_label[1],
         sep = ", "
       )
-
+      
       ggplot(plt_data1, aes(x = year)) +
       # ggplot(df_results[[i]], aes(x = year)) +
         # Credible interval
-        geom_ribbon(aes(ymin = lower, ymax = upper, fill = parent_area_name),
+        # geom_ribbon(aes(ymin = lower, ymax = upper, fill = parent_area_name),
+        geom_ribbon(aes(ymin = lower, ymax = upper, fill = age_group),
+        # geom_ribbon(aes(ymin = lower, ymax = upper, fill = col_fill_vars),
                     # colour  = NA,
                     alpha = 0.5) +
         # Modelled rate
-        geom_line(aes(y = mean, col = parent_area_name), size = 1) +
-        # geom_point(data = plt_data2,
-        #            aes(y = p_ind),
-        #            colour = 'black',
-        #            show.legend = FALSE) +
+        # geom_line(aes(y = mean, col = parent_area_name), size = 1) +
+        geom_line(aes(y = mean, col = age_group), size = 1) +
+        # geom_line(aes(y = mean, col = col_fill_vars), size = 1) +
         geom_pointrange(
             data = plt_data2,
-            aes(y = mean, ymin = lower, ymax = upper),
-            colour = "black",
+            aes(
+              y    = mean, 
+              ymin = lower, 
+              ymax = upper,
+              col  = age_group
+              # col = col_fill_vars
+            ),
+            # colour = "black",
             show.legend = FALSE
         ) +
         # Labels
-        labs(x = xlab, y = 'Circumcision prevalence', colour = '', fill = '') +
+        labs(x = xlab, y = "Circumcision prevalence", colour = "", fill = "") +
         ggtitle(paste0(title, add_title)) +
         # Faceting by area
-        facet_wrap(~area_name) +
+        facet_wrap(~ area_name) +
+        # facet_wrap(quoted_args_vars) +
+        # facet_wrap(names(by)) + 
         scale_x_continuous(breaks = seq(min(plt_data1$year),
         # scale_x_continuous(breaks = seq(min(df_results[[i]]$year),
                                         2021,
@@ -1302,7 +1325,7 @@ plt_MC_modelfit_spec_age <- function(
         theme_bw() +
         guides(colour = guide_legend(nrow = 2)) +
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
-              legend.position = "none")
+              legend.position = "bottom")
     })
   })
   
@@ -1324,11 +1347,15 @@ plt_MC_modelfit_spec_age <- function(
 plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
                             mc_type_survey, age_per, survey_years, model_type,
                             # area_level_select,
+                            facet_vars = "area_name", 
+                            col_fill_vars = "parent_area_name",
                             xlab, ylab, title,
                             str_save = NULL, 
                             save_width = NULL, 
                             save_height = NULL, 
                             n_plots = 12) {
+  
+  # browser()
   
   # Preparing dataset for plots
   initial_filter <- function(.data, spec_type) {
@@ -1382,73 +1409,123 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
       )
    ) 
   
+  # final label for plot
+  final_label <- last(age_per)
+  final_label <- as.numeric(stringr::str_split(final_label, "-")[[1]][[2]])
+  final_label <- paste0(final_label + 1, "+")
+  
+  # manipulate facet variables
+  # by_expr <- rlang::enexpr(facet_vars)
+  # if(length(by_expr) == 1) {
+  #   args_vars <- as.list(by_expr)
+  # } else {
+  #   args_vars <- as.list(by_expr)[-1]
+  # }
+  # quoted_args_vars <- sapply(args_vars, rlang::quo_name)
+  
+  # by <- rlang::enexpr(facet_vars) %>%
+  #   tidyselect::eval_select(tmp1) 
+  
   # split results by area level, year and number of plots desired
-  tmp1 <- split_area_level(tmp1, year= TRUE, n_plots = n_plots)
-  tmp2 <- split_area_level(tmp2, year= TRUE, n_plots = n_plots)
-
-  # plot for each (nested) loop
-  plots <- lapply(seq_along(tmp1), function(i) { # area
-    lapply(seq_along(tmp1[[i]]), function(j) { # year
-      lapply(seq_along(tmp1[[i]][[j]]), function(k) { # cap number of plots
-
-        plt_data1 <- tmp1[[i]][[j]][[k]]
-        plt_data2 <- tmp2[[i]][[j]][[k]]
-
-        if (i == 1 && j == 1 && k == 1) {
-            plt_data1$parent_area_name <- "NA"
-        }
-
-        # get specific title for each plot page
-        add_title <- paste(
-          plt_data1$iso3[1],
-          plt_data1$area_level[1],
-          plt_data1$area_level_label[1],
-          plt_data1$year[1],
-          sep = ", "
-          )
-
-        ggplot(plt_data1, aes(x = age_group)) +
-          geom_ribbon(aes(ymin = lower, ymax = upper, fill = parent_area_name),
-                      alpha = 0.75
-                      # colour = NA,
-                      # fill = 'darkgrey'
-          ) +
-          geom_line(aes(y = mean, col = parent_area_name),
-                    size = 1
-                    # colour = 'black'
-          ) +
-          # geom_point(data = plt_data2,
-          #            aes(y = p_ind),
-          #            colour = 'black',
-          #            show.legend = FALSE) +
-          geom_pointrange(
-              data = plt_data2,
-              aes(y = mean, ymin = lower, ymax = upper),
-              colour = "black",
-              show.legend = FALSE
-          ) +
-          # Labels
-          labs(x =  xlab, y = ylab, colour = '', fill = '') +
-          ggtitle(paste0(title, add_title)) +
-          scale_x_continuous(breaks = 1:14,
-                             labels = c('0-4','5-9','10-14','14-19','20-24','25-29',
-                                        '30-34','35-39','40-44','45-49','50-54',
-                                        '55-59','60-64','65+')) + # should change this to be
-          scale_y_continuous(breaks = seq(0, 1,  by =  0.2),
-                             limits = c(0, 1),
-                             labels = scales::label_percent()) +
-          theme_bw() +
-          theme(axis.text = element_text(size = 14),
-                strip.text = element_text(size = 12),
-                axis.title = element_text(size = 18),
-                legend.text = element_text(size = 18),
-                axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10),
-                legend.position = 'bottom') +
-          facet_wrap(~area_name)
+  # if ("year" %in% col_fill_vars) {
+  #   year_split <- FALSE
+  # } else year_split <- TRUE
+  year_split <- FALSE
+  tmp1 <- split_area_level(tmp1, year = year_split, n_plots = n_plots)
+  tmp2 <- split_area_level(tmp2, year = year_split, n_plots = n_plots)
+  
+  
+  plot_fun <- function(plt_data1, plt_data2) {
+    # get specific title for each plot page
+    add_title <- paste(
+      plt_data1$iso3[1],
+      plt_data1$area_level[1],
+      plt_data1$area_level_label[1],
+      # plt_data1$year[1],
+      sep = ", "
+    )
+    # if (!"year" %in% col_fill_vars) {
+    #   add_title <- paste(add_title, plt_data1$year, sep = ", ")
+    # }
+    
+    plt_data1 <- plt_data1 %>% 
+      mutate(
+        parent_area_name = ifelse(
+          is.na(parent_area_name), 
+          "NA", 
+          parent_area_name
+        )
+      )
+    
+    ggplot(plt_data1, aes(x = age_group)) +
+      # geom_ribbon(aes(ymin = lower, ymax = upper, fill = parent_area_name),
+      geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(year)),
+      # geom_ribbon(aes(ymin = lower, ymax = upper, fill = col_fill_vars),
+                  alpha = 0.75
+                  # colour = NA,
+                  # fill = "darkgrey"
+      ) +
+      # geom_line(aes(y = mean, col = parent_area_name),
+      geom_line(aes(y = mean, col = as.factor(year)),
+      # geom_line(aes(y = mean, col = col_fill_vars),
+                size = 1
+                # colour = "black"
+      ) +
+      # geom_point(data = plt_data2,
+      #            aes(y = p_ind),
+      #            colour = "black",
+      #            show.legend = FALSE) +
+      geom_pointrange(
+        data = plt_data2,
+        aes(
+          y      = mean, 
+          ymin   = lower, 
+          ymax   = upper,
+          # colour = col_fill_vars
+          colour = as.factor(year)
+        ),
+        # colour = "black",
+        show.legend = FALSE
+      ) +
+      # Labels
+      labs(x =  xlab, y = ylab, colour = "", fill = "") +
+      ggtitle(paste0(title, add_title)) +
+      # scale_x_continuous(breaks = 1:14,
+      #                    labels = c("0-4","5-9","10-14","14-19","20-24","25-29",
+      #                               "30-34","35-39","40-44","45-49","50-54",
+      #                                "55-59","60-64","65+")) + 
+      scale_x_continuous(
+        breaks = 1:(length(age_per) + 1),
+        labels = c(age_per, final_label),
+      ) + 
+      scale_y_continuous(breaks = seq(0, 1,  by =  0.2),
+                         limits = c(0, 1),
+                         labels = scales::label_percent()) +
+      theme_bw() +
+      theme(axis.text = element_text(size = 14),
+            strip.text = element_text(size = 12),
+            axis.title = element_text(size = 18),
+            legend.text = element_text(size = 18),
+            axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10),
+            legend.position = "bottom") +
+      facet_wrap(~area_name)
+      # facet_wrap(quoted_args_vars)
+      # facet_wrap(names(by))
+  }
+  
+  recursive_plot_fun <- function(plt_data1, plt_data2, ...) {
+    if (!is.data.frame(plt_data1)) {
+      lapply(seq_along(plt_data1), function(i) {
+        recursive_plot_fun(plt_data1[[i]], plt_data2[[i]], ...)
       })
-    })
-  })
-
+    } else {
+      plot_fun(plt_data1, plt_data2, ...)
+    }
+  }
+  
+  # plot for each (nested) loop
+  plots <- recursive_plot_fun(tmp1, tmp2)
+  
   # flatten nested list of plots
   plots <- rlang::squash(plots)
   # if (!"data.frame" %in% class(plots[[1]][[1]])) {
@@ -2315,17 +2392,17 @@ plt_coverage_year_national <- function(
       )
   }
   
-  loop_plot_fun <- function(all_data, medical_data, ...) {
+  recursive_plot_fun <- function(all_data, medical_data, ...) {
     if (!is.data.frame(all_data)) {
       lapply(seq_along(all_data), function(i) {
-        loop_plot_fun(all_data[[i]], medical_data[[i]], ...)
+        recursive_plot_fun(all_data[[i]], medical_data[[i]], ...)
       })
     } else {
       plot_fun(all_data, medical_data, ...)
     }
   }
   
-  plots <- loop_plot_fun(dat_all, tmp1, spec_years, spec_age_group, n_plots)
+  plots <- recursive_plot_fun(dat_all, tmp1, spec_years, spec_age_group, n_plots)
   plots <- rlang::squash(plots)
   if (!is.null(str_save)) {
     ggsave(

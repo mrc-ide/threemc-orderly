@@ -34,7 +34,7 @@ ssa_iso3 <- sort(c(
 ))
 
 # temp use a few countries to test
-# comparison_iso3 <- c("LSO")
+# ssa_iso3 <- c("LSO")
 
 # results for age groups for comparisons
 archives <- orderly::orderly_list_archive()
@@ -52,6 +52,14 @@ results_agegroup_comparison <- readr::read_csv(paste0(
 
 ssa_iso3 <- ssa_iso3[ssa_iso3 %in% results_agegroup_comparison$iso3]
 
+results_agegroup_national_comparison <-  readr::read_csv(paste0(
+  orderly_root, 
+  "/archive/03_shiny_consolidation/",
+  dir_name,
+  "/artefacts/results_agegroup_national_comparison.csv.gz"
+)) %>% 
+  filter(iso3 %in% ssa_iso3)
+
 # shapefiles
 areas_loc <- archives %>%
   filter(name == "00a2_areas_join") %>%
@@ -64,7 +72,7 @@ areas_loc <- file.path(
   "artefacts/areas.geojson"
 )
 areas <- read_circ_data(areas_loc) %>%
-  filter(iso3 %in% comparison_iso3)
+  filter(iso3 %in% ssa_iso3)
 
 # DMPPT2 data
 # dmppt2_data <- readr::read_csv(
@@ -86,7 +94,7 @@ dmppt2_iso3 <- unique(dmppt2_data$iso3)
 #   paste0(orderly_root, "/Shiny/global/survey-circumcision-coverage.csv.gz"),
 #   filters = c("sex" = "male")
 # ) %>% 
-#   filter(iso3 %in% comparison_iso3)
+#   filter(iso3 %in% ssa_iso3)
 survey_data <- readr::read_csv(paste0(
   orderly_root, 
   "/archive/03_shiny_consolidation/",
@@ -99,6 +107,7 @@ survey_data <- readr::read_csv(paste0(
 comparison_plots_data <- list(
   "ssa_iso3"                    = ssa_iso3,
   "results_agegroup_comparison" = results_agegroup_comparison,
+  "results_agegroup_national_comparison" = results_agegroup_national_comparison,
   "dmppt2_iso3"                 = dmppt2_iso3,
   "dmppt2_data"                 = dmppt2_data,
   "survey_data"                 = survey_data,

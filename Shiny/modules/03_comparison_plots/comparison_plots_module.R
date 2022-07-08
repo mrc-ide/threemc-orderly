@@ -27,6 +27,15 @@ comparison_plots_UI <- function(id) {
                 selected = NULL
               ),
               selectInput(
+                inputId = ns("dataset"),
+                label   = "Data Source",
+                choices = c(
+                  "Sub-National Model" = "sub-national",
+                  "National Model"     = "national"
+                ), 
+                selected = "sub-national"
+              ),
+              selectInput(
                 inputId = ns("plot_type"),
                 label   = "Plot Type", 
                 choices = c(
@@ -63,20 +72,45 @@ comparison_plots_UI <- function(id) {
                 selectInput(
                   inputId  = ns("spec_type"),
                   label    = "Select Circumcision Types",
-                  # choices  = c(
-                  #   "Total Circumcision" = "MC coverage",
-                  #   "Medical Circumcision" = "MMC coverage",
-                  #   "Traditional Circumcision" = "TMC coverage"
-                  # ),
-                  choices = NULL,
-                  # selected = "MC coverage" # ,
-                  # multiple = TRUE
+                  choices = NULL
                 ) 
+              ),
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_4' || 
+                input.plot_type == 'plt_5'", 
+                ns        = ns,
+                selectInput(
+                  inputId  = ns("facet_vars"),
+                  label = "Select Faceting Variables",
+                  choices  = c(
+                    "Area Name" = "area_name",
+                    "Year"      = "year",
+                    "Age Group" = "age_group"
+                  ),
+                  selected = "area_name",
+                  multiple = TRUE
+                )
+              ),
+              # variable to colour and fill by 
+              conditionalPanel(
+                condition = "input.plot_type == 'plt_4' || 
+                input.plot_type == 'plt_5'", 
+                ns        = ns,
+                selectInput(
+                  inputId  = ns ("col_fill_vars"),
+                  label = "Select Colour/Fill Variables",
+                  choices  = c(
+                    "Parent Area Name" = "parent_area_name",
+                    "Year"             = "year",
+                    "Age Group"        = "age_group"
+                  ), 
+                  selected = "parent_area_name"
+                )
               ),
               # single choice for age group
               conditionalPanel(
-                condition = "input.plot_type == 'plt_1' || 
-                input.plot_type == 'plt_4'",
+                condition = "input.plot_type == 'plt_1'", #  || 
+                # input.plot_type == 'plt_4'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("age_group_single"),
@@ -89,6 +123,7 @@ comparison_plots_UI <- function(id) {
               conditionalPanel(
                 condition = "input.plot_type == 'plt_2' || 
                 input.plot_type == 'plt_3' || 
+                input.plot_type == 'plt_4' || 
                 input.plot_type == 'plt_5'",
                 ns        = ns,
                 selectInput(
@@ -99,22 +134,6 @@ comparison_plots_UI <- function(id) {
                   multiple = TRUE
                 ) 
               ),
-              
-              # slider choice for age
-              # conditionalPanel(
-              #   condition = "input.plot_type == 'plt_2' || 
-              #   input.plot_type == 'plt_5' || 
-              #   input.plot_type == 'plt_6'",
-              #   ns        = ns,
-              #   sliderInput(
-              #     inputId = ns("age_slider"),
-              #     label   = "Select Ages",
-              #     min     = 0, 
-              #     max     = 60, 
-              #     step    = 5,
-              #     value   = c(0, 60)
-              #   ) 
-              # ),
               # two-way slider for year
               conditionalPanel(
                 condition = "input.plot_type == 'plt_1' || 
@@ -132,7 +151,8 @@ comparison_plots_UI <- function(id) {
               # multiple selector for year
               conditionalPanel(
                 condition = "input.plot_type == 'plt_2' || 
-                input.plot_type == 'plt_3'",
+                input.plot_type == 'plt_3' || 
+                input.plot_type == 'plt_5'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("year_select"), # also updated below
@@ -239,31 +259,18 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     }
   })
   
-  # update age range slider (doesn't require results)
-  # observe({
-  #   req(input$plot_type)
-  #   
-  #   default <- switch(
-  #     input$plot_type,
-  #     "plt_2" = c(0, 60),
-  #     "plt_5" = c(0, 60),
-  #     "plt_6" = c(0, 30)
-  #   )
-  #   
-  #   updateSliderInput(
-  #     session,
-  #     "age_slider",
-  #     value = default
-  #   )
-  # })
-  
   #### Pull in data ####
   
   # circumcision estimates
   circ_data <- reactive({
     req(input$country)
+    req(input$dataset)
     
-    return(filter(data$results_agegroup_comparison, iso3 == input$country))
+    if (input$dataset == "subnational") {
+      return(filter(data$results_agegroup_comparison, iso3 == input$country))
+    } else {
+      return(filter(data$results_agegroup_national_comparison, iso3 == input$country))
+    }
   })
   
   # survey and dmppt2 circumcision estimates
@@ -356,6 +363,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   # update multiple age group selector
   observe({
     req(circ_data())
+    req(input$plot_type)
     
     # default <- switch(
     #   input$plot_type,
@@ -367,6 +375,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     # )
     default <-  c("0-4",   "5-9",   "10-14", "15-19", "20-24", "25-29", "30-34",
                   "35-39", "40-44", "45-49", "50-54", "54-59", "60-64")
+    if (input$plot_type == "plt_4") default <- "15-49"
     choices <- unique(circ_data()$age_group)
     
     # only allow age bands (not 0+ etc)
@@ -418,6 +427,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     # select <- c("2009", "2015", "2021")
     # select <- select[select %in% circ_data()$year]
     if (input$plot_type %in% c("plt_2", "plt_3")) {
+      
       # last year in DMPPT2 data
       DMPPT2_last_year <- max(add_data()$dmppt2_data$year)
       DMPPT2_first_year <- min(add_data()$dmppt2_data$year)
@@ -426,6 +436,13 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       # also include 2013, or whatever is later
       year_2013 <- max(2013, min(DMPPT2_first_year))
       plt_years <- sort(unique(c(DMPPT2_last_year, year_2013)))
+      
+    # for coverage vs age group, choose all years with survey data as default
+    } else if (input$plot_type == "plt_5") {
+      
+      plt_years <- sort(unique(add_data()$survey_data$year))
+      plt_years <- plt_years[!is.na(plt_years)]
+      
     } else {
       plt_years <- c(min(circ_data()$year), max(circ_data()$year))
     }
@@ -596,10 +613,15 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       
       # if (input$country == "SEN") browser()
       
+      # browser()
+      
       req(input$spec_type)
-      req(input$age_group_single)
+      # req(input$age_group_single)
+      req(input$age_group_multiple)
       req(input$year_slider)
       req(input$n_plot)
+      req(input$facet_vars)
+      req(input$col_fill_vars)
       
       main_title = "Circumcision Coverage vs Year (Black dots denote sampled coverage) - "
       
@@ -609,11 +631,12 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         df_results_survey = survey_data,
         mc_type_model = input$spec_type,
         mc_type_survey = surveys_type,
-        # age_per = "15-49",
-        age_per = input$age_group_single,
-        # years = plt_start_year:2021,
+        # age_per = input$age_group_single,
+        age_per = input$age_group_multiple,
         years = as.numeric(input$year_slider[[1]]):as.numeric(last(input$year_slider)),
         model_type = "No program data",
+        facet_vars = input$facet_vars,
+        col_fill_vars = input$col_fill_vars,
         xlab = "Year",
         ylab = "Total Circumcision Coverage",
         title = paste(surveys_type, main_title),
@@ -625,6 +648,9 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       req(input$spec_type)
       req(input$age_group_multiple)
       req(input$n_plot)
+      req(input$year_select)
+      req(input$facet_vars)
+      req(input$col_fill_vars)
       
       years <- unique(add_data()$survey_data$year)
       
@@ -636,8 +662,11 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         mc_type_model = input$spec_type,
         mc_type_survey = surveys_type,
         age_per = input$age_group_multiple,
-        survey_years =  years[years %in% circ_data()$year],
+        # survey_years =  years[years %in% circ_data()$year],
+        survey_years = input$year_select,
         model_type = "No program data",
+        facet_vars = input$facet_vars,
+        col_fill_vars = input$col_fill_vars,
         xlab = "Age Group",
         ylab = "Circumcision Coverage",
         title = paste(surveys_type, main_title),
