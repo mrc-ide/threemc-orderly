@@ -20,7 +20,7 @@ areas <- sf::read_sf(paste0(dir_path, "areas.geojson")) %>%
 
 # load and save single age and age group results
 agg_results_saver <- function(
-  spec_type, dir_path, save_loc = NULL, national = FALSE
+  spec_type, dir_path, save_loc = NULL, national = FALSE, filter = TRUE
 ) {
   
   # files location
@@ -44,14 +44,16 @@ agg_results_saver <- function(
   }
   
   # only keep "types" needed for plots
-  no_prog_types <- c("MC", "MMC", "TMC")
-  spec_types <- c(
-    paste0(c(paste0(no_prog_types, "s"), "MMC-nTs", "TMICs"), " performed"),
-    paste0(no_prog_types, " coverage"),
-    paste0(no_prog_types, " probability")
-  )
-  results <- results %>% 
-    filter(type %in% spec_types)
+  if (filter == TRUE) {
+    no_prog_types <- c("MC", "MMC", "TMC")
+    spec_types <- c(
+      paste0(c(paste0(no_prog_types, "s"), "MMC-nTs", "TMICs"), " performed"),
+      paste0(no_prog_types, " coverage"),
+      paste0(no_prog_types, " probability")
+    )
+    results <- results %>% 
+      filter(type %in% spec_types)
+  }
   
   # save 
   if (!is.null(save_loc)) {
@@ -65,16 +67,24 @@ agg_results_saver <- function(
   }
 }
 
-# results_age <- agg_results_saver("age", dir_path, areas)
-results_age <- agg_results_saver("age", dir_path)
+results_age <- agg_results_saver("age", dir_path, filter = TRUE)
+results_age <- 
 readr::write_csv( 
   x = results_age,
   file = paste0(save_loc, "results_age.csv.gz")
 )
 rm(results_age); gc()
 
-# results_agegroup <- agg_results_saver("agegroup", dir_path, areas)
-results_agegroup <- agg_results_saver("agegroup", dir_path)
+results_agegroup_n_circ <- agg_results_saver("agegroup", dir_path, filter = FALSE)
+results_agegroup_n_circ <- results_agegroup_n_circ %>% 
+  filter(grepl("Number circumcised", type))
+readr::write_csv(
+  x = results_agegroup_n_circ,
+  file = paste0(save_loc, "results_agegroup_n_circ.csv.gz")
+)
+
+
+results_agegroup <- agg_results_saver("agegroup", dir_path, filter = TRUE)
 readr::write_csv( 
   x = results_agegroup, 
   file = paste0(save_loc, "results_agegroup.csv.gz")
