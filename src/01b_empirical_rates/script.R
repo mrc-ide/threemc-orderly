@@ -7,7 +7,7 @@
 
 dir_loc <- "depends/"
 save_loc <- "artefacts/"
-create_dirs_r(save_loc)
+threemc::create_dirs_r(save_loc)
 
 # age groups to aggregate to 
 age_groups <- c(
@@ -82,7 +82,7 @@ if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL
 
 # if area_level is missing, assume most common area lev in surveys
 if (length(area_lev) == 0) {
-  area_lev <- table(as.numeric(substr(survey_clusters$geoloc_area_id, 5, 5)))
+  area_lev <- table(as.numeric(substr(survey_circumcision$geoloc_area_id, 5, 5)))
   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
 }
 
@@ -95,7 +95,7 @@ cens_year <- max(as.numeric(
 ))
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
-results <- prepare_survey_data(
+results <- threemc::prepare_survey_data(
   areas               = areas,
   survey_circumcision = select(survey_circumcision, -contains("area_level")),
   area_lev            = area_lev,
@@ -106,7 +106,7 @@ results <- prepare_survey_data(
 )
 
 # Create a skeleton dataset for the area level of interest
-results <- create_shell_dataset(
+results <- threemc::create_shell_dataset(
   survey_circumcision = results,
   population_data     = populations,
   areas               = areas,
@@ -116,7 +116,8 @@ results <- create_shell_dataset(
   strat               = "space",
   age                 = "age",
   circ                = "indweight_st"
-)
+) %>% 
+  filter(area_level == "area_lev")
 
 # "obs" cols give number of people who are circumcised in that 
 # age/time/area stratum weighted by population 
@@ -151,7 +152,7 @@ populations_append <- populations %>%
 results <- dplyr::left_join(results, populations_append)
 
 # Add parent areas
-results <- combine_areas(
+results <- threemc::combine_areas(
   results, 
   areas_wide, 
   area_lev, 
@@ -216,7 +217,7 @@ results <- results %>%
 #### Final ####
 
 # Merge regional information on the dataset 
-results <- merge_area_info(results, sf::st_drop_geometry(areas)) %>% 
+results <- threemc::merge_area_info(results, sf::st_drop_geometry(areas)) %>% 
   mutate(
     iso3 = substr(area_id, 0, 3),
     type = case_when(
