@@ -101,6 +101,7 @@ results <- threemc::prepare_survey_data(
   area_lev            = area_lev,
   start_year          = start_year,
   cens_age            = cens_age,
+  cens_year           = cens_year,
   rm_missing_type     = rm_missing_type,
   norm_kisk_weights   = TRUE
 )
