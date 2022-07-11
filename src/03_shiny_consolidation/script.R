@@ -25,7 +25,8 @@ agg_results_saver <- function(
   
   # files location
   files <- list.files(dir_path,full.names = TRUE)
-  files <- files[grepl(toupper(paste0(spec_type, "_")), toupper(files))]
+  # files <- files[grepl(toupper(paste0(spec_type, "_")), toupper(files))]
+  files <- files[grepl(toupper(spec_type), toupper(files))]
   
   if (national == FALSE) {
     files <- files[!grepl(toupper("national"), toupper(files))]
@@ -67,15 +68,22 @@ agg_results_saver <- function(
   }
 }
 
-results_age <- agg_results_saver("age", dir_path, filter = TRUE)
-results_age <- 
+results_age <- agg_results_saver("age_", dir_path, filter = TRUE)
 readr::write_csv( 
   x = results_age,
   file = paste0(save_loc, "results_age.csv.gz")
 )
 rm(results_age); gc()
 
-results_agegroup_n_circ <- agg_results_saver("agegroup", dir_path, filter = FALSE)
+empirical_rates <- agg_results_saver("empirical_rates", dir_path)
+  readr::write_csv( 
+    x = empirical_rates,
+    file = file.path(save_loc, "empirical_rates.csv.gz")
+  )
+rm(empirical_rates); gc()
+
+
+results_agegroup_n_circ <- agg_results_saver("agegroup_", dir_path, filter = FALSE)
 results_agegroup_n_circ <- results_agegroup_n_circ %>% 
   filter(grepl("Number circumcised", type))
 readr::write_csv(
@@ -84,7 +92,7 @@ readr::write_csv(
 )
 
 
-results_agegroup <- agg_results_saver("agegroup", dir_path, filter = TRUE)
+results_agegroup <- agg_results_saver("agegroup_", dir_path, filter = TRUE)
 readr::write_csv( 
   x = results_agegroup, 
   file = paste0(save_loc, "results_agegroup.csv.gz")
@@ -98,7 +106,7 @@ readr::write_csv(
 # )
 # rm(results_age_national); gc()
 
-results_agegroup_national <- agg_results_saver("agegroup", dir_path, national = TRUE)
+results_agegroup_national <- agg_results_saver("agegroup_", dir_path, national = TRUE)
 readr::write_csv( 
   x = results_agegroup_national, 
   file = paste0(save_loc, "results_agegroup_national.csv.gz")
