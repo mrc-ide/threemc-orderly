@@ -117,7 +117,7 @@ results <- threemc::create_shell_dataset(
   age                 = "age",
   circ                = "indweight_st"
 ) %>% 
-  filter(area_level == "area_lev")
+  filter(area_level == area_lev)
 
 # "obs" cols give number of people who are circumcised in that 
 # age/time/area stratum weighted by population 
@@ -152,7 +152,7 @@ populations_append <- populations %>%
 results <- dplyr::left_join(results, populations_append)
 
 # Add parent areas
-results <- threemc::combine_areas(
+results <- threemc:::combine_areas(
   results, 
   areas_wide, 
   area_lev, 
@@ -217,7 +217,7 @@ results <- results %>%
 #### Final ####
 
 # Merge regional information on the dataset 
-results <- threemc::merge_area_info(results, sf::st_drop_geometry(areas)) %>% 
+results <- threemc:::merge_area_info(results, sf::st_drop_geometry(areas)) %>% 
   mutate(
     iso3 = substr(area_id, 0, 3),
     type = case_when(
