@@ -8,6 +8,11 @@ artefacts:
       - artefacts/results_agegroup.csv.gz
   - data: 
       description:
+      - Number of circumcisions for each age group
+      filenames:
+      - artefacts/results_agegroup_n_circ.csv.gz
+  - data: 
+      description:
       - Results for single ages. 
       filenames:
       - artefacts/results_age.csv.gz
