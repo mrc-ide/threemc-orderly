@@ -82,7 +82,7 @@ if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL
 
 # if area_level is missing, assume most common area lev in surveys
 if (length(area_lev) == 0) {
-  area_lev <- table(as.numeric(substr(survey_circumcision$geoloc_area_id, 5, 5)))
+  area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
 }
 
