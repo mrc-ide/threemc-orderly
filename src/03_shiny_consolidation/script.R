@@ -69,7 +69,7 @@ agg_results_saver <- function(
 }
 
 results_age <- agg_results_saver("age_", dir_path, filter = TRUE)
-readr::write_csv( 
+readr::write_csv(
   x = results_age,
   file = paste0(save_loc, "results_age.csv.gz")
 )

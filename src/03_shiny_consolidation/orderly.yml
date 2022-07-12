@@ -769,10 +769,10 @@ depends:
       id: latest(parameter:cntry == "BFA")
       use:
         depends/BFA_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
-  - 01b_empirical_rates:
-      id: latest(parameter:cntry == "BWA")
-      use:
-        depends/BWA_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
+  # - 01b_empirical_rates:
+  #     id: latest(parameter:cntry == "BWA")
+  #     use:
+  #       depends/BWA_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
   - 01b_empirical_rates:
       id: latest(parameter:cntry == "CAF")
       use:
@@ -817,10 +817,10 @@ depends:
       id: latest(parameter:cntry == "GNB")
       use:
         depends/GNB_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
-  - 01b_empirical_rates:
-      id: latest(parameter:cntry == "GNQ")
-      use:
-        depends/GNQ_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
+  # - 01b_empirical_rates:
+  #     id: latest(parameter:cntry == "GNQ")
+  #     use:
+  #       depends/GNQ_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
   - 01b_empirical_rates:
       id: latest(parameter:cntry == "KEN")
       use:
@@ -897,8 +897,7 @@ depends:
       id: latest(parameter:cntry == "ZMB")
       use:
         depends/ZMB_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
-        - 01b_empirical_rates:
-   - 01b_empirical_rates:
+  - 01b_empirical_rates:
       id: latest(parameter:cntry == "ZWE")
       use:
         depends/ZWE_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
