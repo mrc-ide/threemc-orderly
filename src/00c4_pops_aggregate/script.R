@@ -6,6 +6,16 @@ save_dir <- "artefacts/"
 depends_path <- "depends/"
 threemc::create_dirs_r(save_dir)
 
+# age groups to calculate populations for 
+age_groups <- c(
+  "0-4", "5-9", "10-14", "15-19",
+  "20-24", "25-29", "30-34", "35-39",
+  "40-44", "45-49", "50-54", "54-59",
+  "0+", "10+", "15+", "15-24", "10-24",
+  "15-29", "10-29", "15-39",
+  "10-39", "15-49", "10-49"
+)
+
 # load survey clusters, to identify missing area levels to use
 survey_circumcision <- read_circ_data(
     paste0(depends_path, "survey_circumcision.csv.gz"),
@@ -171,4 +181,50 @@ pops_final <- Filter(function(x) !all(is.na(x)), pops_final)
 # readr::write_csv(pops_final, "data/population_singleage_aggr.csv.gz")
 readr::write_csv(
   pops_final, paste0(save_dir, "population_singleage_aggr.csv.gz")
+)
+
+#### Single Ages to Age Groups for populations ####
+
+# TODO: Change below so there's no need for a list here
+pops_final_agegroup_list <- list(pops_final)
+
+# aggregate sample for each age group
+pops_final_agegroup <- lapply(seq_along(age_groups), function(i) {
+  # If upper limit use this split
+  if (grepl("-", age_groups[i])) {
+    age1 <- as.numeric(strsplit(age_groups[i], "-")[[1]][1])
+    age2 <- as.numeric(strsplit(age_groups[i], "-")[[1]][2])
+  }
+  # If no upper limit use this split
+  if (grepl("\\+", age_groups[i])) {
+    age1 <- as.numeric(strsplit(age_groups[i], "\\+")[[1]][1])
+    age2 <- Inf
+  }
+  results_list_loop <- lapply(pops_final_agegroup_list, function(x) {
+    x <- x %>%
+      # take results for age group i
+      dplyr::filter(age >= age1, age <= age2) %>%
+      dplyr::select(-matches("age"))
+    # Getting summarising samples
+    x <- data.table::setDT(x)[,
+                              lapply(.SD, sum, na.rm = T),
+                              by = c("iso3",      "area_id", "area_level",
+                                     "area_name", "year",    "sex"),
+                              .SDcols = "population"
+    ]
+    x <- x %>%
+      # Adding age group
+      dplyr::mutate(age_group = age_groups[i])
+  })
+  # Printing index
+  print(age_groups[i])
+  # return ages
+  return(results_list_loop)
+})
+# join together
+pops_final_agegroup <- bind_rows(rlang::squash(pops_final_agegroup))
+
+# save
+readr::write_csv(
+  pops_final_agegroup, file.path(save_dir, "population_agegroup_aggr.csv.gz")
 )
