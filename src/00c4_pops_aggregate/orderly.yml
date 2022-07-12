@@ -3,10 +3,15 @@ script: script.R
 artefacts:
   - data: 
       description: 
-      - Aggregated country populations
+      - Aggregated country populations for single ages.
       filenames:
       - artefacts/population_singleage_aggr.csv.gz
-   
+  - data: 
+      description: 
+      - Aggregated country populations for 5 year age groups (and some more of interest).
+      filenames:
+      - artefacts/population_agegroup_aggr.csv.gz
+  
 displayname: Aggregate country populations.
 
 packages:
