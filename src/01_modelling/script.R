@@ -64,8 +64,22 @@ survey_circumcision <- prepare_survey_data(
 )
 
 if (nrow(survey_circumcision) == 0) {
-  message("no valid surveys at this level") # move inside function!
+  stop("no valid surveys at this level") # move inside function!
 }
+
+# remove type distinction for 2009 DHS survey
+if (cntry == "LSO") {
+  survey_circumcision <- survey_circumcision %>% 
+    mutate(
+      circ_who = case_when(
+        survey_id == "LSO2009DHS", NA, circ_who
+      ),
+      circ_where = case_when(
+        survey_id == "LSO2009DHS", NA, circ_where
+      )
+    )
+}
+
 
 # include indicator to determine whether there is any type distinction for cntry
 if (all(is.na(survey_circumcision$circ_who) &
