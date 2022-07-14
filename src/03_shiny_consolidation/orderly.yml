@@ -55,6 +55,12 @@ artefacts:
 displayname: |
   - Pull through data for Circumcision Coverage Shiny app.
   
+parameters:
+  cntry:
+    default: ~
+  is_paper:
+    default: TRUE 
+  
 packages:
   - threemc
   - sf
