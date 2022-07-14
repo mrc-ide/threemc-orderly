@@ -603,7 +603,7 @@ plt_coverage_map <- function(
             labs(fill = "") +
             scale_fill_gradientn(colours = colourPalette,
                                  breaks = seq(0, 1, by = 0.1),
-                                 limits = c(0,1),
+                                 limits = c(0, 1),
                                  label = scales::label_percent(accuracy = 1),
                                  guide = guide_colorbar(label = TRUE,
                                                         draw.ulim = TRUE,
@@ -616,7 +616,7 @@ plt_coverage_map <- function(
             theme(axis.text = element_blank(),
                   axis.ticks = element_blank(),
                   strip.text = element_text(size = 18),
-                  legend.text = element_text(size = 14),
+                  legend.text = element_text(size = 14, face = "bold"),
                   plot.title = element_text(size = 26, hjust = 0.5),
                   panel.grid = element_blank(),
                   legend.position = "bottom")
@@ -644,7 +644,11 @@ plt_coverage_map <- function(
           n()
         )) %>% 
         bind_rows() %>% 
-        mutate(year = "Difference")
+        mutate(
+          # year = paste0("Difference, ", spec_years[1], "-", last(spec_years))
+          # year = paste0("% Change, ", spec_years[1], "-", last(spec_years))
+          year = "% Change"
+        )
       
       tmp <- bind_rows(tmp, diff_df)
     }
@@ -694,6 +698,16 @@ plt_coverage_map <- function(
                                               "-",
                                               unique(x$age_group),
                                               "year olds"))
+            } else {
+              x$year <- factor(
+                x$year, 
+                levels = c(
+                  spec_years[1], 
+                  spec_years[2],
+                  # paste0("% Change, ", spec_years[1], "-", last(spec_years))
+                  "% Change"
+                )
+              )
             }
             map_plot(x, areas_plot, colourPalette)
         })
@@ -1538,7 +1552,7 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   }
   
   recursive_plot_fun <- function(plt_data1, plt_data2, ...) {
-    if (!is.data.frame(plt_data1)) {
+    if (!inherits(plt_data1, "data.frame")) {
       lapply(seq_along(plt_data1), function(i) {
         recursive_plot_fun(plt_data1[[i]], plt_data2[[i]], ...)
       })
@@ -1548,7 +1562,10 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   }
   
   # plot for each (nested) loop
-  plots <- recursive_plot_fun(tmp1, tmp2)
+  # plots <- recursive_plot_fun(tmp1, tmp2)
+  plots <- lapply(seq_along(tmp1), function(i) {
+    recursive_plot_fun(tmp1[[i]], tmp2[[i]])
+  })
   
   # flatten nested list of plots
   plots <- rlang::squash(plots)
@@ -2236,7 +2253,11 @@ plt_coverage_year_national <- function(
   
   # add last surveys for each country
   tmp <- tmp %>%
-    left_join(last_surveys, by = "area_id") %>%
+    # left_join(last_surveys, by = "area_id") %>%
+    left_join(
+      distinct(select(last_surveys, -matches("iso3"))), 
+      by = c("area_id")
+    ) %>%
     # add alpha to plot if the circumcisions are projected
     mutate(light = ifelse(year <= survey_year, "Surveyed", "Projected"))
   # pull where year == survey year and add another row for projected for it!
@@ -2257,6 +2278,8 @@ plt_coverage_year_national <- function(
           area_name == "GHANA"                      ~ "Ghana",
           # area_name == "Congo"                      ~ "Republic of the Congo",
           grepl("Democratic Republic", area_name)   ~ "DR Congo",
+          area_name == "Equatorial Guinea"          ~ "Eq. Guinea",
+          area_name == "Central African Repulic"    ~ "Cent. Af. Rep.",
           TRUE                                      ~ area_name
         )
       ) 
@@ -2325,6 +2348,11 @@ plt_coverage_year_national <- function(
     arrange(area_name) %>% 
     mutate(
       light = factor(light, levels = c("Surveyed", "Projected")),
+      type = case_when(
+        grepl("MMC", type) ~ "MMC",
+        grepl("TMC", type) ~ "TMC",
+        TRUE               ~ as.character(type)
+      ),
       type = forcats::fct_drop(type)
     )
   
@@ -2343,7 +2371,7 @@ plt_coverage_year_national <- function(
     )
   } else spec_title <- main
   
-  plot_fun <- function(all_data, medical_data, spec_years, spec_age_group, n_plots) {
+  plot_fun <- function(all_data, mc_data, spec_years, spec_age_group, n_plots) {
     
     manual_fill <- wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
     
@@ -2351,6 +2379,8 @@ plt_coverage_year_national <- function(
     if ("Unknown" %in% all_data$type) {
       manual_fill <- c(manual_fill, "#5e4fa2")
     }
+    
+    # browser()
     
     all_data %>%
       ggplot(
@@ -2387,7 +2417,7 @@ plt_coverage_year_national <- function(
       ) +
       # annotate plots with coverage at first year
       geom_text(
-        data = medical_data %>%
+        data = mc_data %>%
           filter(type == "Male Circumcision (MC)", year == spec_years[1]) %>%
           select(area_id, area_name, year, mean.y),
         aes(x = spec_years[1],
@@ -2400,14 +2430,13 @@ plt_coverage_year_national <- function(
         # vjust = 0,
         nudge_x = 1,
         color = "grey30",
-        # size = 6,
-        size = 5,
-        nudge_y = 0.02,
+        size = 6,
+        nudge_y = 7,
         show.legend = FALSE
       ) +
       # annotate plots with coverage at last year
       geom_text(
-        data = medical_data %>%
+        data = mc_data %>%
           filter(type == "Male Circumcision (MC)", year == last(spec_years)) %>%
           select(area_id, area_name, year, mean.y),
         aes(
@@ -2426,9 +2455,8 @@ plt_coverage_year_national <- function(
         # vjust = 1,
         nudge_x = -1,
         color = "grey30",
-        # size = 5,
-        size = 5,
-        nudge_y = 0.02,
+        size = 6,
+        nudge_y = 7,
         show.legend = FALSE
       ) +
       # Setting for the axes
@@ -2472,13 +2500,13 @@ plt_coverage_year_national <- function(
       )
   }
   
-  recursive_plot_fun <- function(all_data, medical_data, ...) {
-    if (!is.data.frame(all_data)) {
+  recursive_plot_fun <- function(all_data, mc_data, ...) {
+    if (!inherits(all_data, "data.frame")) {
       lapply(seq_along(all_data), function(i) {
-        recursive_plot_fun(all_data[[i]], medical_data[[i]], ...)
+        recursive_plot_fun(all_data[[i]], mc_data[[i]], ...)
       })
     } else {
-      plot_fun(all_data, medical_data, ...)
+      plot_fun(all_data, mc_data, ...)
     }
   }
   
@@ -2500,6 +2528,205 @@ plt_coverage_year_national <- function(
       # height = 7.5
       height = save_height
     )
+  } else {
+    return(plots)
+  }
+}
+
+#### Function to Plot Empirical vs Modelled Rates ####
+
+plt_empirical_model_rates <- function(
+    results, 
+    empirical_rates,
+    areas = NULL,
+    spec_type,
+    spec_age_groups, 
+    spec_years,  # from surveys
+    spec_area_levels,
+    spec_model = "No program data",
+    main = NULL, 
+    str_save = NULL, 
+    save_width = NULL, 
+    save_height = NULL, 
+    n_plots = 1    
+) {
+  
+  # temp
+  if (grepl("coverage", spec_type)) {
+    spec_type <- stringr::str_replace_all(spec_type, "coverage", "probability")
+  }
+  
+  # browser()
+  # Preparing dataset for plots
+  initial_filter <- function(.data) {
+    .data <- .data %>%
+      filter(
+        type == spec_type,
+        age_group %in% spec_age_groups,
+        year %in% (spec_years - 1),
+        area_level %in% spec_area_levels
+      )
+    return(.data)
+  }
+  results <- initial_filter(results)
+  empirical_rates <- initial_filter(empirical_rates)
+  
+  # merge area information
+  # if (!is.null(areas)) {
+  #   if (inherits(areas, "sf")) {
+  #     areas <- sf::st_drop_geometry(areas)
+  #   }
+  #   results <- results %>% 
+  #     select(-any_of(names(areas)), area_id)
+  #   empirical_rates <- empirical_rates %>% 
+  #     select(-any_of(names(areas)), area_id)
+  #   
+  #   results <- threemc:::merge_area_info(results, areas)
+  #   empirical_rates <- threemc:::merge_area_info(empirical_rates, areas)
+  # }
+  
+  results <- results %>% 
+    mutate(
+      type = case_when(
+        grepl("MMC", type) ~ "MMC",
+        grepl("TMC", type) ~ "TMC",
+        TRUE               ~ "MC"
+      )
+    )
+  empirical_rates <- empirical_rates %>% 
+    mutate(
+      type = case_when(
+        grepl("MMC", type) ~ "MMC",
+        grepl("TMC", type) ~ "TMC",
+        TRUE               ~ "MC"
+      )
+    )
+  
+  spec_type <- unique(results$type)
+  
+  # make sure surveys and model estimates are aligned
+  empirical_rates <- empirical_rates %>%
+    filter(
+      area_name %in% results$area_name,
+      year %in% results$year  
+    )
+  
+  if (
+    length(unique(results$area_id)) != 
+    length(unique(empirical_rates$area_id))
+  ) {
+    message("Area IDs in model estimates and survey estimates are misaligned") 
+    results <- results %>%
+      filter(
+        area_name %in% empirical_rates$area_name,
+        year %in% empirical_rates$year  
+      )
+  }
+  
+  # Ordering age groups (needed??)
+  results$age_group <- as.numeric(factor(
+    results$age_group, levels = spec_age_groups
+  ))
+  empirical_rates$age_group <- as.numeric(factor(
+    empirical_rates$age_group, levels = spec_age_groups
+  ))
+  
+  # make sure areas are the same for both
+  empirical_rates <- filter(empirical_rates, area_name %in% results$area_name)
+  # make sure years are the same
+  results <- filter(results, year %in% empirical_rates$year) 
+  
+  # take age above age_groups as last label for plot
+  final_label <- last(spec_age_groups)
+  final_label <- as.numeric(stringr::str_split(final_label, "-")[[1]][[2]])
+  final_label <- paste0(final_label + 1, "+")
+  
+  results <- split_area_level(results, year = TRUE, n_plots = n_plots)
+  empirical_rates <- split_area_level(empirical_rates, year = TRUE, n_plots = n_plots)
+  
+  
+  plot_fun <- function(data, emp_data) {
+    
+    add_title <- paste(
+      emp_data$iso3[1],
+      paste0("area_level: ", data$area_level[1]),
+      # data$area_level_label[1],
+      paste0("year: ", data$year[1]),
+      data$type[1],
+      sep = ", "
+    )
+    
+    data <- mutate(data, indicator = "Model Rates")
+    emp_data <- mutate(emp_data, indicator = "Empirical Rates")
+    
+    data %>%
+      ggplot(
+        aes(y = mean, fill = indicator, colour = indicator)
+      ) +
+      geom_ribbon(
+        aes(x = seq_along(age_group), ymin = lower, ymax = upper),
+        alpha = 0.5
+      ) +
+      geom_line(aes(x = seq_along(age_group), group = 1), size = 1) +
+      geom_line(
+        data = emp_data,
+        aes(x = seq_along(age_group), y = mean, colour = indicator),
+        size = 1
+      ) +
+      geom_point(
+        data = emp_data,
+        aes(x = seq_along(age_group), y = mean, colour = indicator),
+        size = 3,
+        show.legend = FALSE
+      ) +
+      scale_x_continuous(
+        breaks = 1:(length(spec_age_groups) + 1),
+        labels = c(spec_age_groups, final_label),
+      ) +
+      scale_y_continuous(breaks = seq(0, 1,  by =  0.2),
+                         limits = c(0, 1),
+                         labels = scales::label_percent()) +
+      facet_wrap(~area_name) +
+      theme_bw() +
+      labs(
+        title = add_title,
+        x = "Age at Circumcision",
+        y = "Circumcision Rate (%)",
+        fill = "Type"
+      ) +
+      theme(
+        legend.text = element_text(size = 15),
+        axis.text.x = element_text(vjust = 0.5, size = 12),
+        legend.position = "right"
+      ) +
+      guides(colour = "none")
+  }
+  
+  recursive_plot_fun <- function(data, emp_data, ...) {
+    if (!inherits(data, "data.frame")) {
+      lapply(seq_along(data), function(i) {
+        recursive_plot_fun(data[[i]], emp_data[[i]], ...)
+      })
+    } else {
+      plot_fun(data, emp_data, ...)
+    }
+  }
+  
+  plots <- lapply(seq_along(results), function(i) {
+    recursive_plot_fun(results[[i]], empirical_rates[[i]])
+  })
+  
+  # flatten nested list of plots
+  plots <- rlang::squash(plots)
+  
+  if (!is.null(str_save)) {
+    # save
+    plots <-  gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
+    ggsave(filename = str_save,
+           plot = plots,
+           dpi = "retina",
+           width = save_width,
+           height = save_height)
   } else {
     return(plots)
   }
