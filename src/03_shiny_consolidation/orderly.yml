@@ -289,7 +289,7 @@ depends:
         depends/Results_MOZ_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
         depends/Results_MOZ_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
   - 02_aggregations:      
-      id: latest(parameter:cntry == "MWI")
+      id: latest(parameter:cntry == "MWI" && parameter:is_paper == is_paper)
       use: 
         depends/Results_MWI_Age_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
         depends/Results_MWI_Age_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
@@ -388,7 +388,7 @@ depends:
         depends/Results_TZA_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
         depends/Results_TZA_AgeGroup_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
   - 02_aggregations:      
-      id: latest(parameter:cntry == "UGA")
+      id: latest(parameter:cntry == "UGA" && parameter:is_paper == is_paper)
       use: 
         depends/Results_UGA_Age_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
         depends/Results_UGA_Age_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
@@ -624,7 +624,7 @@ depends:
         depends/Results_MOZ_AgeGroup_National_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
         depends/Results_MOZ_AgeGroup_National_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
   - 01a_model_aggregate_spec_area_lev:      
-      id: latest(parameter:cntry == "MWI" && parameter:area_lev == 0)
+      id: latest(parameter:cntry == "MWI" && parameter:area_lev == 0 && parameter::is_paper == is_paper)
       use: 
         # depends/Results_MWI_Age_National_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
         # depends/Results_MWI_Age_National_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
@@ -723,7 +723,7 @@ depends:
         depends/Results_TZA_AgeGroup_National_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
         depends/Results_TZA_AgeGroup_National_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
   - 01a_model_aggregate_spec_area_lev:      
-      id: latest(parameter:cntry == "UGA" && parameter:area_lev == 0)
+      id: latest(parameter:cntry == "UGA" && parameter:area_lev == 0 && parameter:is_paper == is_paper)
       use: 
         # depends/Results_UGA_Age_National_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
         # depends/Results_UGA_Age_National_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
@@ -848,7 +848,7 @@ depends:
       use:
         depends/MOZ_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
   - 01b_empirical_rates:
-      id: latest(parameter:cntry == "MWI")
+      id: latest(parameter:cntry == "MWI" && parameter:is_paper == is_paper)
       use:
         depends/MWI_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
   - 01b_empirical_rates:
@@ -892,7 +892,7 @@ depends:
       use:
         depends/TZA_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
   - 01b_empirical_rates:
-      id: latest(parameter:cntry == "UGA")
+      id: latest(parameter:cntry == "UGA" && parameter:is_paper == is_paper)
       use:
         depends/UGA_empirical_rates.csv.gz: artefacts/empirical_rates.csv.gz
   - 01b_empirical_rates:
