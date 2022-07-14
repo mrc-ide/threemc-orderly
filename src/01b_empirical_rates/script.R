@@ -126,8 +126,7 @@ results <- threemc::create_shell_dataset(
 
 results <- results %>% 
   # calculate MC as MC + MMC + TMC
-  filter(!is.na(obs_mmc), !is.na(obs_tmc), !is.na(obs_mc)) %>% 
-  mutate(obs_mc = obs_mc + obs_mmc + obs_tmc) %>% 
+  mutate(obs_mc = sum(obs_mc, obs_mmc, obs_tmc, na.rm = TRUE)) %>% 
   # pivot empirical person year columns to the one column
   # pivot_longer(cols = obs_mmc:icens, names_to = "type", values_to = "mean") %>% 
   pivot_longer(cols = obs_mmc:obs_mc, names_to = "type", values_to = "mean") %>% 

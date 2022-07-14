@@ -68,6 +68,7 @@ agg_results_saver <- function(
   }
 }
 
+# results for single ages
 results_age <- agg_results_saver("age_", dir_path, filter = TRUE)
 readr::write_csv(
   x = results_age,
@@ -75,8 +76,10 @@ readr::write_csv(
 )
 rm(results_age); gc()
 
+# Rates of circumcision from surveys, not model
 empirical_rates <- agg_results_saver("empirical_rates", dir_path)
-  readr::write_csv( 
+
+readr::write_csv( 
     x = empirical_rates,
     file = file.path(save_loc, "empirical_rates.csv.gz")
   )
