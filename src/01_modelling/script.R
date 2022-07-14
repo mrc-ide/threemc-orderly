@@ -71,10 +71,10 @@ if (nrow(survey_circumcision) == 0) {
 if (cntry == "LSO") {
   survey_circumcision <- survey_circumcision %>% 
     mutate(
-      circ_who = case_when(
+      circ_who = ifelse(
         survey_id == "LSO2009DHS", NA, circ_who
       ),
-      circ_where = case_when(
+      circ_where = ifelse(
         survey_id == "LSO2009DHS", NA, circ_where
       )
     )
