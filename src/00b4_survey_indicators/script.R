@@ -8,6 +8,17 @@ areas <- st_drop_geometry(areas)
 
 survey <- read_csv("depends/survey_circumcision.csv.gz")
 
+# remove type from LSO2009DHS survey
+survey <- survey %>% 
+  mutate(
+    circ_who = ifelse(
+      survey_id == "LSO2009DHS", NA, circ_who
+    ),
+    circ_where = ifelse(
+      survey_id == "LSO2009DHS", NA, circ_where
+    )
+  )
+
 ## survey_meta <- read_csv("depends/zaf_survey_meta.csv")
 ## survey_regions <- read_csv("depends/zaf_survey_regions.csv")
 
