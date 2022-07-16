@@ -30,6 +30,19 @@ areas <- st_make_valid(areas)
 survey_circumcision <- read_circ_data("depends/survey_circumcision.csv.gz", filters)
 populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
 
+# remove type distinction for 2009 DHS survey
+if (cntry == "LSO") {
+  survey_circumcision <- survey_circumcision %>% 
+    mutate(
+      circ_who = ifelse(
+        survey_id == "LSO2009DHS", NA, circ_who
+      ),
+      circ_where = ifelse(
+        survey_id == "LSO2009DHS", NA, circ_where
+      )
+    )
+}
+
 # pull recommended area hierarchy for target country
 area_lev <- threemc::datapack_psnu_area_level %>%
   filter(iso3 == cntry) %>%
@@ -66,20 +79,6 @@ survey_circumcision <- prepare_survey_data(
 if (nrow(survey_circumcision) == 0) {
   stop("no valid surveys at this level") # move inside function!
 }
-
-# remove type distinction for 2009 DHS survey
-if (cntry == "LSO") {
-  survey_circumcision <- survey_circumcision %>% 
-    mutate(
-      circ_who = ifelse(
-        survey_id == "LSO2009DHS", NA, circ_who
-      ),
-      circ_where = ifelse(
-        survey_id == "LSO2009DHS", NA, circ_where
-      )
-    )
-}
-
 
 # include indicator to determine whether there is any type distinction for cntry
 if (all(is.na(survey_circumcision$circ_who) &
