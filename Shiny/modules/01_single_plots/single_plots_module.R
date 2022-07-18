@@ -603,7 +603,7 @@ single_plots_server <- function(input, output, session, connection, selected = r
       paste0("01_", tolower(input$country), "_coverage_prevalence.png")
     },
     content = function(file) {
-      temp <- plt_data()[[input$plot_n]]
+      temp <- plt_data()[[as.numeric(input$plot_n)]]
       ggplot2::ggsave(
         filename = file, 
         plot = temp, 

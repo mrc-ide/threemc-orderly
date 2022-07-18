@@ -30,7 +30,7 @@ comparison_plots_UI <- function(id) {
                 inputId = ns("dataset"),
                 label   = "Data Source",
                 choices = c(
-                  "Sub-National Model" = "sub-national",
+                  "Sub-National Model" = "subnational",
                   "National Model"     = "national"
                 ), 
                 selected = "sub-national"
@@ -422,7 +422,6 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   observe({
     req(circ_data())
     req(add_data())
-    req(input$plot_type)
 
     # select <- c("2009", "2015", "2021")
     # select <- select[select %in% circ_data()$year]
@@ -703,7 +702,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       paste0("01_", tolower(input$country), "_coverage_prevalence.png")
     },
     content = function(file) {
-      temp <- plt_data()[[input$plot_n]]
+      temp <- plt_data()[[as.numeric(input$plot_n)]]
       ggplot2::ggsave(
         filename = file,
         plot = temp,
