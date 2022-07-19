@@ -40,12 +40,13 @@ comparison_plots_UI <- function(id) {
                 label   = "Plot Type", 
                 choices = c(
                   # DMPPT2 Comparison Plots
-                  "DMPPT2 - Coverage vs Year"                = "plt_1",
-                  "DMPPT2 - Barchart"                        = "plt_2",
-                  "DMPPT2 Coverage vs Model Coverage"        = "plt_3",
+                  "DMPPT2 - Coverage vs Year"                        = "plt_1",
+                  "DMPPT2 - Barchart"                                = "plt_2",
+                  "DMPPT2 Coverage vs Model Coverage"                = "plt_3",
                   # Survey Comparison Plots
-                  "Surveys - Coverage vs Year, by Type"      = "plt_4",
-                  "Surveys - Coverage vs Age Group, by Type" = "plt_5"
+                  "Surveys - Coverage vs Year, by Type"              = "plt_4",
+                  "Surveys - Coverage vs Age Group, by Type"         = "plt_5",
+                  "Surveys - Empirical vs Model Rates, by Age Group" = "plt_6"
                 )
               ),
               selectInput(
@@ -67,7 +68,8 @@ comparison_plots_UI <- function(id) {
               # plot type for survey plots
               conditionalPanel(
                 condition = "input.plot_type == 'plt_4' ||
-                input.plot_type == 'plt_5'",
+                input.plot_type == 'plt_5' || 
+                input.plot_type == 'plt_6'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("spec_type"),
@@ -124,7 +126,8 @@ comparison_plots_UI <- function(id) {
                 condition = "input.plot_type == 'plt_2' || 
                 input.plot_type == 'plt_3' || 
                 input.plot_type == 'plt_4' || 
-                input.plot_type == 'plt_5'",
+                input.plot_type == 'plt_5' || 
+                input.plot_type == 'plt_6'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("age_group_multiple"),
@@ -152,7 +155,8 @@ comparison_plots_UI <- function(id) {
               conditionalPanel(
                 condition = "input.plot_type == 'plt_2' || 
                 input.plot_type == 'plt_3' || 
-                input.plot_type == 'plt_5'",
+                input.plot_type == 'plt_5' || 
+                input.plot_type == 'plt_6'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("year_select"), # also updated below
@@ -265,8 +269,11 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   circ_data <- reactive({
     req(input$country)
     req(input$dataset)
+    req(input$plot_type)
     
-    if (input$dataset == "subnational") {
+    if (input$plot_type == "plt_6") {
+      return(filter(data$results_agegroup_probs, iso3 == input$country))
+    } else if (input$dataset == "subnational") {
       return(filter(data$results_agegroup_comparison, iso3 == input$country))
     } else {
       return(filter(data$results_agegroup_national_comparison, iso3 == input$country))
@@ -279,10 +286,12 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     
     dmppt2_data <- filter(data$dmppt2_data, iso3 == input$country)
     survey_data <- filter(data$survey_data, iso3 == input$country)
+    empirical_rates <- filter(empirical_rates, iso3 == input$country)
     
     output <- list(
-      "dmppt2_data" = dmppt2_data,
-      "survey_data" = survey_data
+      "dmppt2_data"     = dmppt2_data,
+      "survey_data"     = survey_data,
+      "empirical_rates" = empirical_rates
     )
     
     return(output)
@@ -294,7 +303,13 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   observe({
     req(circ_data())
     
-    if (all(add_data()$survey_data$indicator == "circumcised")) {
+    if (input$plot_type == "plt_6") {
+      choices <- c(
+        "Total Circumcision"       = "MC probability",
+        "Medical Circumcision"     = "MMC probability",
+        "Traditional Circumcision" = "TMC probability"
+      )
+    } else if (all(add_data()$survey_data$indicator == "circumcised")) {
       choices <- c("Total Circumcision" = "MC coverage")
     } else {
       choices <- c(
@@ -303,11 +318,12 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         "Traditional Circumcision" = "TMC coverage"
       )
     }
+    
     updateSelectInput(
         session,
         "spec_type",
         choices = choices, 
-        selected = "MC coverage"
+        selected = choices[1]
     )
   })
   
@@ -324,6 +340,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       # "plt_4" = 12,
       "plt_4" = 1,
       "plt_5" = 12,
+      "plt_6" = 4,
       1
     )
     
@@ -437,10 +454,11 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       plt_years <- sort(unique(c(DMPPT2_last_year, year_2013)))
       
     # for coverage vs age group, choose all years with survey data as default
-    } else if (input$plot_type == "plt_5") {
+    } else if (input$plot_type %in% c("plt_5", "plt_6")) {
       
       plt_years <- sort(unique(add_data()$survey_data$year))
       plt_years <- plt_years[!is.na(plt_years)]
+      plt_years <- plt_years[plt_years %in% circ_data()$year]
       
     } else {
       plt_years <- c(min(circ_data()$year), max(circ_data()$year))
@@ -459,15 +477,30 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     req(circ_data())
     req(add_data())
     req(input$plot_type)
+    req(input$dataset)
     
-    area_levs <- defaults <- unique(add_data()$dmppt2_data$area_level)
-    if (input$plot_type == "plt_3") defaults <- defaults[defaults != 0]
+    # defaults <- unique(add_data()$dmppt2_data$area_level)
+    # if (input$plot_type == "plt_3") defaults <- defaults[defaults != 0]
+    # 
+    # if (length(defaults) == 0) {
+    #   defaults <- unique(add_data()$survey_data$area_level)
+    # }
+    
+    if (input$dataset == "national") {
+      choices <- 0
+      selected <- 0
+    } else {
+      choices <- c(0, 1)
+      selected <- c(0, 1)
+    }
     
     updateSelectInput(
       session,
       "area_levels",
-      choices = area_levs,
-      selected = defaults
+      # choices = unique(circ_data()$area_level),
+      # selected = defaults
+      choices = choices,
+      selected = selected
     )
   })
   
@@ -618,6 +651,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       # req(input$age_group_single)
       req(input$age_group_multiple)
       req(input$year_slider)
+      req(input$area_levels)
       req(input$n_plot)
       req(input$facet_vars)
       req(input$col_fill_vars)
@@ -633,6 +667,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         # age_per = input$age_group_single,
         age_per = input$age_group_multiple,
         years = as.numeric(input$year_slider[[1]]):as.numeric(last(input$year_slider)),
+        area_level_select = as.numeric(input$area_levels),
         model_type = "No program data",
         facet_vars = input$facet_vars,
         col_fill_vars = input$col_fill_vars,
@@ -671,6 +706,32 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         title = paste(surveys_type, main_title),
         n_plots = as.numeric(input$n_plot)
       )
+    } else if (input$plot_type == "plt_6") {
+      
+      req(input$spec_type)
+      req(input$age_group_multiple)
+      req(input$year_select)
+      req(input$area_levels)
+      req(input$n_plot)
+      
+      p1 <- plt_empirical_model_rates(
+        results = circ_data(), 
+        empirical_rates = add_data()$empirical_rates,
+        areas = data$areas,
+        # spec_type = "MMC probability",
+        spec_type = input$spec_type,
+        # spec_age_groups = age_groups, 
+        spec_age_groups = input$age_group_multiple,
+        # spec_years = survey_years,
+        spec_years = as.numeric(input$year_select),
+        spec_area_levels = input$area_levels,
+        main = NULL, 
+        str_save = NULL, 
+        save_width = NULL, 
+        save_height = NULL, 
+        n_plots = as.numeric(input$n_plot)
+      )
+      
     }
   })
   

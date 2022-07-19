@@ -60,6 +60,25 @@ results_agegroup_national_comparison <-  readr::read_csv(paste0(
 )) %>% 
   filter(iso3 %in% ssa_iso3)
 
+results_agegroup_probs <-  readr::read_csv(paste0(
+  orderly_root, 
+  "/archive/03_shiny_consolidation/",
+  dir_name,
+  "/artefacts/results_agegroup.csv.gz"
+)) %>% 
+  filter(iso3 %in% ssa_iso3, grepl("probability", type))
+
+# empirical rates
+empirical_rates <-  readr::read_csv(paste0(
+  orderly_root, 
+  "/archive/03_shiny_consolidation/",
+  dir_name,
+  "/artefacts/empirical_rates.csv.gz"
+)) %>% 
+  filter(iso3 %in% ssa_iso3)
+
+
+
 # shapefiles
 areas_loc <- archives %>%
   filter(name == "00a2_areas_join") %>%
@@ -111,6 +130,8 @@ comparison_plots_data <- list(
   "dmppt2_iso3"                 = dmppt2_iso3,
   "dmppt2_data"                 = dmppt2_data,
   "survey_data"                 = survey_data,
+  "empirical_rates"             = empirical_rates,
+  "results_agegroup_probs"      = results_agegroup_probs,
   "orderly_root"                = orderly_root
 )
 
