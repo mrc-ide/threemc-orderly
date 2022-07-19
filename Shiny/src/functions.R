@@ -1397,7 +1397,7 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
         year %in% survey_years
       )
     if ("model" %in% names(.data)) .data <- .data[.data$model == model_type, ]
-    if (nrow(.data) == 0) stop("Filtering has resulted in an empty dataframe")
+    # if (nrow(.data) == 0) stop("Filtering has resulted in an empty dataframe")
     return(.data)
   }
   tmp1 <- initial_filter(df_results, mc_type_model)
@@ -2418,7 +2418,8 @@ plt_coverage_year_national <- function(
         # vjust = 0,
         nudge_x = 1,
         color = "grey30",
-        size = 6,
+        # size = 6,
+        size = 17,
         nudge_y = 7,
         show.legend = FALSE
       ) +
@@ -2443,7 +2444,8 @@ plt_coverage_year_national <- function(
         # vjust = 1,
         nudge_x = -1,
         color = "grey30",
-        size = 6,
+        # size = 6,
+        size = 17,
         nudge_y = 7,
         show.legend = FALSE
       ) +
