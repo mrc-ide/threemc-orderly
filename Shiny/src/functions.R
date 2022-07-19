@@ -603,7 +603,7 @@ plt_coverage_map <- function(
             labs(fill = "") +
             scale_fill_gradientn(colours = colourPalette,
                                  breaks = seq(0, 1, by = 0.1),
-                                 limits = c(0,1),
+                                 limits = c(0, 1),
                                  label = scales::label_percent(accuracy = 1),
                                  guide = guide_colorbar(label = TRUE,
                                                         draw.ulim = TRUE,
@@ -631,8 +631,6 @@ plt_coverage_map <- function(
         }
     }
     
-    # browser()
-    
     # Add difference, if specified
     tmp$year <- as.factor(tmp$year)
     if (inc_difference == TRUE) {
@@ -644,7 +642,11 @@ plt_coverage_map <- function(
           n()
         )) %>% 
         bind_rows() %>% 
-        mutate(year = "Difference")
+        mutate(
+          # year = paste0("Difference, ", spec_years[1], "-", last(spec_years))
+          # year = paste0("% Change, ", spec_years[1], "-", last(spec_years))
+          year = "% Change"
+        )
       
       tmp <- bind_rows(tmp, diff_df)
     }
@@ -694,6 +696,16 @@ plt_coverage_map <- function(
                                               "-",
                                               unique(x$age_group),
                                               "year olds"))
+            } else {
+              x$year <- factor(
+                x$year, 
+                levels = c(
+                  spec_years[1], 
+                  spec_years[2],
+                  # paste0("% Change, ", spec_years[1], "-", last(spec_years))
+                  "% Change"
+                )
+              )
             }
             map_plot(x, areas_plot, colourPalette)
         })
@@ -1231,9 +1243,6 @@ plt_MC_modelfit_spec_age <- function(
   xlab, ylab, title, str_save = NULL,
   save_width = NULL, save_height = NULL, n_plots = 12) {
 
-  # if (df_results$iso3[1] == "GNB") browser()
-  # browser()
-  
   # filter data accordingly
   initial_filter <- function(.data, type_filter) {
     .data <- .data %>%
@@ -1379,8 +1388,6 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
                             save_height = NULL, 
                             n_plots = 12) {
   
-  # browser()
-  
   # Preparing dataset for plots
   initial_filter <- function(.data, spec_type) {
     .data <- .data %>%
@@ -1390,6 +1397,7 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
         year %in% survey_years
       )
     if ("model" %in% names(.data)) .data <- .data[.data$model == model_type, ]
+    # if (nrow(.data) == 0) stop("Filtering has resulted in an empty dataframe")
     return(.data)
   }
   tmp1 <- initial_filter(df_results, mc_type_model)
@@ -1538,7 +1546,7 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   }
   
   recursive_plot_fun <- function(plt_data1, plt_data2, ...) {
-    if (!is.data.frame(plt_data1)) {
+    if (!inherits(plt_data1, "data.frame")) {
       lapply(seq_along(plt_data1), function(i) {
         recursive_plot_fun(plt_data1[[i]], plt_data2[[i]], ...)
       })
@@ -2208,8 +2216,6 @@ plt_coverage_year_national <- function(
   n_plots = 1
 ) {
   
-  # browser()
-  
   if (length(spec_years) == 2 && (spec_years[2] - spec_years[1]) > 1) {
     message("Changing spec_years to a sequence from the first to last year")
     spec_years <- sort(spec_years)
@@ -2239,7 +2245,11 @@ plt_coverage_year_national <- function(
   
   # add last surveys for each country
   tmp <- tmp %>%
-    left_join(last_surveys, by = "area_id") %>%
+    # left_join(last_surveys, by = "area_id") %>%
+    left_join(
+      distinct(select(last_surveys, -matches("iso3"))), 
+      by = c("area_id")
+    ) %>%
     # add alpha to plot if the circumcisions are projected
     mutate(light = ifelse(year <= survey_year, "Surveyed", "Projected"))
   # pull where year == survey year and add another row for projected for it!
@@ -2260,6 +2270,8 @@ plt_coverage_year_national <- function(
           area_name == "GHANA"                      ~ "Ghana",
           # area_name == "Congo"                      ~ "Republic of the Congo",
           grepl("Democratic Republic", area_name)   ~ "DR Congo",
+          area_name == "Equatorial Guinea"          ~ "Eq. Guinea",
+          area_name == "Central African Repulic"    ~ "Cent. Af. Rep.",
           TRUE                                      ~ area_name
         )
       ) 
@@ -2313,8 +2325,6 @@ plt_coverage_year_national <- function(
       mean.y > 0
     )
   
-  # browser()
-  
   missing_type_iso3 <- unique(tmp1$iso3)
   missing_type_iso3 <- missing_type_iso3[!missing_type_iso3 %in% unique(dat_all$iso3)]
   if (length(missing_type_iso3) > 0) {
@@ -2328,6 +2338,11 @@ plt_coverage_year_national <- function(
     arrange(area_name) %>% 
     mutate(
       light = factor(light, levels = c("Surveyed", "Projected")),
+      type = case_when(
+        grepl("MMC", type) ~ "MMC",
+        grepl("TMC", type) ~ "TMC",
+        TRUE               ~ as.character(type)
+      ),
       type = forcats::fct_drop(type)
     )
   
@@ -2346,7 +2361,7 @@ plt_coverage_year_national <- function(
     )
   } else spec_title <- main
   
-  plot_fun <- function(all_data, medical_data, spec_years, spec_age_group, n_plots) {
+  plot_fun <- function(all_data, mc_data, spec_years, spec_age_group, n_plots) {
     
     manual_fill <- wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
     
@@ -2390,7 +2405,7 @@ plt_coverage_year_national <- function(
       ) +
       # annotate plots with coverage at first year
       geom_text(
-        data = medical_data %>%
+        data = mc_data %>%
           filter(type == "Male Circumcision (MC)", year == spec_years[1]) %>%
           select(area_id, area_name, year, mean.y),
         aes(x = spec_years[1],
@@ -2404,13 +2419,13 @@ plt_coverage_year_national <- function(
         nudge_x = 1,
         color = "grey30",
         # size = 6,
-        size = 5,
-        nudge_y = 0.02,
+        size = 17,
+        nudge_y = 7,
         show.legend = FALSE
       ) +
       # annotate plots with coverage at last year
       geom_text(
-        data = medical_data %>%
+        data = mc_data %>%
           filter(type == "Male Circumcision (MC)", year == last(spec_years)) %>%
           select(area_id, area_name, year, mean.y),
         aes(
@@ -2429,9 +2444,9 @@ plt_coverage_year_national <- function(
         # vjust = 1,
         nudge_x = -1,
         color = "grey30",
-        # size = 5,
-        size = 5,
-        nudge_y = 0.02,
+        # size = 6,
+        size = 17,
+        nudge_y = 7,
         show.legend = FALSE
       ) +
       # Setting for the axes
@@ -2475,13 +2490,13 @@ plt_coverage_year_national <- function(
       )
   }
   
-  recursive_plot_fun <- function(all_data, medical_data, ...) {
-    if (!is.data.frame(all_data)) {
+  recursive_plot_fun <- function(all_data, mc_data, ...) {
+    if (!inherits(all_data, "data.frame")) {
       lapply(seq_along(all_data), function(i) {
-        recursive_plot_fun(all_data[[i]], medical_data[[i]], ...)
+        recursive_plot_fun(all_data[[i]], mc_data[[i]], ...)
       })
     } else {
-      plot_fun(all_data, medical_data, ...)
+      plot_fun(all_data, mc_data, ...)
     }
   }
   
@@ -2531,7 +2546,6 @@ plt_empirical_model_rates <- function(
     spec_type <- stringr::str_replace_all(spec_type, "coverage", "probability")
   }
   
-  # browser()
   # Preparing dataset for plots
   initial_filter <- function(.data) {
     .data <- .data %>%
@@ -2678,7 +2692,7 @@ plt_empirical_model_rates <- function(
   }
   
   recursive_plot_fun <- function(data, emp_data, ...) {
-    if (!is.data.frame(data)) {
+    if (!inherits(data, "data.frame")) {
       lapply(seq_along(data), function(i) {
         recursive_plot_fun(data[[i]], emp_data[[i]], ...)
       })
