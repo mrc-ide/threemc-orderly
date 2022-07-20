@@ -181,6 +181,10 @@ plt_mc_coverage_prevalence <- function(
   results_agegroup, areas, spec_age_group, spec_years, area_levels, spec_model,
   main = NULL, str_save = NULL, save_width, save_height, n_plots = 1
   ) {
+  
+  if (length(spec_years) == 2) {
+    spec_years <- spec_years[1]:last(spec_years)
+  }
 
   # Subsetting
   tmp1 <- results_agegroup %>%
@@ -190,7 +194,7 @@ plt_mc_coverage_prevalence <- function(
       # age_group ==  "10+",
       age_group == spec_age_group,
       # year %in%     c(2009:2021),
-      year %in% spec_years,
+      year %in%       spec_years,
       area_level %in% area_levels,
       model == spec_model
     ) %>%
@@ -241,10 +245,15 @@ plt_mc_coverage_prevalence <- function(
                               type = NA,
                               test = "B"))
 
-  # Dummy dataset to add 80% target
+  # Dummy dataset to add 90% target
+  if (spec_age_group == "15-49") {
+    target <- 80
+  } else {
+    target <- 90
+  }
   dummy2 = data.frame("test" = c("A", "B"),
                       "type" = NA,
-                      "y"    = c(80, NA))
+                      "y"    = c(target, NA))
 
   # split tmp by area level and number of desired plots
   tmp <- split_area_level(tmp, n_plots = n_plots)
@@ -672,10 +681,24 @@ plt_coverage_map <- function(
             if (is.null(spec_main_title)) {
               spec_main_title_single <- paste(x$iso3[1],
                                               x$type[1],
-                                              spec_main_title,
                                               x$age_group[1],
                                               "years old")
-            } else spec_main_title_single <- spec_main_title
+            } else {
+              spec_main_title_single <- spec_main_title
+            }
+            # ensure change in percentage is last
+            if (inc_difference == TRUE) {
+              # ensure change in 
+              x$year <- factor(
+                x$year, 
+                levels = c(
+                  spec_years[1], 
+                  spec_years[2],
+                  # paste0("% Change, ", spec_years[1], "-", last(spec_years))
+                  "% Change"
+                )
+              )
+            }
           
             map_plot(x, areas_plot, colourPalette) +
                 ggtitle(spec_main_title_single)
@@ -1105,7 +1128,7 @@ plt_circ_age_ridge <- function(
 ) {
     
     # temp fix
-    if (!all(spec_ages == 0:30)) {
+    if (length(spec_ages) != 31 || !all(spec_ages == 0:30)) {
       spec_ages <- 0:30
     }
 
@@ -1145,15 +1168,19 @@ plt_circ_age_ridge <- function(
     tmp2 <- add_area_info(tmp2, areas)
 
     # split by area level and number of desired plots
-    tmp <- split_area_level(tmp, n_plots = n_plots, years = TRUE)
-    tmp2 <- split_area_level(tmp2, n_plots = n_plots, years = TRUE)
+    # tmp <- split_area_level(tmp, n_plots = n_plots, years = TRUE)
+    # tmp2 <- split_area_level(tmp2, n_plots = n_plots, years = TRUE)
+    tmp <- list(tmp)
+    tmp2 <- list(tmp2)
 
     plots <- lapply(seq_along(tmp), function(i) {
-        lapply(seq_along(tmp[[i]]), function(j) {
-          lapply(seq_along(tmp[[i]][[j]]), function(k) {
+        # lapply(seq_along(tmp[[i]]), function(j) {
+          # lapply(seq_along(tmp[[i]][[j]]), function(k) {
             
-            plt_data <- tmp[[i]][[j]][[k]]
-            plt_data2 <- tmp2[[i]][[j]][[k]]
+            # plt_data <- tmp[[i]][[j]][[k]]
+            # plt_data2 <- tmp2[[i]][[j]][[k]]
+            plt_data <- tmp[[i]]
+            plt_data2 <- tmp2[[i]]
             
             spec_title <- paste(
               plt_data$year[1],
@@ -1169,10 +1196,12 @@ plt_circ_age_ridge <- function(
                        height = density,
                        fill = type,
                        color = type)) +
-              geom_density_ridges(stat = "identity",
-                                  scale = 1,
-                                  alpha = 0.7,
-                                  color = NA)  +
+              ggridges::geom_density_ridges(
+                stat = "identity",
+                scale = 1,
+                alpha = 0.7,
+                color = NA
+              )  +
               # Adding average age of circumcision
               geom_point(data = plt_data2,
                          aes(x = average_age,
@@ -1214,8 +1243,8 @@ plt_circ_age_ridge <- function(
                 legend.position = "bottom",
                 panel.spacing = unit(0.2, "lines")
               )
-          })
-        })
+          # })
+        # })
     })
     
     plots <- rlang::squash(plots)
@@ -1378,7 +1407,14 @@ plt_MC_modelfit_spec_age <- function(
 }
 
 plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
-                            mc_type_survey, age_per, survey_years, model_type,
+                            mc_type_survey, 
+                            age_per = c(
+                              "0-4",   "5-9",   "10-14", "15-19", "20-24", 
+                              "25-29", "30-34", "35-39", "40-44", 
+                              "45-49", "50-54", "54-59", "60-64"
+                            ),
+                            survey_years, model_type,
+                            area_level_select = unique(df_results$area_level),
                             # area_level_select,
                             facet_vars = "area_name", 
                             col_fill_vars = "parent_area_name",
@@ -1394,7 +1430,8 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
       filter(
         type == spec_type,
         age_group %in% age_per,
-        year %in% survey_years
+        year %in% survey_years,
+        area_level %in% area_level_select
       )
     if ("model" %in% names(.data)) .data <- .data[.data$model == model_type, ]
     # if (nrow(.data) == 0) stop("Filtering has resulted in an empty dataframe")
@@ -1768,12 +1805,12 @@ plt_dmppt2_compare_year <- function(circ_data,
       # don't add parent area legend for i = j = 1 (country level)
       if (i == 1 & j == 1) {
         p <- p +
-          theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
+          theme(axis.text.x = element_text(size = 12, angle = 45, vjust = 0.5),
                 legend.position = "none"
           )
       } else {
         p <- p +
-          theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
+          theme(axis.text.x = element_text(size = 12, angle = 45, vjust = 0.5),
                 legend.position = "bottom"
           )
       }
@@ -2419,8 +2456,11 @@ plt_coverage_year_national <- function(
         nudge_x = 1,
         color = "grey30",
         # size = 6,
-        size = 17,
-        nudge_y = 7,
+        size = 6,
+        # size = 17,
+        # nudge_y = 7,
+        # nudge_y = 2,
+        nudge_y = -1,
         show.legend = FALSE
       ) +
       # annotate plots with coverage at last year
@@ -2445,8 +2485,11 @@ plt_coverage_year_national <- function(
         nudge_x = -1,
         color = "grey30",
         # size = 6,
-        size = 17,
-        nudge_y = 7,
+        # size = 17,
+        size = 6,
+        # nudge_y = 7,
+        # nudge_y = 2,
+        nudge_y = -1,
         show.legend = FALSE
       ) +
       # Setting for the axes
