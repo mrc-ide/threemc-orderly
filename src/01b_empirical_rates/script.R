@@ -117,7 +117,7 @@ results <- threemc::create_shell_dataset(
   strat               = "space",
   age                 = "age",
   circ                = "indweight_st"
-) %>% 
+)  %>% 
   filter(area_level == area_lev)
 
 # "obs" cols give number of people who are circumcised in that 
@@ -168,9 +168,11 @@ results <- threemc:::combine_areas(
 
 #### Change Age to Age Group ####
 
-# save single age results
+# save aggregated single age results
 results_single_age <- bind_rows(results) %>% 
-  select(-c(space, circ_age, time))
+  select(-c(space, circ_age, time)) %>% 
+  group_by(area_id, area_name, year, age, type) %>% 
+  summarise(population = sum(population), mean = sum(mean), .groups = "drop")
 
 # Multiplying by population to population weight
 results_list <- lapply(results, function(x) {
