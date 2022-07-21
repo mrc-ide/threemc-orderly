@@ -138,7 +138,7 @@ results <- results %>%
     mean = ifelse(age < 15, 0, mean),
     # Calculate empirical rates
     # across(obs_mmc:icens, ~ ifelse(. == 0, 0, . / N))
-    mean = ifelse(mean == 0, 0, mean / N)
+    mean = ifelse(mean == 0 | N == 0, 0, mean / N)
   ) %>% 
   select(-N)
 
@@ -167,6 +167,10 @@ results <- threemc:::combine_areas(
 
 
 #### Change Age to Age Group ####
+
+# save single age results
+results_single_age <- bind_rows(results) %>% 
+  select(-c(space, circ_age, time))
 
 # Multiplying by population to population weight
 results_list <- lapply(results, function(x) {
@@ -220,17 +224,30 @@ results <- results %>%
 #### Final ####
 
 # Merge regional information on the dataset 
-results <- threemc:::merge_area_info(results, sf::st_drop_geometry(areas)) %>% 
-  mutate(
-    iso3 = substr(area_id, 0, 3),
-    type = case_when(
-      type == "obs_mc" ~ "MC probability",
-      type == "obs_mmc" ~ "MMC probability",
-      type == "obs_tmc" ~ "TMC probability"
-    )  
-  ) %>% 
-  relocate(iso3) %>% 
+merge_empirical_rates <- function(.data) {
+  threemc:::merge_area_info(.data, sf::st_drop_geometry(areas)) %>% 
+    mutate(
+      iso3 = substr(area_id, 0, 3),
+      type = case_when(
+        type == "obs_mc" ~ "MC probability",
+        type == "obs_mmc" ~ "MMC probability",
+        type == "obs_tmc" ~ "TMC probability"
+      )  
+    ) %>% 
+    relocate(iso3)
+}
+
+results <- merge_empirical_rates(results) %>% 
   relocate(age_group, .after = year)
+results_single_age <- merge_empirical_rates(results_single_age) %>% 
+  relocate(age, .after = year)
 
 # return results
-readr::write_csv(results, file.path(save_loc, "empirical_rates.csv.gz"))
+readr::write_csv(
+  results, 
+  file.path(save_loc, "empirical_rates.csv.gz")
+)
+readr::write_csv(
+  results_single_age, 
+  file.path(save_loc, "empirical_rates_singleage.csv.gz")
+)
