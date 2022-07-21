@@ -50,6 +50,11 @@ cens_year <- max(as.numeric(
   substr(unique(survey_circumcision$survey_id), 4, 7)
 ))
 
+# RWA2019DHS has quite a few ppl circumcised in 2019, change cens_year to 2020
+if (cntry == "RWA") {
+  cens_year <- cens_year + 1
+}
+
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circumcision <- prepare_survey_data(
   areas               = areas,
