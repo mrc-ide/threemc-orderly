@@ -56,8 +56,6 @@ displayname: |
   - Pull through data for Circumcision Coverage Shiny app.
   
 parameters:
-  cntry:
-    default: ~
   is_paper:
     default: TRUE 
   
@@ -624,7 +622,7 @@ depends:
         depends/Results_MOZ_AgeGroup_National_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
         depends/Results_MOZ_AgeGroup_National_Probability.csv.gz: artefacts/Results_AgeGroup_Probability.csv.gz
   - 01a_model_aggregate_spec_area_lev:      
-      id: latest(parameter:cntry == "MWI" && parameter:area_lev == 0 && parameter::is_paper == is_paper)
+      id: latest(parameter:cntry == "MWI" && parameter:area_lev == 0 && parameter:is_paper == is_paper)
       use: 
         # depends/Results_MWI_Age_National_Incidence.csv.gz: artefacts/Results_Age_Incidence.csv.gz
         # depends/Results_MWI_Age_National_Prevalence.csv.gz: artefacts/Results_Age_Prevalence.csv.gz
