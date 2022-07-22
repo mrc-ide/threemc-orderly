@@ -23,6 +23,13 @@
 save_dir <- "artefacts/"
 threemc::create_dirs_r(save_dir)
 
+# Surveys we don't have permissions to publish with yet
+rm_surveys <- c("UGA2020PHIA", "MWI2020PHIA")
+
+# location of UGA2020PHIA file
+uga2020phia_loc <- "depends/uga2020phia.csv.gz"
+is_uga2020phia <- file.exists(uga2020phia_loc) # check it exists
+
 # load areas
 areas <- sf::st_drop_geometry(sf::read_sf("depends/areas.geojson"))
 
@@ -54,6 +61,10 @@ dhs_merged <- dhs_clusters %>%
   select(iso3, survey_id, area_id, area_level, area_name,
          individual_id, cluster_id, household, line, sex, age, indweight,
          circ_status, circ_age, circ_who, circ_where)
+
+if (!is_uga2020phia && !is_paper && !"UGA2020PHIA" %in% dhs_merged$survey_id) {
+  stop("Require UGA2020PHIA for full analysis!")
+}
 
 
 #' ## MICS surveys
@@ -116,6 +127,29 @@ survey_merged %>%
 if ("area_name" %in% names(survey_merged)) {
   survey_merged <- select(survey_merged, -area_name)
 }
+
+# remove certain surveys without permissions, if required
+if (is_paper == TRUE) {
+  survey_merged <- survey_merged %>% 
+    filter(!survey_id %in% rm_surveys)
+# add UGA2020PHIA if desired for analysis + not present
+} else if (is_uga2020phia && !"UGA2020PHIA" %in% survey_merged$survey_id) {
+  
+  message("UGA2020PHIA not in surveys, adding now")
+  
+  # load UGA2020PHIA survey
+  uga2020phia <- readr::read_csv("depends/uga2020phia.csv.gz")
+  if (!"area_level" %in% names(uga2020phia)) {
+    uga2020phia <- uga2020phia %>% 
+      mutate(
+        area_level = ifelse(
+          area_id == "UGA", 0, as.numeric(substr(area_id, 5, 5))
+        )
+      )
+  }
+  survey_merged <- bind_rows(survey_merged, uga2020phia)
+}
+
 
 # save survey_circumcision
 readr::write_csv(

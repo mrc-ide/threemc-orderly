@@ -117,7 +117,7 @@ results <- threemc::create_shell_dataset(
   strat               = "space",
   age                 = "age",
   circ                = "indweight_st"
-) %>% 
+)  %>% 
   filter(area_level == area_lev)
 
 # "obs" cols give number of people who are circumcised in that 
@@ -126,8 +126,7 @@ results <- threemc::create_shell_dataset(
 
 results <- results %>% 
   # calculate MC as MC + MMC + TMC
-  filter(!is.na(obs_mmc), !is.na(obs_tmc), !is.na(obs_mc)) %>% 
-  mutate(obs_mc = obs_mc + obs_mmc + obs_tmc) %>% 
+  mutate(obs_mc = sum(obs_mc, obs_mmc, obs_tmc, na.rm = TRUE)) %>% 
   # pivot empirical person year columns to the one column
   # pivot_longer(cols = obs_mmc:icens, names_to = "type", values_to = "mean") %>% 
   pivot_longer(cols = obs_mmc:obs_mc, names_to = "type", values_to = "mean") %>% 
@@ -135,13 +134,15 @@ results <- results %>%
   select(area_id:age, type, N, mean) %>% 
   mutate(
     # shouldn't be surveyed circumcisions for under 15s
-    # across(obs_mmc:icens, ~ifelse(age < 15, 0, .)),
-    mean = ifelse(age < 15, 0, mean),
+    # don't need to do this! 
+    # mean = ifelse(age < 15, 0, mean),
     # Calculate empirical rates
     # across(obs_mmc:icens, ~ ifelse(. == 0, 0, . / N))
-    mean = ifelse(mean == 0, 0, mean / N)
+    mean = ifelse(mean == 0 | N == 0, 0, mean / N)
   ) %>% 
-  select(-N)
+  select(-N) %>% 
+  # remove 0s, so taking log doesn't give -Inf
+  mutate(mean = ifelse(mean == 0, NA_real_, mean))
 
 # only keep relevant columns in populations for left_join
 populations_append <- populations %>% 
@@ -168,6 +169,12 @@ results <- threemc:::combine_areas(
 
 
 #### Change Age to Age Group ####
+
+# save aggregated single age results
+results_single_age <- bind_rows(results) %>% 
+  select(-c(space, circ_age, time)) %>% 
+  group_by(area_id, area_name, year, age, type) %>% 
+  summarise(population = sum(population), mean = sum(mean), .groups = "drop")
 
 # Multiplying by population to population weight
 results_list <- lapply(results, function(x) {
@@ -221,17 +228,30 @@ results <- results %>%
 #### Final ####
 
 # Merge regional information on the dataset 
-results <- threemc:::merge_area_info(results, sf::st_drop_geometry(areas)) %>% 
-  mutate(
-    iso3 = substr(area_id, 0, 3),
-    type = case_when(
-      type == "obs_mc" ~ "MC probability",
-      type == "obs_mmc" ~ "MMC probability",
-      type == "obs_tmc" ~ "TMC probability"
-    )  
-  ) %>% 
-  relocate(iso3) %>% 
+merge_empirical_rates <- function(.data) {
+  threemc:::merge_area_info(.data, sf::st_drop_geometry(areas)) %>% 
+    mutate(
+      iso3 = substr(area_id, 0, 3),
+      type = case_when(
+        type == "obs_mc" ~ "MC probability",
+        type == "obs_mmc" ~ "MMC probability",
+        type == "obs_tmc" ~ "TMC probability"
+      )  
+    ) %>% 
+    relocate(iso3)
+}
+
+results <- merge_empirical_rates(results) %>% 
   relocate(age_group, .after = year)
+results_single_age <- merge_empirical_rates(results_single_age) %>% 
+  relocate(age, .after = year)
 
 # return results
-readr::write_csv(results, file.path(save_loc, "empirical_rates.csv.gz"))
+readr::write_csv(
+  results, 
+  file.path(save_loc, "empirical_rates.csv.gz")
+)
+readr::write_csv(
+  results_single_age, 
+  file.path(save_loc, "empirical_rates_singleage.csv.gz")
+)
