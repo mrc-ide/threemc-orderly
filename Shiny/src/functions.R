@@ -2515,10 +2515,12 @@ plt_empirical_model_rates <- function(
     empirical_rates,
     areas = NULL,
     spec_type,
-    spec_age_groups, 
+    # spec_age_groups, 
+    spec_ages = 0:60, 
     spec_years,  # from surveys
     spec_area_levels,
     spec_model = "No program data",
+    take_log = TRUE,
     main = NULL, 
     str_save = NULL, 
     save_width = NULL, 
@@ -2537,8 +2539,10 @@ plt_empirical_model_rates <- function(
     .data <- .data %>%
       filter(
         type == spec_type,
-        age_group %in% spec_age_groups,
-        year %in% (spec_years - 1),
+        # age_group %in% spec_age_groups,
+        age %in% spec_ages,
+        # year %in% (spec_years - 1),
+        year %in% spec_years,
         area_level %in% spec_area_levels
       )
     return(.data)
@@ -2599,12 +2603,12 @@ plt_empirical_model_rates <- function(
   }
   
   # Ordering age groups (needed??)
-  results$age_group <- as.numeric(factor(
-    results$age_group, levels = spec_age_groups
-  ))
-  empirical_rates$age_group <- as.numeric(factor(
-    empirical_rates$age_group, levels = spec_age_groups
-  ))
+  # results$age_group <- as.numeric(factor(
+  #   results$age_group, levels = spec_age_groups
+  # ))
+  # empirical_rates$age_group <- as.numeric(factor(
+  #   empirical_rates$age_group, levels = spec_age_groups
+  # ))
   
   # make sure areas are the same for both
   empirical_rates <- filter(empirical_rates, area_name %in% results$area_name)
@@ -2612,15 +2616,25 @@ plt_empirical_model_rates <- function(
   results <- filter(results, year %in% empirical_rates$year) 
   
   # take age above age_groups as last label for plot
-  final_label <- last(spec_age_groups)
-  final_label <- as.numeric(stringr::str_split(final_label, "-")[[1]][[2]])
-  final_label <- paste0(final_label + 1, "+")
+  # final_label <- last(spec_age_groups)
+  # final_label <- as.numeric(stringr::str_split(final_label, "-")[[1]][[2]])
+  # final_label <- paste0(final_label + 1, "+")
   
+  if (take_log == TRUE) {
+    # results$mean <- log(results$mean)
+    results <- results %>% 
+      mutate(across(mean:upper, log))
+    empirical_rates$mean <- log(empirical_rates$mean)
+    ylab <- "Log Circumcision Rate (%)"
+  } else ylab <- "Circumcision Rate (%)"
+  
+  # split by area_level & year
   results <- split_area_level(results, year = TRUE, n_plots = n_plots)
   empirical_rates <- split_area_level(empirical_rates, year = TRUE, n_plots = n_plots)
   
-  
   plot_fun <- function(data, emp_data) {
+    
+    # browser()
     
     add_title <- paste(
       emp_data$iso3[1],
@@ -2634,39 +2648,43 @@ plt_empirical_model_rates <- function(
     data <- mutate(data, indicator = "Model Rates")
     emp_data <- mutate(emp_data, indicator = "Empirical Rates")
     
-    data %>%
+    p <- data %>%
       ggplot(
         aes(y = mean, fill = indicator, colour = indicator)
       ) +
       geom_ribbon(
-        aes(x = seq_along(age_group), ymin = lower, ymax = upper),
+        # aes(x = seq_along(age_group), ymin = lower, ymax = upper),
+        aes(x = age, ymin = lower, ymax = upper),
         alpha = 0.5
       ) +
-      geom_line(aes(x = seq_along(age_group), group = 1), size = 1) +
-      geom_line(
-        data = emp_data,
-        aes(x = seq_along(age_group), y = mean, colour = indicator),
-        size = 1
-      ) +
+      # geom_line(aes(x = seq_along(age_group), group = 1), size = 1) +
+      geom_line(aes(x = age), size = 1) +
+      # geom_line(
+      #   data = emp_data,
+      #   # aes(x = seq_along(age_group), y = mean, colour = indicator),
+      #   aes(x = age, y = mean, colour = indicator),
+      #   size = 1
+      # ) +
       geom_point(
         data = emp_data,
-        aes(x = seq_along(age_group), y = mean, colour = indicator),
+        # aes(x = seq_along(age_group), y = mean, colour = indicator),
+        aes(x = age, y = mean, colour = indicator),
         size = 3,
         show.legend = FALSE
       ) +
-      scale_x_continuous(
-        breaks = 1:(length(spec_age_groups) + 1),
-        labels = c(spec_age_groups, final_label),
-      ) +
-      scale_y_continuous(breaks = seq(0, 1,  by =  0.2),
-                         limits = c(0, 1),
-                         labels = scales::label_percent()) +
+      # scale_x_continuous(
+      #   breaks = 1:(length(spec_age_groups) + 1),
+      #   labels = c(spec_age_groups, final_label),
+      # ) +
+      # scale_y_continuous(breaks = seq(0, 1,  by =  0.2),
+      #                    limits = c(0, 1),
+      #                    labels = scales::label_percent()) +
       facet_wrap(~area_name) +
       theme_bw() +
       labs(
         title = add_title,
         x = "Age at Circumcision",
-        y = "Circumcision Rate (%)",
+        y = ylab,
         fill = "Type"
       ) +
       theme(
