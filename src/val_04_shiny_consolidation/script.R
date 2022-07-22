@@ -39,9 +39,9 @@ results_oos_val <- order_area_name(results_oos_val)
 
 # remove duplicates (shouldn't be there at all!)
 results_oos_val <- results_oos_val %>%
-  group_by(area_id, year, model, type, age_group) %>%
-  filter(mean == max(mean, na.rm = TRUE)) %>%
-  ungroup() %>% 
+  # group_by(area_id, year, model, type, age_group) %>% # too slow!!
+  # filter(mean == max(mean, na.rm = TRUE)) %>%
+  # ungroup() %>% 
   distinct()
 
 readr::write_csv(
