@@ -39,6 +39,8 @@ displayname: |
 parameters:
   cntry:
     default: ~
+  is_paper:
+    default: TRUE
     
 packages:
   - threemc
@@ -57,7 +59,7 @@ packages:
 depends:
   # modelling results from last task
   01_modelling:
-    id: latest(parameter:cntry == cntry)
+    id: latest(parameter:cntry == cntry && parameter:is_paper == is_paper)
     use:
       depends/Results_DistrictAgeTime_ByType.csv.gz: artefacts/Results_DistrictAgeTime_ByType.csv.gz
       depends/TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds  

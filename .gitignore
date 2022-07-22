@@ -8,7 +8,6 @@ check
 depends
 backup
 runner
-
 # Orderly will store data in a sqlite database, by default orderly.sqlite
 *.sqlite
 # It is suggested to use environment variables, in either
@@ -30,7 +29,6 @@ global
 .orderly
 # don't upload ordelry environment file
 orderly_envir.yml
-
 # don't upload rsconnect directories from Shiny apps
 rsconnect
-
+threemc-orderly.Rproj

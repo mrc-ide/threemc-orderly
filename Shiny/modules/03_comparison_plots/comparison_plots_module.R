@@ -46,7 +46,8 @@ comparison_plots_UI <- function(id) {
                   # Survey Comparison Plots
                   "Surveys - Coverage vs Year, by Type"              = "plt_4",
                   "Surveys - Coverage vs Age Group, by Type"         = "plt_5",
-                  "Surveys - Empirical vs Model Rates, by Age Group" = "plt_6"
+                  # "Surveys - Empirical vs Model Rates, by Age Group" = "plt_6"
+                  "Surveys - Empirical vs Model Rates, by Age" = "plt_6"
                 )
               ),
               selectInput(
@@ -123,12 +124,12 @@ comparison_plots_UI <- function(id) {
               ),
               # multiple choice for age group
               conditionalPanel(
-                condition = "input.plot_type == 'plt_2' || 
-                input.plot_type == 'plt_3' || 
-                input.plot_type == 'plt_4' || 
-                input.plot_type == 'plt_5' || 
-                input.plot_type == 'plt_6'",
-                ns        = ns,
+                condition  = "input.plot_type == 'plt_2' || 
+                              input.plot_type == 'plt_3' || 
+                              input.plot_type == 'plt_4' || 
+                              input.plot_type == 'plt_5'", # || 
+                              # input.plot_type == 'plt_6'",
+                ns         = ns,
                 selectInput(
                   inputId  = ns("age_group_multiple"),
                   label    = "Select Age Group",
@@ -272,7 +273,8 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     req(input$plot_type)
     
     if (input$plot_type == "plt_6") {
-      return(filter(data$results_agegroup_probs, iso3 == input$country))
+      # return(filter(data$results_agegroup_probs, iso3 == input$country))
+      return(filter(data$results_age, iso3 == input$country))
     } else if (input$dataset == "subnational") {
       return(filter(data$results_agegroup_comparison, iso3 == input$country))
     } else {
@@ -305,7 +307,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     
     if (input$plot_type == "plt_6") {
       choices <- c(
-        "Total Circumcision"       = "MC probability",
+        # "Total Circumcision"       = "MC probability",
         "Medical Circumcision"     = "MMC probability",
         "Traditional Circumcision" = "TMC probability"
       )
@@ -458,6 +460,10 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       
       plt_years <- sort(unique(add_data()$survey_data$year))
       plt_years <- plt_years[!is.na(plt_years)]
+      
+      # for empirical rates, look at the year before surveys
+      if (input$plot_type == "plt_6") plt_years <- plt_years - 1 
+      
       plt_years <- plt_years[plt_years %in% circ_data()$year]
       
     } else {
@@ -490,7 +496,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       choices <- 0
       selected <- 0
     } else {
-      choices <- c(0, 1)
+      choices <- c(0, 1, 2, 3)
       selected <- c(0, 1)
     }
     
@@ -643,8 +649,6 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       
     } else if (input$plot_type == "plt_4") {
       
-      # if (input$country == "SEN") browser()
-      
       # browser()
       
       req(input$spec_type)
@@ -709,20 +713,17 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     } else if (input$plot_type == "plt_6") {
       
       req(input$spec_type)
-      req(input$age_group_multiple)
+      # req(input$age_group_multiple)
       req(input$year_select)
       req(input$area_levels)
       req(input$n_plot)
       
-      p1 <- plt_empirical_model_rates(
+      plt_empirical_model_rates(
         results = circ_data(), 
         empirical_rates = add_data()$empirical_rates,
         areas = data$areas,
-        # spec_type = "MMC probability",
         spec_type = input$spec_type,
-        # spec_age_groups = age_groups, 
-        spec_age_groups = input$age_group_multiple,
-        # spec_years = survey_years,
+        # spec_age_groups = input$age_group_multiple,
         spec_years = as.numeric(input$year_select),
         spec_area_levels = input$area_levels,
         main = NULL, 

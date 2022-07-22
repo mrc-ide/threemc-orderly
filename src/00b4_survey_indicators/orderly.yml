@@ -18,6 +18,8 @@ packages:
 parameters: 
   mc.cores:
     default: NULL
+  is_paper:
+    default: TRUE
 
 depends:
   00a2_areas_join:
@@ -25,6 +27,6 @@ depends:
     use:
       depends/areas.geojson: artefacts/areas.geojson
   00b3_survey_join:      
-    id: latest
+    id: latest(parameter:is_paper == is_paper)
     use:
       depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
