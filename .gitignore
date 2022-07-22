@@ -32,3 +32,5 @@ orderly_envir.yml
 # don't upload rsconnect directories from Shiny apps
 rsconnect
 threemc-orderly.Rproj
+# ignore files in misc directory
+misc
