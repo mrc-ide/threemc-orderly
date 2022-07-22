@@ -1270,7 +1270,7 @@ plt_MC_modelfit_spec_age <- function(
   facet_vars = "area_name",
   col_fill_vars = "parent_area_name",
   xlab, ylab, title, str_save = NULL,
-  save_width = NULL, save_height = NULL, n_plots = 12) {
+  save_width = 16, save_height = 12, n_plots = 12) {
 
   # filter data accordingly
   initial_filter <- function(.data, type_filter) {
@@ -1416,12 +1416,14 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
                             survey_years, model_type,
                             area_level_select = unique(df_results$area_level),
                             # area_level_select,
-                            facet_vars = "area_name", 
-                            col_fill_vars = "parent_area_name",
+                            # facet_vars = "area_name", 
+                            # col_fill_vars = "parent_area_name",
+                            # for year: "facet", have separate plots ("split"), or "colour"
+                            facet_year = "split",
                             xlab, ylab, title,
                             str_save = NULL, 
-                            save_width = NULL, 
-                            save_height = NULL, 
+                            save_width = 16, 
+                            save_height = 12, 
                             n_plots = 12) {
   
   # Preparing dataset for plots
@@ -1499,10 +1501,14 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   # if ("year" %in% col_fill_vars) {
   #   year_split <- FALSE
   # } else year_split <- TRUE
-  year_split <- FALSE
+  if (facet_year == "split") {
+    year_split <- TRUE
+  } else {
+    year_split <- FALSE
+  }
+  
   tmp1 <- split_area_level(tmp1, year = year_split, n_plots = n_plots)
   tmp2 <- split_area_level(tmp2, year = year_split, n_plots = n_plots)
-  
   
   plot_fun <- function(plt_data1, plt_data2) {
     # get specific title for each plot page
@@ -1517,6 +1523,12 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
     #   add_title <- paste(add_title, plt_data1$year, sep = ", ")
     # }
     
+    if (facet_year == "colour") {
+      colour_var <- "year"
+    } else {
+      colour_var <- "parent_area_id"
+    }
+    
     plt_data1 <- plt_data1 %>% 
       mutate(
         parent_area_name = ifelse(
@@ -1526,43 +1538,29 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
         )
       )
     
-    ggplot(plt_data1, aes(x = age_group)) +
-      # geom_ribbon(aes(ymin = lower, ymax = upper, fill = parent_area_name),
-      geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(year)),
-      # geom_ribbon(aes(ymin = lower, ymax = upper, fill = col_fill_vars),
+    p <- ggplot(plt_data1, aes(x = age_group)) +
+      # geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(year)),
+      geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(colour_var)),
                   alpha = 0.75
-                  # colour = NA,
-                  # fill = "darkgrey"
       ) +
-      # geom_line(aes(y = mean, col = parent_area_name),
-      geom_line(aes(y = mean, col = as.factor(year)),
-      # geom_line(aes(y = mean, col = col_fill_vars),
+      # geom_line(aes(y = mean, col = as.factor(year)),
+      geom_line(aes(y = mean, col = as.factor(colour_var)),
                 size = 1
-                # colour = "black"
       ) +
-      # geom_point(data = plt_data2,
-      #            aes(y = p_ind),
-      #            colour = "black",
-      #            show.legend = FALSE) +
       geom_pointrange(
         data = plt_data2,
         aes(
           y      = mean, 
           ymin   = lower, 
           ymax   = upper,
-          # colour = col_fill_vars
-          colour = as.factor(year)
+          colour = as.factor(colour_var)
+          # colour = as.factor(year)
         ),
-        # colour = "black",
         show.legend = FALSE
       ) +
       # Labels
       labs(x =  xlab, y = ylab, colour = "", fill = "") +
       ggtitle(paste0(title, add_title)) +
-      # scale_x_continuous(breaks = 1:14,
-      #                    labels = c("0-4","5-9","10-14","14-19","20-24","25-29",
-      #                               "30-34","35-39","40-44","45-49","50-54",
-      #                                "55-59","60-64","65+")) + 
       scale_x_continuous(
         breaks = 1:(length(age_per) + 1),
         labels = c(age_per, final_label),
@@ -1576,10 +1574,20 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
             axis.title = element_text(size = 18),
             legend.text = element_text(size = 18),
             axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10),
-            legend.position = "bottom") +
-      facet_wrap(~area_name)
+            legend.position = "bottom")
+      
+    if (facet_year == "facet") {
+      # p <- p + facet_wrap(
+      #   ~area_name + year, 
+      #   nrow = length(survey_years)
+      # )
+      p <- p + facet_grid(year ~ area_name)
+    } else {
+      p <- p + facet_wrap(~area_name)
       # facet_wrap(quoted_args_vars)
       # facet_wrap(names(by))
+    }
+    return(p)
   }
   
   recursive_plot_fun <- function(plt_data1, plt_data2, ...) {
