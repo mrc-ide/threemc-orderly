@@ -134,13 +134,15 @@ results <- results %>%
   select(area_id:age, type, N, mean) %>% 
   mutate(
     # shouldn't be surveyed circumcisions for under 15s
-    # across(obs_mmc:icens, ~ifelse(age < 15, 0, .)),
-    mean = ifelse(age < 15, 0, mean),
+    # don't need to do this! 
+    # mean = ifelse(age < 15, 0, mean),
     # Calculate empirical rates
     # across(obs_mmc:icens, ~ ifelse(. == 0, 0, . / N))
     mean = ifelse(mean == 0 | N == 0, 0, mean / N)
   ) %>% 
-  select(-N)
+  select(-N) %>% 
+  # remove 0s, so taking log doesn't give -Inf
+  mutate(mean = ifelse(mean == 0, NA_real_, mean))
 
 # only keep relevant columns in populations for left_join
 populations_append <- populations %>% 
