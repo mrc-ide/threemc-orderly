@@ -26,12 +26,12 @@ agg_results_saver <- function(
   # files location
   files <- list.files(dir_path,full.names = TRUE)
   # files <- files[grepl(toupper(paste0(spec_type, "_")), toupper(files))]
-  files <- files[grepl(toupper(spec_type), toupper(files))]
+  files <- files[grepl(toupper(spec_type), toupper(files), fixed = TRUE)]
   
   if (national == FALSE) {
-    files <- files[!grepl(toupper("national"), toupper(files))]
+    files <- files[!grepl(toupper("national"), toupper(files), fixed = TRUE)]
   } else {
-    files <- files[grepl(toupper("national"), toupper(files))]
+    files <- files[grepl(toupper("national"), toupper(files), fixed = TRUE)]
   }
   
   # load results
@@ -77,13 +77,22 @@ readr::write_csv(
 rm(results_age); gc()
 
 # Rates of circumcision from surveys, not model
-empirical_rates <- agg_results_saver("empirical_rates", dir_path)
+empirical_rates <- agg_results_saver("empirical_rates.", dir_path)
 
 readr::write_csv( 
     x = empirical_rates,
     file = file.path(save_loc, "empirical_rates.csv.gz")
   )
 rm(empirical_rates); gc()
+
+# empirical rates for single ages
+empirical_rates_singleage <- agg_results_saver("empirical_rates_singleage", dir_path)
+
+readr::write_csv( 
+  x = empirical_rates_singleage,
+  file = file.path(save_loc, "empirical_rates_singleage.csv.gz")
+)
+rm(empirical_rates_singleage); gc()
 
 
 results_agegroup_n_circ <- agg_results_saver("agegroup_", dir_path, filter = FALSE)
