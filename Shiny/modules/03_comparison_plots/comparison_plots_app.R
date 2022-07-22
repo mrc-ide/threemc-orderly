@@ -38,10 +38,23 @@ ssa_iso3 <- sort(c(
 
 # results for age groups for comparisons
 archives <- orderly::orderly_list_archive()
-dir_name <- orderly::orderly_list_archive() %>% 
-  filter(name == "03_shiny_consolidation") %>%
-  slice(n()) %>% 
-  pull(id)
+# dir_name <- orderly::orderly_list_archive() %>% 
+#   filter(name == "03_shiny_consolidation") %>%
+#   slice(n()) %>% 
+#   pull(id)
+# dir_name <- orderly::orderly_search(
+#   query = "latest(parameter:is_paper == is_paper)",
+#   name = "03_shiny_consolidation",
+#   parameters = list(is_paper = FALSE)
+# )
+dir_name <- orderly::orderly_search(
+  query = "parameter:is_paper == is_paper",
+  name = "03_shiny_consolidation",
+  parameters = list(is_paper = FALSE)
+)
+# dir_name <- last(dir_name)
+dir_name <- dir_name[length(dir_name) - 1]
+
 results_agegroup_comparison <- readr::read_csv(paste0(
   orderly_root, 
   "/archive/03_shiny_consolidation/",
@@ -60,24 +73,31 @@ results_agegroup_national_comparison <-  readr::read_csv(paste0(
 )) %>% 
   filter(iso3 %in% ssa_iso3)
 
-results_agegroup_probs <-  readr::read_csv(paste0(
+# results_agegroup_probs <-  readr::read_csv(paste0(
+#   orderly_root, 
+#   "/archive/03_shiny_consolidation/",
+#   dir_name,
+#   "/artefacts/results_agegroup.csv.gz"
+# )) %>% 
+#   filter(iso3 %in% ssa_iso3, grepl("probability", type))
+
+# Need single ages as well
+results_age <- readr::read_csv(paste0(
   orderly_root, 
   "/archive/03_shiny_consolidation/",
   dir_name,
-  "/artefacts/results_agegroup.csv.gz"
+  "/artefacts/results_age.csv.gz"
 )) %>% 
-  filter(iso3 %in% ssa_iso3, grepl("probability", type))
+  filter(iso3 %in% ssa_iso3)
 
 # empirical rates
 empirical_rates <-  readr::read_csv(paste0(
   orderly_root, 
   "/archive/03_shiny_consolidation/",
   dir_name,
-  "/artefacts/empirical_rates.csv.gz"
+  "/artefacts/empirical_rates_singleage.csv.gz"
 )) %>% 
   filter(iso3 %in% ssa_iso3)
-
-
 
 # shapefiles
 areas_loc <- archives %>%
@@ -124,15 +144,16 @@ survey_data <- readr::read_csv(paste0(
 
 # data which is fed into Shiny app
 comparison_plots_data <- list(
-  "ssa_iso3"                    = ssa_iso3,
-  "results_agegroup_comparison" = results_agegroup_comparison,
+  "ssa_iso3"                             = ssa_iso3,
+  "results_agegroup_comparison"          = results_agegroup_comparison,
   "results_agegroup_national_comparison" = results_agegroup_national_comparison,
-  "dmppt2_iso3"                 = dmppt2_iso3,
-  "dmppt2_data"                 = dmppt2_data,
-  "survey_data"                 = survey_data,
-  "empirical_rates"             = empirical_rates,
-  "results_agegroup_probs"      = results_agegroup_probs,
-  "orderly_root"                = orderly_root
+  "results_age"                          = results_age,
+  "dmppt2_iso3"                          = dmppt2_iso3,
+  "dmppt2_data"                          = dmppt2_data,
+  "survey_data"                          = survey_data,
+  "empirical_rates"                      = empirical_rates,
+  # "results_agegroup_probs"               = results_agegroup_probs,
+  "orderly_root"                         = orderly_root
 )
 
 # source function and module, respectively
