@@ -1540,12 +1540,14 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
     
     p <- ggplot(plt_data1, aes(x = age_group)) +
       # geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(year)),
-      geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(colour_var)),
-                  alpha = 0.75
+      geom_ribbon(
+        aes(ymin = lower, ymax = upper, fill = as.factor(.data[[colour_var]])),
+        alpha = 0.75
       ) +
       # geom_line(aes(y = mean, col = as.factor(year)),
-      geom_line(aes(y = mean, col = as.factor(colour_var)),
-                size = 1
+      geom_line(
+        aes(y = mean, col = as.factor(.data[[colour_var]])),
+        size = 1
       ) +
       geom_pointrange(
         data = plt_data2,
@@ -1553,8 +1555,8 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
           y      = mean, 
           ymin   = lower, 
           ymax   = upper,
-          colour = as.factor(colour_var)
           # colour = as.factor(year)
+          colour = as.factor(.data[[colour_var]])
         ),
         show.legend = FALSE
       ) +
