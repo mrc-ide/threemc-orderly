@@ -17,35 +17,51 @@ areas <- sf::read_sf(paste0(dir_path, "areas.geojson")) %>%
 
 #### Pull & Save Data ####
 
-oos_val_files <- list.files("depends/", full.names = TRUE)
-oos_val_files <- oos_val_files[grepl("AgeGroup", oos_val_files)]
-results_oos_val <- bind_rows(
-  lapply(oos_val_files, readr::read_csv,  show_col_types = FALSE)
-)
+files <- list.files("depends/", full.names = TRUE)
 
-# add in required columns from areas and order area names
+# shapefile information to join in
 areas_join <- sf::st_drop_geometry(areas) %>%
   dplyr::select(
     iso3,       area_id,          area_name,
     area_level, area_level_label, area_sort_order
   ) %>%
   distinct()
-results_oos_val <- results_oos_val %>% 
-  select(-c(area_name, area_level)) %>% 
-  left_join(areas_join)
 
-# order area names 
-results_oos_val <- order_area_name(results_oos_val)
+data_preprocess <- function(files, areas_join, pattern, fixed = TRUE) {
+  # oos_val_files <- files[grepl("OOS.", files, fixed = TRUE)]
+  files <- files[grepl(pattern, files, fixed = fixed)]
+  results <- bind_rows(
+    lapply(files, readr::read_csv,  show_col_types = FALSE)
+  )
+  
+  # join in shapefile information 
+  results <- results %>% 
+    select(-c(area_name, area_level)) %>% 
+    left_join(areas_join)
 
-# remove duplicates (shouldn't be there at all!)
-results_oos_val <- results_oos_val %>%
-  # group_by(area_id, year, model, type, age_group) %>% # too slow!!
-  # filter(mean == max(mean, na.rm = TRUE)) %>%
-  # ungroup() %>% 
-  distinct()
+  # order area names 
+  results <- order_area_name(results)
+
+  # remove duplicates (shouldn't be there at all!)
+  results <- distinct(results)
+}
+
+results_oos_val <- data_preprocess(files, areas_join, "_OOS.")
+results_investigating_var_corr <- data_preprocess(files, areas_join, "_test.")
+results_oos_val_var_corr <- data_preprocess(files, areas_join, "test&OOS.")
+
 
 readr::write_csv(
   x = results_oos_val,
   file = paste0(save_loc, "results_oos.csv.gz")
 )
 rm(results_oos_val); gc()
+readr::write_csv(
+  x = results_investigating_var_corr,
+  file = paste0(save_loc, "results_investigating_var.csv.gz")
+)
+rm(results_investigating_var_corr); gc()
+readr::write_csv(
+  x = results_oos_val_var_corr,
+  file = paste0(save_loc, "results_oos_var.csv.gz")
+)
