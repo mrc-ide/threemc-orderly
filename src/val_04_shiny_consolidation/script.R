@@ -65,3 +65,19 @@ readr::write_csv(
   x = results_oos_val_var_corr,
   file = paste0(save_loc, "results_oos_var.csv.gz")
 )
+rm(results_oos_val_var_corr); gc()
+
+survey_files <- files[grepl("used_survey", files)]
+all_surveys <- bind_rows(
+  lapply(survey_files, readr::read_csv,  show_col_types = FALSE)
+)
+# all_surveys <- stringr::str_split(all_surveys$used_surveys, ", ")
+all_surveys <- unlist(rlang::squash(stringr::str_split(all_surveys$used_surveys, ", ")))
+all_surveys_df <- data.frame(
+  "survey_year" = as.numeric(substr(all_surveys, 4, 7))
+)
+all_surveys_df$iso3 <- all_surveys_df$area_id <- substr(all_surveys, 0, 3)
+readr::write_csv(
+  x = select(all_surveys_df, iso3, area_id, survey_year),
+  file = paste0(save_loc, "used_surveys.csv.gz")
+)

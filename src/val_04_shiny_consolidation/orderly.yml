@@ -16,6 +16,11 @@ artefacts:
      - Aggregations for OOS Validation paired with variance investigation.
      filenames: 
      - artefacts/results_oos_var.csv.gz
+  - data:
+     description:
+     - Used surveys for each country from OOS Validation
+     filenames: 
+     - artefacts/used_surveys.csv.gz
  
 displayname: |
   - Pull through data for Circumcision Coverage Validation Shiny module.
@@ -27,6 +32,7 @@ displayname: |
 packages:
   - threemc
   - sf
+  - rlang
   - data.table
   - dplyr
   - stringr
@@ -62,18 +68,21 @@ depends:
         depends/Results_BDI_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_BDI_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_BDI_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/BDI_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "BEN")
       use: 
         depends/Results_BEN_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_BEN_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_BEN_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/BEN_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "BFA")
       use: 
         depends/Results_BFA_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_BFA_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_BFA_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/BFA_used_survey_info.csv: artefacts/used_survey_info.csv
   # - val_00a_oos_validation:
   #     id: latest(parameter:cntry == "BWA")
   #     use: 
@@ -92,12 +101,14 @@ depends:
         depends/Results_CIV_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_CIV_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_CIV_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/CIV_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "CMR")
       use: 
         depends/Results_CMR_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_CMR_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_CMR_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/CMR_used_survey_info.csv: artefacts/used_survey_info.csv
   # - val_00a_oos_validation:
   #     id: latest(parameter:cntry == "COD")
   #     use: 
@@ -110,12 +121,14 @@ depends:
         depends/Results_COG_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_COG_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_COG_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/COG_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "ETH")
       use: 
         depends/Results_ETH_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_ETH_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_ETH_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/ETH_used_survey_info.csv: artefacts/used_survey_info.csv
   # - val_00a_oos_validation:
   #     id: latest(parameter:cntry == "GAB")
   #     use: 
@@ -158,24 +171,28 @@ depends:
         depends/Results_KEN_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_KEN_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_KEN_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/KEN_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "LBR")
       use: 
         depends/Results_LBR_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_LBR_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_LBR_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/LBR_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "LSO")
       use: 
         depends/Results_LSO_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_LSO_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_LSO_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/LSO_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "MLI")
       use: 
         depends/Results_MLI_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_MLI_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_MLI_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/MLI_used_survey_info.csv: artefacts/used_survey_info.csv
   # - val_00a_oos_validation:
   #     id: latest(parameter:cntry == "MOZ")
   #     use: 
@@ -188,12 +205,14 @@ depends:
         depends/Results_MWI_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_MWI_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_MWI_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/MWI_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "NAM")
       use: 
         depends/Results_NAM_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_NAM_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_NAM_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/NAM_used_survey_info.csv: artefacts/used_survey_info.csv
   # - val_00a_oos_validation:
   #     id: latest(parameter:cntry == "NER")
   #     use: 
@@ -206,12 +225,14 @@ depends:
         depends/Results_NGA_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_NGA_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_NGA_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/NGA_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "RWA")
       use: 
         depends/Results_RWA_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_RWA_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_RWA_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/RWA_used_survey_info.csv: artefacts/used_survey_info.csv
   # - val_00a_oos_validation:
   #     id: latest(parameter:cntry == "SEN")
   #     use: 
@@ -224,18 +245,21 @@ depends:
         depends/Results_SLE_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_SLE_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_SLE_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/SLE_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "SWZ")
       use: 
         depends/Results_SWZ_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_SWZ_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_SWZ_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/SWZ_used_survey_info.csv: artefacts/used_survey_info.csv
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "TCD")
       use: 
         depends/Results_TCD_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_TCD_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_TCD_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/TCD_used_survey_info.csv: artefacts/used_survey_info.csv
   # - val_00a_oos_validation:
   #     id: latest(parameter:cntry == "TGO")
   #     use: 
@@ -260,6 +284,7 @@ depends:
         depends/Results_ZAF_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_ZAF_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_ZAF_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/ZAF_used_survey_info.csv: artefacts/used_survey_info.csv
   # - val_00a_oos_validation:
   #     id: latest(parameter:cntry == "ZMB")
   #     use: 
@@ -272,6 +297,7 @@ depends:
         depends/Results_ZWE_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_ZWE_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
         depends/Results_ZWE_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+        depends/ZWE_used_survey_info.csv: artefacts/used_survey_info.csv
         
   # Results from Investigating Variance
   - val_01a_investigating_var_corr:
