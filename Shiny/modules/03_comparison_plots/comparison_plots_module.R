@@ -1,8 +1,5 @@
 #### Static Data ####
 
-# aggregations location
-dir_path <- "archive/02_aggregations"
-
 #### UI ####
 
 comparison_plots_UI <- function(id) {
