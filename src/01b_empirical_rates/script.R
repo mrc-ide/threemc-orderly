@@ -126,7 +126,14 @@ results <- threemc::create_shell_dataset(
 
 results <- results %>% 
   # calculate MC as MC + MMC + TMC
-  mutate(obs_mc = sum(obs_mc, obs_mmc, obs_tmc, na.rm = TRUE)) %>% 
+  mutate(
+    obs_mc = case_when(
+      !is.na(obs_mmc) & !is.na(obs_tmc) ~ obs_mc + obs_mmc + obs_tmc,
+      !is.na(obs_mmc)                   ~ obs_mc + obs_mmc,
+      !is.na(obs_tmc)                   ~ obs_mc + obs_tmc,
+      TRUE                              ~ obs_mc
+    )
+  ) %>% 
   # pivot empirical person year columns to the one column
   # pivot_longer(cols = obs_mmc:icens, names_to = "type", values_to = "mean") %>% 
   pivot_longer(cols = obs_mmc:obs_mc, names_to = "type", values_to = "mean") %>% 
@@ -167,14 +174,27 @@ results <- threemc:::combine_areas(
   fill = TRUE
 )
 
+# ensure there is no duplication
+results <- results %>% 
+  bind_rows() %>% 
+  distinct() %>% 
+  group_split(area_level, .keep = TRUE)
+
 
 #### Change Age to Age Group ####
 
 # save aggregated single age results
 results_single_age <- bind_rows(results) %>% 
+  # ensure rows aren't doubled
+  distinct() %>% 
   select(-c(space, circ_age, time)) %>% 
-  group_by(area_id, area_name, year, age, type) %>% 
-  summarise(population = sum(population), mean = sum(mean), .groups = "drop")
+  # Don't think I should be doing this! These are individual obs, not to be summed!
+  # group_by(area_id, area_name, year, age, type) %>% 
+  # summarise(
+  #   population = sum(population, na.rm = TRUE), 
+  #   mean = sum(mean, na.rm = TRUE), .groups = "drop"
+  # ) %>% 
+  identity()
 
 # Multiplying by population to population weight
 results_list <- lapply(results, function(x) {
@@ -197,6 +217,7 @@ results <- lapply(seq_along(age_groups), function(i) {
   }
   results_list_loop <- lapply(results_list, function(x) {
     x <- x %>%
+      distinct() %>% 
       # take results for age group i
       dplyr::filter(.data$age >= age1, .data$age <= age2) %>%
       dplyr::select(-.data$age)
@@ -238,13 +259,12 @@ merge_empirical_rates <- function(.data) {
         type == "obs_tmc" ~ "TMC probability"
       )  
     ) %>% 
-    relocate(iso3)
+    relocate(iso3) %>% 
+    relocate(contains("age"), .after = year)
 }
 
-results <- merge_empirical_rates(results) %>% 
-  relocate(age_group, .after = year)
-results_single_age <- merge_empirical_rates(results_single_age) %>% 
-  relocate(age, .after = year)
+results <- merge_empirical_rates(results) 
+results_single_age <- merge_empirical_rates(results_single_age)
 
 # return results
 readr::write_csv(

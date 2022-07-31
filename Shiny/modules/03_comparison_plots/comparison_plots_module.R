@@ -1,8 +1,5 @@
 #### Static Data ####
 
-# aggregations location
-dir_path <- "archive/02_aggregations"
-
 #### UI ####
 
 comparison_plots_UI <- function(id) {
@@ -703,6 +700,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         # survey_years =  years[years %in% circ_data()$year],
         survey_years = input$year_select,
         model_type = "No program data",
+        facet_year = "colour",
         # facet_vars = input$facet_vars,
         # col_fill_vars = input$col_fill_vars,
         xlab = "Age Group",

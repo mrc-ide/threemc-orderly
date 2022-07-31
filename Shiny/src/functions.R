@@ -32,14 +32,15 @@ results_reader <- function(cntry = NULL, type, dir_path, pattern = NULL,
 }
 
 #### Function to Add "Light" Column to Data ####
-add_last_surveys <- function(.data, last_surveys, add_rows = TRUE) {
+add_last_surveys <- function(.data, last_surveys, add_rows = TRUE, join_cols = c("iso3", "area_id")) {
     # join data with last_surveys
     if (!"iso3" %in% names(.data)) {
         .data$iso3 <- substr(.data$area_id, 0, 3)
     }
     .data <- .data %>%
         # add last surveys for each country
-        left_join(last_surveys, by = c("iso3", "area_id")) %>%
+        # left_join(last_surveys, by = c("iso3", "area_id")) %>%
+        left_join(last_surveys, by = join_cols) %>%
         # assume missing survey years are max for that country
         group_by(iso3) %>%
         mutate(survey_year = ifelse(
@@ -1540,12 +1541,14 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
     
     p <- ggplot(plt_data1, aes(x = age_group)) +
       # geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(year)),
-      geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(colour_var)),
-                  alpha = 0.75
+      geom_ribbon(
+        aes(ymin = lower, ymax = upper, fill = as.factor(.data[[colour_var]])),
+        alpha = 0.75
       ) +
       # geom_line(aes(y = mean, col = as.factor(year)),
-      geom_line(aes(y = mean, col = as.factor(colour_var)),
-                size = 1
+      geom_line(
+        aes(y = mean, col = as.factor(.data[[colour_var]])),
+        size = 1
       ) +
       geom_pointrange(
         data = plt_data2,
@@ -1553,8 +1556,8 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
           y      = mean, 
           ymin   = lower, 
           ymax   = upper,
-          colour = as.factor(colour_var)
           # colour = as.factor(year)
+          colour = as.factor(.data[[colour_var]])
         ),
         show.legend = FALSE
       ) +
@@ -2777,6 +2780,233 @@ plt_empirical_model_rates <- function(
   # flatten nested list of plots
   plots <- rlang::squash(plots)
   
+  if (!is.null(str_save)) {
+    # save
+    plots <-  gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
+    ggsave(filename = str_save,
+           plot = plots,
+           dpi = "retina",
+           width = save_width,
+           height = save_height)
+  } else {
+    return(plots)
+  }
+}
+
+#### OOS & Investigating Variance #### 
+
+# plots vs year, should allow it to plot vs age group as well!
+val_plt <- function(
+    df_results_oos, 
+    df_results_orig = NULL,
+    df_results_survey = NULL, 
+    all_surveys,
+    spec_agegroup, 
+    spec_years = unique(df_results_oos$year), 
+    spec_type,
+    # take_log = TRUE,
+    spec_area_level = unique(df_results_oos$area_level), 
+    take_log = FALSE, 
+    facet = TRUE,
+    xlab, ylab, title, 
+    str_save = NULL, save_width = 16, save_height = 12, 
+    n_plots = 12
+) {
+  
+  # browser()
+  
+  # df_results_oos <- results_oos_val
+  # df_results_orig <- results_agegroup_comparison
+  # df_results_survey <- survey_data
+  # df_results_survey <- NULL
+  # # all_surveys_test = all_surveys
+  # # all_surveys = all_surveys_test
+  # spec_agegroup <- "15-49"
+  # spec_years <- unique(results_oos_val$year)
+  # spec_type <- "MMC coverage"
+  # spec_area_level <- 0
+  # take_log <- FALSE
+  # xlab <- "test"
+  # ylab <- "test"
+  # title <- "test"
+  # n_plots <- 12
+  
+  if (!is.null(df_results_orig)) {
+    df_results_oos <- bind_rows(
+      mutate(df_results_oos, indicator = "OOS"),
+      mutate(df_results_orig, indicator = "Original"),
+    ) 
+  }
+  
+  # filter data accordingly (need to add more arguments to this)
+  initial_filter <- function(.data, type_filter) {
+    .data <- .data %>%
+      filter(
+        year %in% spec_years,
+        area_level %in% spec_area_level,
+        age_group %in% spec_agegroup,
+        type == type_filter
+      )
+    # if ("model" %in% names(.data))
+    #     .data <- .data[.data$model == model_type, ]
+    return(.data)
+  }
+  df_results_oos <- initial_filter(df_results_oos, spec_type)
+  if (!is.null(df_results_survey)) {
+    df_results_survey <- initial_filter(df_results_survey, spec_type)
+    
+    # make sure areas are the same for both
+    df_results_survey <- df_results_survey %>%
+      filter(area_name %in% df_results_oos$area_name)
+  }
+  
+  if (nrow(df_results_survey) == 0) df_results_survey <- NULL
+  
+  # convert to the log scale if desired
+  if (take_log == TRUE) {
+    df_results_oos <- df_results_oos %>%
+      mutate(across(mean:upper, log))
+    if (!is.null(df_results_survey)) {
+      df_results_survey <- df_results_survey %>%
+        mutate(across(mean:upper, log))
+    }
+  }
+  
+  # add alpha/shape column for aggregations and surveys
+  if (!is.null(all_surveys)) {
+    all_surveys_orig <- all_surveys %>% 
+      filter(iso3 %in% df_results_oos$iso3) %>% 
+      filter(survey_year == max(survey_year)) %>% 
+      slice(1)
+    
+    # add "light" column to aggregation and survey results
+    df_results_oos <- add_last_surveys(df_results_oos, all_surveys_orig, add_rows = TRUE)
+    if(!is.null(df_results_survey)) {
+      df_results_survey <- add_last_surveys(df_results_survey, all_surveys_orig, add_rows = TRUE)
+    }
+  }
+  
+  # split results by area level, and number of plots desired
+  df_results_oos <- split_area_level(df_results_oos, n_plots = n_plots)
+  if (!is.null(df_results_survey)) {
+    df_results_survey <- split_area_level(df_results_survey, n_plots = n_plots)
+  }
+  
+  # plot for each (nested) loop
+  plots <- lapply(seq_along(df_results_oos), function(i) {
+    lapply(seq_along(df_results_oos[i]), function(j) {
+      
+      plt_data1 <- df_results_oos[[i]][[j]]
+      if (!is.null(df_results_survey)) {
+        plt_data2 <- df_results_survey[[i]][[j]]
+        # plt_data1$alpha <- plt_data2$alpha <- 0.8
+      } # else {
+      # plt_data1$alpha <- ifelse(plt_data1$light == "Surveyed", 0.8, 0.3)
+      # }
+      
+      # browser()
+      
+      if (i == 1 && j == 1) {
+        plt_data1$parent_area_name <- NA_character_
+      }
+      
+      # get specific title for each plot page
+      add_title <- paste(
+        plt_data1$iso3[1],
+        plt_data1$area_level[1],
+        plt_data1$area_level_label[1],
+        sep = ", "
+      )
+      
+      if ("indicator" %in% names(plt_data1)) {
+        colour_var <- "indicator"
+      } else colour_var <- "parent_area_id"
+      
+      p <- ggplot(plt_data1, aes(x = year)) +
+        # Credible interval
+        geom_ribbon(
+          data = filter(plt_data1, light == "Surveyed"),
+          aes(ymin = lower, ymax = upper, fill = as.factor(.data[[colour_var]]), alpha = light)
+        ) +
+        geom_ribbon(
+          data = filter(plt_data1, light == "Projected"),
+          aes(ymin = lower, ymax = upper, fill = as.factor(.data[[colour_var]]), alpha = light)
+        ) +
+        # Modelled rate
+        geom_line(aes(y = mean, col = as.factor(.data[[colour_var]])), size = 1)
+      # scale_alpha_manual(
+      #   values = c("Surveyed" = 0.8, "Projected" = 0.3)
+      # )
+      
+      if (!is.null(df_results_survey)) {
+        p <- p + 
+          # survey points (want clear points for surveys not included)
+          geom_pointrange(
+            data = filter(plt_data2, light == "Surveyed"),
+            aes(y = mean, ymin = lower, ymax = upper),
+            colour = "black",
+            # size = 0.3,
+            show.legend = FALSE
+          ) +
+          geom_pointrange(
+            data = filter(plt_data2, light == "Projected"),
+            aes(y = mean, ymin = lower, ymax = upper),
+            shape = 1,
+            colour = "black",
+            # size = 0.3,
+            show.legend = FALSE
+          )  # + 
+        # guides(alpha = "none")
+      } else {
+        p <- p + 
+          scale_alpha_manual(
+            values = c("Surveyed" = 0.8, "Projected" = 0.3)
+          )
+      }
+      p <- p +   
+        guides(
+          alpha = guide_legend(override.aes = list(
+            fill = wesanderson::wes_palette("Zissou1", 1)
+          ))
+        ) + 
+        # Labels
+        labs(
+          x = xlab,
+          y = ylab,
+          colour = "",
+          fill = "",
+          alpha = "Period"
+        ) +
+        ggtitle(paste0(title, add_title)) +
+        scale_x_continuous(
+          breaks = seq(min(plt_data1$year), 2021, by = 2)
+        )
+      
+      
+      if (grepl(paste("coverage", "probability", sep = "|") , spec_type) && take_log == FALSE) {
+        p <- p +
+        scale_y_continuous(
+          breaks = seq(0, 1, by = 0.25),
+          limits = c(0, 1),
+          label = scales::label_percent(accuracy = 1)
+        )
+      }
+      p <- p +
+        theme_bw() +
+        theme(legend.position = "bottom")
+      
+      if (facet == TRUE) {
+        p <- p +
+          # Faceting by area
+          facet_wrap(~ area_name)
+      }
+      
+      return(p)
+    })
+  })
+  
+  # flatten nested list of plots
+  plots <- purrr::flatten(plots)
   if (!is.null(str_save)) {
     # save
     plots <-  gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
