@@ -1,0 +1,82 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: naomi fit object
+      filenames:
+      - artefacts/TMBObjects_DistrictAgeTime_ByType.rds
+  - data:
+      description: Modelling results for area level of interest, including quantiles
+      filenames:
+      - artefacts/Results_DistrictAgeTime_ByType.csv.gz
+  - data:
+      description: 
+      - Aggregated Probabilities of Circumcision for Single Ages
+      filenames: 
+      - artefacts/Results_Age_Probability.csv.gz
+  - data:
+      description: 
+      - Aggregated Circumcision Incidences for Single Ages
+      filenames: 
+      - artefacts/Results_Age_Incidence.csv.gz
+  - data:
+      description: 
+      - Aggregated Circumcision Prevalences for Single Ages
+      filenames: 
+      - artefacts/Results_Age_Prevalence.csv.gz
+  - data:
+      description: 
+      - Aggregated Probabilities of Circumcision for Age Groups
+      filenames: 
+      - artefacts/Results_AgeGroup_Probability.csv.gz
+  - data:
+      description: 
+      - Aggregated Circumcision Incidences for Age Groups
+      filenames: 
+      - artefacts/Results_AgeGroup_Incidence.csv.gz
+  - data:
+      description: 
+      - Aggregated Circumcision Prevalences for Age Groups
+      filenames: 
+      - artefacts/Results_AgeGroup_Prevalence.csv.gz 
+  
+displayname: | 
+  threemc model fit and aggregated results for user-specifed area level.
+
+parameters:
+  add_cntry:
+    default: ~
+  is_paper:
+    default: TRUE
+
+packages:
+  - threemc
+  - sf
+  - data.table
+  - dplyr
+  - Matrix
+  - TMB
+  - rlang
+  - ggplot2
+  
+# global_resources:
+#   depends/areas.geojson: areas.geojson
+#   depends/survey_circumcision.csv.gz: survey_circumcision.csv.gz
+#   depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
+  
+depends:
+  # areas file
+  - 00a2_areas_join:
+      id: latest
+      use:
+        depends/areas.geojson: artefacts/areas.geojson
+  # surveys
+  - 00b3_survey_join:
+      id: latest(parameter:is_paper == is_paper)
+      use: 
+        depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
+  # populations
+  - 00c4_pops_aggregate:
+      id: latest
+      use: 
+        depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
