@@ -299,7 +299,7 @@ mics_final <- circ_recoded %>%
 #' This will ensure that variable not coded entirely as NA (unexpectedly
 #' missed during extract)
 
-check_not_na <- function(var, threshold = 0.25) {
+check_not_all_na <- function(var, threshold = 0.25) {
   mics_final %>%
     group_by(survey_id) %>%
     summarise(mean(is.na({{var}})) <= threshold) %>%
@@ -307,11 +307,11 @@ check_not_na <- function(var, threshold = 0.25) {
     stopifnot()
 }
 
-check_not_na(dob)
-check_not_na(dob)
-check_not_na(area_name)
-check_not_na(circ_status)
-check_not_na(individual_id, 0.0)
+check_not_all_na(dob)
+check_not_all_na(doi)
+check_not_all_na(area_name)
+check_not_all_na(circ_status)
+check_not_all_na(individual_id, 0.0)
 
 #' Handful of missing area_name for TCD2019MICS, mnweight also =0
 mics_final %>%
@@ -320,7 +320,7 @@ mics_final %>%
 mics_final <- mics_final %>%
   filter(! (mnweight == 0 & is.na(area_name) & survey_id == "TCD2019MICS"))
 
-check_not_na(area_name, 0.0)
+check_not_all_na(area_name, 0.0)
 
 stopifnot(mics_final$circ_status %in% c(0, 1, NA))
 
@@ -331,10 +331,12 @@ mics_final <- mics_final %>%
     sex  = "male", # can be assumed
     # age at interview = floor(date of interview - date of birth)
     age = floor( (doi - dob) / 12),
-    doi = NULL,
-    dob = NULL
   ) %>%
-  rename(indweight = mnweight)
+  rename(
+    indweight = mnweight,
+    dob_cmc = dob,
+    interview_cmc = doi
+  )
 
 #' Recode area_name to match areas file
 
@@ -446,7 +448,7 @@ mics_final %>%
 
 mics_final <- mics_final %>%
   select(iso3, survey_id, area_id, area_name, individual_id, cluster_id, household, line,
-         sex, age, everything())
+         sex, age, dob_cmc, interview_cmc, everything())
 
 # save MICS surveys
 readr::write_csv(
