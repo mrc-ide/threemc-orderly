@@ -10,7 +10,9 @@
 #' * household    
 #' * line         
 #' * sex          
-#' * age          
+#' * age
+#' * dob_cmc
+#' * interview_cmc
 #' * indweight    
 #' * circ_status  
 #' * circ_age     
@@ -43,7 +45,8 @@ dhs_merged <- dhs_clusters %>%
   ) %>%
   inner_join(
     dhs_individuals %>%
-      select(iso3, survey_id, individual_id, cluster_id, household, line, sex, age, indweight),
+      select(iso3, survey_id, individual_id, cluster_id, household, line, sex, age,
+             dob_cmc, interview_cmc, indweight),
     by = c("iso3", "survey_id", "cluster_id")
   ) %>%
   inner_join(
@@ -52,7 +55,8 @@ dhs_merged <- dhs_clusters %>%
     by = c("iso3", "survey_id", "individual_id")
   ) %>%
   select(iso3, survey_id, area_id, area_level, area_name,
-         individual_id, cluster_id, household, line, sex, age, indweight,
+         individual_id, cluster_id, household, line, sex, age,
+         dob_cmc, interview_cmc, indweight,
          circ_status, circ_age, circ_who, circ_where)
 
 
