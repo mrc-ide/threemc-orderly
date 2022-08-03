@@ -53,6 +53,10 @@ depends:
       id: latest(parameter:iso3 == "BEN" && parameter:version == "2021")
       use:
         depends/ben_interpolated_population.csv: interpolated_population.csv 
+  - aaa_scale_pop:
+      id: latest(parameter:iso3 == "BWA")
+      use:
+        depends/bwa_interpolated_population.csv: interpolated_population.csv 
   -  aaa_scale_pop:
       # id: latest(parameter:iso3 == "CAF" && parameter:version == "2021")
       id: latest(parameter:iso3 == "CAF")

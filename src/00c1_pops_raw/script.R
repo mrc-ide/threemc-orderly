@@ -20,7 +20,7 @@ iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
 
 # countries whose populations are pulled from other orderly tasks
 orderly_iso3 <-  c(
-  "bdi", "ben", "cod", "cog", "gab", "gha", "gin", "lbr", 
+  "bdi", "ben", "bwa", "cod", "cog", "gab", "gha", "gin", "lbr", 
   "mli", "moz", "ner", "sen", "sle", "tcd", "tgo" 
   # "mli", "ner", "sen", "sle", "tcd", "tgo" # temp remove MOZ
 )
@@ -189,12 +189,13 @@ pop_raw <- pop_raw %>%
   select(iso3, area_id, area_name, year, sex, age_group, population)
   
 
-pop_raw <- pop_raw %>%
-  filter(iso3 != "BWA", !grepl("KEN_3", area_id))
+# why do this???
+# pop_raw <- pop_raw %>%
+#   filter(iso3 != "BWA", !grepl("KEN_3", area_id))
 
-# pop_raw %>%
-#   anti_join(areas, by = "area_id") %>%
-#   count(iso3)
+pop_raw %>%
+  anti_join(areas, by = "area_id") %>%
+  count(iso3)
 
 # Recode MOZ area_id for Maputo in population dataset
 # pop_raw %>%
