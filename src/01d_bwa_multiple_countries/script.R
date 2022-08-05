@@ -281,6 +281,47 @@ out_spec <- compute_quantiles(out, fit, area_lev = area_lev)
 
 #### Removing Additional Country Data ####
 
+#### Diagnostic Plots ####
+
+paste0(save_dir, "Circ_Coverage.pdf"), width = 10)
+ggplot(out_spec,
+       aes(x = age,
+           y = cum_incM,
+           ymin = cum_incL,
+           ymax = cum_incU,
+           group = as.factor(year),
+           colour = as.factor(year))) +
+  geom_ribbon(fill = "lightgrey",
+              colour = NA) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(x = "Age",
+       y = "Coverage",
+       colour = "") +
+  theme_bw() +
+  facet_wrap(. ~ area_name)
+dev.off()
+
+# Rates
+pdf(paste0(save_dir, "Circ_Rates.pdf"), width = 10)
+ggplot(out_spec,
+       aes(x = age,
+           y = rateM,
+           ymin = rateL,
+           ymax = rateU,
+           group = as.factor(year),
+           colour = as.factor(year))) +
+  geom_ribbon(fill = "lightgrey",
+              colour = NA) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(x = "Age",
+       y = "Rates",
+       colour = "") +
+  theme_bw() +
+  facet_wrap(. ~ area_name)
+dev.off()
+
 #### REMOVE ADDITIONAL COUNTRY DATA FROM OUT_SPEC & SAMPLE
 
 #### saving results ####
