@@ -1,0 +1,25 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: LSO2014DHS circumcision dataset
+      filenames:
+        - artefacts/lso2014dhs_survey_circumcision.csv
+        - artefacts/lso2014dhs_survey_individuals.csv	
+
+displayname: Lesotho 2014 DHS circumcision data set
+
+description: |
+  Lesotho 2014 DHS included separate questions for whether respondent
+  was traditionally circumcised or medically circumcised.
+
+  Custom re-extract of this survey including both traditional and medical
+  circumcision age.
+
+
+packages:
+  - dplyr
+  - haven
+  - naomi.utils
+  - rdhs
+  - readr

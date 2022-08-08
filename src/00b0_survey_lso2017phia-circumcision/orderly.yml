@@ -1,0 +1,20 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: LSO2017PHIA circumcision dataset
+      filenames: artefacts/lso2017phia-circumcision.csv
+
+displayname: Lesotho 2017 PHIA circumcision data set
+
+description: |
+  Lesotho 2016-17 PHIA included separate questions for whether respondent
+  was traditionally circumcised or medically circumcised.
+
+  Custom re-extract of this survey including both traditional and medical
+  circumcision age.
+
+
+packages:
+  - dplyr
+  - readr
