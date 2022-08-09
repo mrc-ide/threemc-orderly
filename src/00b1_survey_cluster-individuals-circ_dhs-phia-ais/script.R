@@ -148,6 +148,15 @@ dhs_individuals <- dhs_individuals %>%
       filter(survey_id %in% dhs_individuals$survey_id))
   )
 
+#' Add LSO2014DHS -- custom extract
+lso2014dhs_individuals <- read_csv("depends/lso2014dhs_survey_individuals.csv")
+
+stopifnot(!lso2014dhs_individuals$survey_id %in% dhs_individuals$survey_id)
+
+dhs_individuals <- dhs_individuals %>%
+  bind_rows(lso2014dhs_individuals)
+
+
 # individual_id has been coded differently than in circumcision dataset
 
 dhs_individual_id <- function(cluster, household, line) {
@@ -201,9 +210,28 @@ dhs_circumcision <- as.list(dhs_circumcision) %>%
     survey_id != "CIV2005AIS"
   )
 
+#' Add LSO2014DHS survey (manual extract)
+
+lso2014dhs_circumcision <- read_csv("depends/lso2014dhs_survey_circumcision.csv") %>%
+  mutate(
+    individual_id = sprintf("%11s", individual_id)
+  )
+
+stopifnot(!lso2014dhs_circumcision$survey_id %in% dhs_circumcision$survey_id)
+
+dhs_circumcision <- dhs_circumcision %>%
+  bind_rows(lso2014dhs_circumcision)
+  
+
 phia_paths <- paste0("depends/", iso3_phia, phia_years, "phia_survey_circumcision.csv")
 phia_circumcision <- lapply(phia_paths, read_csv)
+
 names(phia_circumcision) <- toupper(iso3_phia)
+
+#' To match other PHIA surveys
+phia_circumcision$LSO <- phia_circumcision$LSO %>%
+  rename(circumcised = circ_status)
+
 phia_circumcision <- phia_circumcision %>% 
   Map(mutate, ., iso3 = toupper(names(.))) %>%
   bind_rows() %>%

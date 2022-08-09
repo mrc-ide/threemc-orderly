@@ -1,0 +1,115 @@
+
+#' ## Circumcision variables in LePHIA 2016-17
+#' 
+#' mcstatus:
+#'  Some men are uncomfortable talking about circumcision but it is important for us to have this information.   Some men are circumcised. Are you circumcised?
+#'  *  1 - YES
+#'  *  2 - NO
+#'  * -8 - DON'T KNOW
+#'  * -9 - REFUSED"
+#'
+#' mcmeth:
+#'   If so, were you medically circumcised, traditionally circumcised, or both?
+#'   *  1 - MEDICAL
+#'   *  2 - TRADITIONAL
+#'   *  3 - BOTH
+#'   *  -8 - DON'T KNOW
+#'   *  -9 - REFUSED
+#'
+#' mcparcom:
+#'   Are you completely or partially circumcised?
+#'   *  1 - COMPLETELY
+#'   *  2 - PARTIALLY
+#'   *  -8 - DON'T KNOW
+#'   *  -9 - REFUSED
+#' 
+#' mcage:
+#'   How old were you when you were medically circumcised? Please give your best guess. (top coded at 35)
+#'
+#' mcagedk:
+#'   Please provide the reason this previous question was left blank: HOW OLD WERE YOU WHEN YOU WERE MEDICALLY CIRCUMCISED?
+#'   * -8 - DON'T KNOW
+#'   * -9 - REFUSED
+#'
+#' mcagetrd:
+#'   How old were you when you were traditionally circumcised? Please give your best guess. (bottom coded at 13 and top coded at 25)
+#'
+#' mcagetrd:
+#'   Please provide the reason this previous question was left blank: HOW OLD WERE YOU WHEN YOU WERE TRADITIONALLY CIRCUMCISED?
+#'   * -8 - DON'T KNOW
+#'   * -9 - REFUSED
+#' 
+#' mcwho:
+#'  Who did the circumcision?
+#'  *  1 - DOCTOR, CLINICAL OFFICER, OR NURSE
+#'  *  2 - TRADITIONAL PRACTITIONER/CIRCUMCISER/INITIATION SCHOOL PERSONNEL
+#'  *  3 - MIDWIFE
+#'  *  4 - RELIGIOUS LEADER
+#'  *  5 - FAMILY MEMBER/RELATIVE
+#'  * 96 - OTHER (SPECIFY)
+#'  * -8 - DON'T KNOW
+#'  * -9 - REFUSED
+
+
+#' Download LSO2017PHIA individual data set from Sharepoint
+
+sharepoint <- spud::sharepoint$new(Sys.getenv("SHAREPOINT_URL"))
+
+url <- "sites/HIVInferenceGroup-WP/Shared Documents/Data/household surveys/PHIA/datasets/LSO/datasets/203_LePHIA 2016-2017 Adult Interview Dataset (CSV).zip" %>%
+  URLencode()
+
+file <- sharepoint$download(url)
+tmpd <- tempfile()
+unzip(file, "lephia2016adultind.csv", exdir = tmpd)
+
+raw <- read_csv(file.path(tmpd, "lephia2016adultind.csv"), na = ".")
+
+circ <- raw %>%
+  filter(
+    indstatus == 1,   ## 1 = 'Eligible respondent'
+    gender == 1       ## 1 = Male
+  ) %>%
+  transmute(
+    iso3 = "LSO",
+    survey_id = "LSO2017PHIA",
+    individual_id = personid,
+    circ_status = recode(mcstatus, `1` = 1L, `2` = 0L, .default = NA_integer_),
+    circ_partial = recode(mcparcom, `1` = "complete", `2` = "partial", .default = NA_character_),
+    circ_method = recode(mcmeth, `1` = "medical", `2` = "traditional", `3` = "both", .default = NA_character_),
+    circ_who = mcwho %>%
+      recode(`1` = "medical",
+             `2` = "traditional",
+             `3` = "traditional",
+             `4` = "traditional",
+             `5` = "traditional",
+             `96` = "traditional",
+             .default = NA_character_),
+    circ_med_age = mcage,
+    circ_trad_age = mcagetrd
+  ) 
+
+circ %>%
+  filter(!is.na(circ_med_age),
+         !is.na(circ_trad_age)) %>%
+  count(circ_method)
+
+#' If circ_method = "both": code as first reported circumcision
+#' 
+#' * Code circ_age as minimum of circ_med_age and circ_trad_age
+#' * Code circ_where as which was first
+#' * Recode circ_who = "traditional" if it was traditional circumcision reported
+#'   before medical circumcision
+
+
+circ <- circ %>%
+  mutate(
+    circ_age = pmin(circ_trad_age, circ_med_age, na.rm = TRUE),
+    circ_where = case_when(!is.na(circ_med_age) & is.na(circ_trad_age) ~ "medical",
+                           circ_med_age <= circ_trad_age ~ "medical",
+                           !is.na(circ_trad_age) ~ "traditional"),
+    circ_who = if_else(!is.na(circ_trad_age) & !is.na(circ_med_age) &
+                         circ_trad_age < circ_med_age,
+                       "traditional", circ_who)
+  )
+
+write_csv(circ, "lso2017phia-circumcision.csv", na = "")
