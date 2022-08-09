@@ -114,8 +114,6 @@ survey_circumcision <- prepare_survey_data(
   norm_kisk_weights   = TRUE
 )
 
-if ()
-
 if (nrow(survey_circumcision) == 0) {
   message("no valid surveys at this level") # move inside function!
 }
