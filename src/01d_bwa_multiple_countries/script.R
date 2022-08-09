@@ -85,20 +85,21 @@ populations <- populations %>%
   arrange(area_id, area_level)
 
 # pull recommended area hierarchy for target country
-area_lev <- threemc::datapack_psnu_area_level %>%
-  filter(iso3 == cntry) %>%
-  pull(psnu_area_level)
+# area_lev <- threemc::datapack_psnu_area_level %>%
+#   filter(iso3 == cntry) %>%
+#   pull(psnu_area_level)
+# 
+# # don't model at the country level
+# if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL 
+# 
+# # if area_level is missing, assume most common area lev in surveys
+# if (length(area_lev) == 0) {
+#   survey_circ_area_lev <- filter(survey_circumcision, iso3 == cntry)
+#   area_lev <- table(as.numeric(substr(survey_circ_area_lev$area_id, 5, 5)))
+#   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
+# }
 
-# don't model at the country level
-if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL 
-
-# if area_level is missing, assume most common area lev in surveys
-if (length(area_lev) == 0) {
-  survey_circ_area_lev <- filter(survey_circumcision, iso3 == cntry)
-  area_lev <- table(as.numeric(substr(survey_circ_area_lev$area_id, 5, 5)))
-  area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
-}
-
+area_lev <- 1
 
 #### Preparing circumcision data ####
 # pull latest census year from survey_id
@@ -218,9 +219,10 @@ dat_tmb <- threemc_prepare_model_data(
 
 #### Modelling circumcision probabilites ####
 # specify TMB model
-if (is_type == TRUE) {
-  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
-} else mod <- "Surv_SpaceAgeTime"
+# if (is_type == TRUE) {
+#   mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
+# } else mod <- "Surv_SpaceAgeTime"
+mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_No_AgeTime_Interaction"
 
 # Initial values
 parameters <- with(
@@ -238,7 +240,7 @@ parameters <- with(
     "u_space_mmc"            = rep(0, ncol(X_space_mmc)),
     "u_space_tmc"            = rep(0, ncol(X_space_tmc)),
     # Interactions for MMC
-    "u_agetime_mmc"          = matrix(0, ncol(X_age_mmc), ncol(X_time_mmc)),
+    # "u_agetime_mmc"          = matrix(0, ncol(X_age_mmc), ncol(X_time_mmc)),
     "u_agespace_mmc"         = matrix(0, ncol(X_age_mmc), ncol(X_space_mmc)),
     "u_spacetime_mmc"        = matrix(0, ncol(X_time_mmc), ncol(X_space_mmc)),
     # Interactions for TMC
@@ -248,7 +250,7 @@ parameters <- with(
     "logsigma_age_mmc"       = 0,
     "logsigma_time_mmc"      = 0,
     "logsigma_space_mmc"     = 0,
-    "logsigma_agetime_mmc"   = 0,
+    # "logsigma_agetime_mmc"   = 0,
     "logsigma_agespace_mmc"  = 0,
     "logsigma_spacetime_mmc" = 0,
     "logsigma_age_tmc"       = 0,
@@ -275,15 +277,20 @@ fit <- threemc_fit_model(
                  "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
   N = N
 )
+# load("~/imperial_repos/threemc-orderly/bwa_zaf_fit.RData")
 
 # subset to specific area level and calculate quantiles for rates and hazard
 out_spec <- compute_quantiles(out, fit, area_lev = area_lev)
+# out_spec <- readr::read_csv("~/imperial_repos/threemc-orderly/bwa_zaf_fit.csv.gz")
+
+out_spec <- out_spec %>% 
+  filter(!grepl("_zaf", area_id))
 
 #### Removing Additional Country Data ####
 
 #### Diagnostic Plots ####
 
-paste0(save_dir, "Circ_Coverage.pdf"), width = 10)
+pdf(paste0(save_dir, "Circ_Coverage.pdf"), width = 10)
 ggplot(out_spec,
        aes(x = age,
            y = cum_incM,
@@ -322,7 +329,9 @@ ggplot(out_spec,
   facet_wrap(. ~ area_name)
 dev.off()
 
-#### REMOVE ADDITIONAL COUNTRY DATA FROM OUT_SPEC & SAMPLE
+#### REMOVE ZAF DATA FROM OUT_SPEC & SAMPLE ####
+
+# ?
 
 #### saving results ####
 
