@@ -26,6 +26,9 @@ orderly_root <- unlist(stringr::str_split(orderly_root, "/"))
 orderly_root <- orderly_root[1:which(orderly_root == "threemc-orderly")]
 orderly_root <- paste(orderly_root, collapse = "/")
 
+# source functions
+source(paste0(orderly_root, "/Shiny/src/functions.R"))
+
 ssa_iso3 <- sort(c(
   "AGO", "BDI", "BEN", "BFA", "BWA", "CAF", "CIV", "CMR", "COD",
   "COG", "ETH", "GAB", "GHA", "GIN", "GMB", "GNB", "GNQ", "KEN",
@@ -65,6 +68,29 @@ results_agegroup_comparison <- readr::read_csv(paste0(
 
 ssa_iso3 <- ssa_iso3[ssa_iso3 %in% results_agegroup_comparison$iso3]
 
+# Replace with "new" estimates
+# removed_survey_iso3 <- c("RWA", "TZA", "ZWE", "UGA")
+# ids <- vapply(removed_survey_iso3, function(x) {
+#   orderly::orderly_search(
+#     query = "latest(parameter:cntry == cntry)", 
+#     name = "01c_model_aggregate_rm_surveys",
+#     parameters = list(cntry = x)
+#   )
+# }, character(1))
+# 
+# results_new <- lapply(ids, function(x) {
+#   results_reader(
+#     type = "agegroup",
+#     dir_path = paste0(orderly_root, "/archive/01c_model_aggregate_rm_surveys/", x, "/artefacts/")
+#   )
+# }) %>% 
+#   bind_rows() %>% 
+#   mutate(iso3 = substr(area_id, 0, 3))
+# 
+# results_agegroup_comparison <- results_agegroup_comparison %>% 
+#   filter(!iso3 %in% removed_survey_iso3) %>% 
+#   bind_rows(results_new)
+
 results_agegroup_national_comparison <-  readr::read_csv(paste0(
   orderly_root, 
   "/archive/03_shiny_consolidation/",
@@ -82,22 +108,22 @@ results_agegroup_national_comparison <-  readr::read_csv(paste0(
 #   filter(iso3 %in% ssa_iso3, grepl("probability", type))
 
 # Need single ages as well
-results_age <- readr::read_csv(paste0(
-  orderly_root, 
-  "/archive/03_shiny_consolidation/",
-  dir_name,
-  "/artefacts/results_age.csv.gz"
-)) %>% 
-  filter(iso3 %in% ssa_iso3)
+# results_age <- readr::read_csv(paste0(
+#   orderly_root, 
+#   "/archive/03_shiny_consolidation/",
+#   dir_name,
+#   "/artefacts/results_age.csv.gz"
+# )) %>% 
+#   filter(iso3 %in% ssa_iso3)
 
 # empirical rates
-empirical_rates <-  readr::read_csv(paste0(
-  orderly_root, 
-  "/archive/03_shiny_consolidation/",
-  dir_name,
-  "/artefacts/empirical_rates_singleage.csv.gz"
-)) %>% 
-  filter(iso3 %in% ssa_iso3)
+# empirical_rates <-  readr::read_csv(paste0(
+#   orderly_root, 
+#   "/archive/03_shiny_consolidation/",
+#   dir_name,
+#   "/artefacts/empirical_rates_singleage.csv.gz"
+# )) %>% 
+#   filter(iso3 %in% ssa_iso3)
 
 # shapefiles
 areas_loc <- archives %>%
@@ -147,11 +173,11 @@ comparison_plots_data <- list(
   "ssa_iso3"                             = ssa_iso3,
   "results_agegroup_comparison"          = results_agegroup_comparison,
   "results_agegroup_national_comparison" = results_agegroup_national_comparison,
-  "results_age"                          = results_age,
+  # "results_age"                          = results_age,
   "dmppt2_iso3"                          = dmppt2_iso3,
   "dmppt2_data"                          = dmppt2_data,
   "survey_data"                          = survey_data,
-  "empirical_rates"                      = empirical_rates,
+  # "empirical_rates"                      = empirical_rates,
   # "results_agegroup_probs"               = results_agegroup_probs,
   "orderly_root"                         = orderly_root
 )
