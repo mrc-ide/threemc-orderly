@@ -10,7 +10,9 @@
 #' * household    
 #' * line         
 #' * sex          
-#' * age          
+#' * age
+#' * dob_cmc
+#' * interview_cmc
 #' * indweight    
 #' * circ_status  
 #' * circ_age     
@@ -29,6 +31,12 @@ rm_surveys <- c("UGA2020PHIA", "MWI2020PHIA")
 # location of UGA2020PHIA file
 uga2020phia_loc <- "depends/uga2020phia.csv.gz"
 is_uga2020phia <- file.exists(uga2020phia_loc) # check it exists
+
+# location of BWA surveys 
+bwa2008bais_loc <- "depends/bwa2008bais.csv.gz"
+is_bwa2008bais  <- file.exists(bwa2008bais_loc)
+bwa2013bais_loc <- "depends/bwa2013bais.csv.gz"
+is_bwa2013bais  <- file.exists(bwa2013bais_loc) 
 
 # load areas
 areas <- sf::st_drop_geometry(sf::read_sf("depends/areas.geojson"))
@@ -50,7 +58,8 @@ dhs_merged <- dhs_clusters %>%
   ) %>%
   inner_join(
     dhs_individuals %>%
-      select(iso3, survey_id, individual_id, cluster_id, household, line, sex, age, indweight),
+      select(iso3, survey_id, individual_id, cluster_id, household, line, sex, age,
+             dob_cmc, interview_cmc, indweight),
     by = c("iso3", "survey_id", "cluster_id")
   ) %>%
   inner_join(
@@ -59,7 +68,8 @@ dhs_merged <- dhs_clusters %>%
     by = c("iso3", "survey_id", "individual_id")
   ) %>%
   select(iso3, survey_id, area_id, area_level, area_name,
-         individual_id, cluster_id, household, line, sex, age, indweight,
+         individual_id, cluster_id, household, line, sex, age,
+         dob_cmc, interview_cmc, indweight,
          circ_status, circ_age, circ_who, circ_where)
 
 if (!is_uga2020phia && !is_paper && !"UGA2020PHIA" %in% dhs_merged$survey_id) {
@@ -128,28 +138,48 @@ if ("area_name" %in% names(survey_merged)) {
   survey_merged <- select(survey_merged, -area_name)
 }
 
+#### Add Missing Surveys ####
+
+# function to merge in missing survey with current surveys 
+add_missing_survey <- function(survey_merged, name, is_present, loc) {
+  if (is_present && !name %in% survey_merged$survey_id) {
+    
+    message(name, " not in surveys, adding now")
+    
+    # load missing_survey survey
+    missing_survey <- readr::read_csv(loc, ) %>% 
+      # make sure to coerce individual_id & cluster_id to character
+      mutate(across(contains("_id"), ~as.character(.))) %>% 
+      select(any_of(names(survey_merged)))
+    if (!"area_level" %in% names(missing_survey)) {
+      missing_survey <- missing_survey %>% 
+        mutate(
+          area_level = ifelse(
+            area_id == substr(name, 0, 3), 0, as.numeric(substr(area_id, 5, 5))
+          )
+        )
+    }
+    survey_merged <- bind_rows(survey_merged, missing_survey)
+  } 
+  return(survey_merged)
+}
+
 # remove certain surveys without permissions, if required
 if (is_paper == TRUE) {
   survey_merged <- survey_merged %>% 
     filter(!survey_id %in% rm_surveys)
 # add UGA2020PHIA if desired for analysis + not present
-} else if (is_uga2020phia && !"UGA2020PHIA" %in% survey_merged$survey_id) {
-  
-  message("UGA2020PHIA not in surveys, adding now")
-  
-  # load UGA2020PHIA survey
-  uga2020phia <- readr::read_csv("depends/uga2020phia.csv.gz")
-  if (!"area_level" %in% names(uga2020phia)) {
-    uga2020phia <- uga2020phia %>% 
-      mutate(
-        area_level = ifelse(
-          area_id == "UGA", 0, as.numeric(substr(area_id, 5, 5))
-        )
-      )
-  }
-  survey_merged <- bind_rows(survey_merged, uga2020phia)
-}
+} else survey_merged <- add_missing_survey(
+  survey_merged, "UGA2020PHIA", is_uga2020phia, uga2020phia_loc
+) 
 
+# merge in BWA surveys
+survey_merged <- add_missing_survey(
+  survey_merged, "BWA2008BAIS", is_bwa2008bais, bwa2008bais_loc
+) 
+survey_merged <- add_missing_survey(
+  survey_merged, "BWA2013BAIS", is_bwa2013bais, bwa2013bais_loc
+) 
 
 # save survey_circumcision
 readr::write_csv(

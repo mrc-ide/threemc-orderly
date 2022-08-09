@@ -188,7 +188,7 @@ depends:
     use:
       depends/lso2017phia_survey_clusters.csv: lso2017phia_survey_clusters.csv
       depends/lso2017phia_survey_individuals.csv: lso2017phia_survey_individuals.csv
-      depends/lso2017phia_survey_circumcision.csv: lso2017phia_survey_circumcision.csv
+      ## depends/lso2017phia_survey_circumcision.csv: lso2017phia_survey_circumcision.csv
   mwi_survey_phia:
     id: latest
     # id: latest(parameter:version == "2021")
@@ -245,4 +245,16 @@ depends:
       depends/zwe2016phia_survey_clusters.csv: zwe2016phia_survey_clusters.csv
       depends/zwe2016phia_survey_individuals.csv: zwe2016phia_survey_individuals.csv
       depends/zwe2016phia_survey_circumcision.csv: zwe2016phia_survey_circumcision.csv
-  
+
+
+  ## Recoded LSO circumcision: data sets include separate medical and traditional circ age
+  00b0_survey_lso2014dhs-circumcision:
+    id: latest
+    use:
+      depends/lso2014dhs_survey_circumcision.csv: artefacts/lso2014dhs_survey_circumcision.csv
+      depends/lso2014dhs_survey_individuals.csv: artefacts/lso2014dhs_survey_individuals.csv
+  00b0_survey_lso2017phia-circumcision:
+    id: latest
+    use:
+      depends/lso2017phia_survey_circumcision.csv: artefacts/lso2017phia-circumcision.csv
+    

@@ -285,12 +285,12 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     
     dmppt2_data <- filter(data$dmppt2_data, iso3 == input$country)
     survey_data <- filter(data$survey_data, iso3 == input$country)
-    empirical_rates <- filter(empirical_rates, iso3 == input$country)
+    # empirical_rates <- filter(empirical_rates, iso3 == input$country)
     
     output <- list(
       "dmppt2_data"     = dmppt2_data,
-      "survey_data"     = survey_data,
-      "empirical_rates" = empirical_rates
+      "survey_data"     = survey_data# ,
+      # "empirical_rates" = empirical_rates
     )
     
     return(output)
