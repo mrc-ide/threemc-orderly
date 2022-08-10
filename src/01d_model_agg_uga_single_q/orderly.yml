@@ -1,5 +1,8 @@
 script: script.R
 
+sources:
+  - source.R
+
 artefacts:
  - data:
       description: naomi fit object

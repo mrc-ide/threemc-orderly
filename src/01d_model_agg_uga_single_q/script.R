@@ -234,13 +234,13 @@ fit_min <- minimise_fit_obj(fit, dat_tmb, parameters)
 # Saving results (also make into function)
 readr::write_csv(
   out_spec,
-  file = paste0(save_loc, "Results_DistrictAgeTime_ByType_OOS.csv.gz")
+  file = paste0(save_loc, "Results_DistrictAgeTime_ByType.csv.gz")
 )
 
 # save minimised fit obj as .rds file
 saveRDS(
   fit_min, 
-  paste0(save_loc, "TMBObjects_DistrictAgeTime_ByType_OOS.rds")
+  paste0(save_loc, "TMBObjects_DistrictAgeTime_ByType.rds")
 )
 rm(fit_min); gc()
 
@@ -330,7 +330,7 @@ lapply(seq_along(age_vars$inputs), function(i) {
         file = paste0(
             save_loc, "Results_",
             age_vars$names[[i]], "_", stringr::str_to_title(types[j]),
-            "_OOS.csv.gz"
+            ".csv.gz"
         )
     )
 
