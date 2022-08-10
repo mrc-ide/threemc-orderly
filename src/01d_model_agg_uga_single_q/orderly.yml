@@ -2,18 +2,13 @@ script: script.R
 
 artefacts:
  - data:
-      description:
-      - Details surveys used and removed
-      filenames:
-      - artefacts/used_survey_info.csv
- - data:
       description: naomi fit object
       filenames:
-      - artefacts/TMBObjects_DistrictAgeTime_ByType_OOS.rds
+      - artefacts/TMBObjects_DistrictAgeTime_ByType.rds
  - data:
       description: Modelling results for area level of interest, including quantiles
       filenames:
-      - artefacts/Results_DistrictAgeTime_ByType_OOS.csv.gz
+      - artefacts/Results_DistrictAgeTime_ByType.csv.gz
  - staticgraph:
       description: Plot of circumcision coverage for all areas modelled.
       filenames:
@@ -26,19 +21,18 @@ artefacts:
       description: 
       - Aggregated Probabilities of Circumcision for Age Groups
       filenames: 
-      - artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+      - artefacts/Results_AgeGroup_Probability.csv.gz
  - data:
       description: 
       - Aggregated Circumcision Incidences for Age Groups
       filenames: 
-      - artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
+      - artefacts/Results_AgeGroup_Incidence.csv.gz
  - data:
       description: 
       - Aggregated Circumcision Prevalences for Age Groups
       filenames: 
-      - artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz 
+      - artefacts/Results_AgeGroup_Prevalence.csv.gz 
       
-  
 displayname: |
   - Fit model and perform aggregations while removing the most recent survey 
   from the data. The aim is to perform an out-of-sample validation, whereby we 

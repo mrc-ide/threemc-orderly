@@ -65,9 +65,6 @@ if (length(area_lev) == 0) {
 survey_circumcision <- survey_circumcision %>% 
   mutate(survey_year = as.numeric(substr(survey_circumcision$survey_id, 4, 7)))
 
-#### Remove Specified Question Col ####
-survey_circumcision[[rm_question]] <- NA_character_
-
 #### Preparing circumcision data ####
 
 # pull latest census year from survey_id
@@ -98,6 +95,11 @@ if (all(is.na(survey_circumcision$circ_who) &
   is_type <- FALSE
 } else is_type <- TRUE
 
+#### Remove Specified Question Col ####
+
+survey_circumcision[[rm_question]][
+  survey_circumcision[[rm_question]] == "traditional"
+] <- NA
 
 #### Shell dataset to estimate empirical rate ####
 
@@ -131,30 +133,8 @@ out <- create_shell_dataset(
   circ                = "indweight_st"
 )
 
-# temporary fix required due to missing populations for ETH and MOZ
-if (cntry %in% c("ETH", "MOZ")) {
-    missing_pop_areas <- out %>%
-        filter(is.na(population)) %>%
-        distinct(area_id) %>%
-        pull()
-    if (length(missing_pop_areas) > 0) {
-        message(paste0(
-            paste(missing_pop_areas, collapse = ", "),
-            " are missing populations, and will be removed"
-        ))
-        # remove areas with missing populations, change "space" accordingly
-        areas <- areas %>%
-            filter(!area_id %in% missing_pop_areas) %>%
-            mutate(space = 1:n())
-        out <- out %>%
-            filter(!is.na(population)) %>%
-            left_join(areas %>%
-                          select(area_id, space_new = space),
-                      by = "area_id") %>%
-            mutate(space = space_new) %>%
-            select(-space_new)
-    }
-}
+# may help model to fit?
+# out <- out %>% filter(area_level == area_lev)
 
 
 #### Dataset for modelling ####
