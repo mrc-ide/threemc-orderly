@@ -14,7 +14,7 @@ remote:
       prefix: threemc
       token: $ORDERLYWEB_GITHUB_TOKEN
     primary: true
-    master_only: true
+    default_branch_only: true
     
   fertility-web:
     driver: orderlyweb::orderlyweb_remote
@@ -23,7 +23,7 @@ remote:
       port: 443
       prefix: fertility
       token: $ORDERLYWEB_GITHUB_TOKEN
-    master_only: true
+    default_branch_only: true
   
   fertility:
     driver: orderly.sharepoint::orderly_remote_sharepoint
@@ -39,7 +39,7 @@ remote:
       port: 443
       prefix: naomi 
       token: $ORDERLYWEB_GITHUB_TOKEN
-    master_only: true
+    default_branch_only: true
       
   naomi:
     driver: orderly.sharepoint::orderly_remote_sharepoint
