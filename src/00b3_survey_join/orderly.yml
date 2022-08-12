@@ -14,6 +14,11 @@ artefacts:
 
 displayname: Join survey data, including MICS surveys. 
 
+# parameter to remove surveys we don't have permission to publish (2020 PHIAs) 
+parameters:
+  is_paper:
+    default: TRUE
+
 packages:
   - threemc
   - sf
@@ -21,6 +26,11 @@ packages:
   - dplyr
   - readr
   - stringr
+  
+global_resources: 
+ depends/uga2020phia.csv.gz: uga2020phia.csv.gz
+ depends/bwa2008bais.csv.gz: bwa2008bais.csv.gz
+ depends/bwa2013bais.csv.gz: bwa2013bais.csv.gz
 
 depends:
   # 00a_create_area_data:

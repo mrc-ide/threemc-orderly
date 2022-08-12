@@ -23,6 +23,8 @@ displayname: threemc model fit
 parameters:
   cntry:
     default: ~
+  is_paper:
+    default: TRUE
 
 packages:
   - threemc
@@ -47,7 +49,7 @@ depends:
         depends/areas.geojson: artefacts/areas.geojson
   # surveys
   - 00b3_survey_join:
-      id: latest
+      id: latest(parameter:is_paper == is_paper)
       use: 
         depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
   # populations

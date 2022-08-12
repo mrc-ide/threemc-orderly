@@ -1,7 +1,7 @@
 
 #' Note: requires branch mrc-ide/naomi.utils@sexbehav-vars-jeff
 #'
-stopifnot(packageVersion("naomi.utils") >= "0.1.1")
+stopifnot(packageVersion("naomi.utils") >= "0.1.11")
 
 areas <- read_sf("depends/areas.geojson")
 areas <- st_drop_geometry(areas)
@@ -99,6 +99,10 @@ get_age_groups_custom <- function() {
 
 environment(get_age_groups_custom) <- asNamespace("naomi")
 assignInNamespace("get_age_groups", get_age_groups_custom, ns = "naomi")
+
+if (is.null(mc.cores)) {
+    mc.cores <- if(.Platform$OS.type == "windows") 1 else parallel::detectCores()
+}
 
 survey_circ_coverage <- calc_survey_indicators(
   survey_meta,

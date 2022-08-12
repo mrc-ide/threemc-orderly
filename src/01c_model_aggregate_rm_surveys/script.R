@@ -1,85 +1,36 @@
+#### Part 1 of Analysis (Modelling) with functionalised behaviour ####
+
+#################
 #### Initial ####
+#################
 
-## Want to gain intuition on how variance hyperparameters effect error bounds ##
-## for model fit ##
-# Also fixing correlation hyperparameters as well!
+### Metadata to run the models
 
-# directory to pull dependencies from
-dir_path <- "depends/"
-# save locations
-save_loc <- "artefacts/"
-save_loc_mod <- paste0(save_loc, "models/")
-save_loc_agg <- paste0(save_loc, "aggregations/")
-# ensure save locs exists
-create_dirs_r(save_loc)
-create_dirs_r(save_loc_mod)
-create_dirs_r(save_loc_agg)
+# !! Change this to use dataset stored in threemc
+k_dt <- 5 # Age knot spacing
+start_year <-  2006
+if(cntry == "LBR") cens_age <- 29 else cens_age <- 59
+N <- 1000
 
+# Revert to using planar rather than spherical geometry in `sf`
+sf::sf_use_s2(FALSE)
 
-# initial hyperparameters for each modelled country
-# init_hyperparameters <- readr::read_csv("data/threemc_hyperpars.csv")
-init_hyperparameters <- readr::read_csv(paste0(dir_path, "threemc_hyperpars.csv"))
-
-# Median variance time hyperpars for countries with the widest error bounds
-# (for circumcision rate) (which are ZWE, NAM, UGA, ZMB, MOZ):
-#logsigma_time_mmc = 0.32550794 (vs -0.05520797 for all countries)
-# logsigma_agetime_mmc = 1.82913044 (vs 0.21878839)
-# logsigma_spacetime_mmc = -2.30655943 (vs -2.09773799)
-# corr: ?
-test_hyperparameters <- init_hyperparameters %>%
-  filter(iso3 %in% c("ZWE", "NAM", "UGA", "ZMB", "MOZ")) %>%
-  # select(contains("logsigma") & contains("time_mmc")) %>%
-  select(
-    (contains("logsigma") & contains("time_mmc")) | # var hyperpars
-      (contains("logitrho_mmc_time"))
-  ) %>%
-  summarise(across(everything(), median, na.rm = TRUE)) %>%
-  # convert to vector
-  tidyr::pivot_longer(everything()) %>%
-  tibble::deframe()
-
-test_hyperparameters <- round(test_hyperparameters, 9) # ensure hyperparams are known
+# save loc
+save_dir <- "artefacts/"
+threemc::create_dirs_r(save_dir) # ensure save_dir exists; create if not
 
 # remove circumcisions with missing type?
 rm_missing_type <- FALSE
 
-#### Metadata to run the models ####
-# set country
-# cntry <- "MWI"
-
-k_dt <- 5 # Age knot spacing
-start_year <-  2006
-cens_age <- 59
-N <- 1000
-
-#### Reading in data ####
-# Revert to using planar rather than spherical geometry in `sf`
-sf::sf_use_s2(FALSE)
-
-# Updated to redefine space here. Previously space variable reset within
-# area_level. However, as we will be estimating the rates/coverage across
-# multiple admin boundaries (area_level) internally in the model, this needs
-# to be reset so that the hazard/integration matrices can distinguish between
-# areas/area_levels
-
 # read in data, filter for specific country and male surveys only
 filters <- c("iso3" = cntry, sex = "male")
-areas_orig <- areas <- read_circ_data(paste0(dir_path, "areas.geojson"), filters)
-areas <- areas %>%
+areas_orig <- areas <- read_circ_data("depends/areas.geojson", filters) 
+
+areas <- areas %>% 
   dplyr::mutate(space = 1:dplyr::n()) # add space column to areas
-survey_circumcision <- read_circ_data(
-  paste0(dir_path, "survey_circumcision.csv.gz"),
-  filters
-)
-
-if (all(is.na(survey_circumcision$circ_who))) {
-  stop("No type distinction for this country, OOS validation non-applicable")
-}
-
-populations <- read_circ_data(
-  paste0(dir_path, "population_singleage_aggr.csv.gz"),
-  filters
-)
+areas <- st_make_valid(areas) 
+survey_circumcision <- read_circ_data("depends/survey_circumcision.csv.gz", filters)
+populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
 
 # pull recommended area hierarchy for target country
 area_lev <- threemc::datapack_psnu_area_level %>%
@@ -94,6 +45,20 @@ if (length(area_lev) == 0) {
   area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
 }
+
+# remove certain surveys 
+rm_surveys <- unlist(stringr::str_split(rm_surveys, pattern = "<--->"))
+survey_circumcision <- survey_circumcision %>% 
+  filter(!survey_id %in% rm_surveys)
+
+# save used and unused surveys
+used_surveys <- paste(unique(survey_circumcision$survey_id), collapse = ", ")
+survey_info <- data.frame(
+  "used_surveys" = used_surveys,
+  "removed_surveys" = paste(rm_surveys, collapse = ", ")
+)
+readr::write_csv(survey_info, paste0(save_dir, "used_survey_info.csv"))
+  
 
 #### Preparing circumcision data ####
 # pull latest census year from survey_id
@@ -130,6 +95,25 @@ if (all(is.na(survey_circumcision$circ_who) &
 
 # Skeleton dataset
 
+# Shell dataset creation changed in the following ways:
+#    1) Single age population counts are now added to the output data set.
+#       This is needed early on, as we will be aggregating the estimated
+#       probabilities and cumulative incidence from the model on the district
+#       level in order to include survey data not on the district level (or
+#       administrative level of interest). These will be weighted by population.
+#    2) Now produced for multiple levels of area_level. Function sets
+#       up the shell dataset for all admin boundaries between national (admin 0)
+#       and the district level (or administrative level of interest) rather
+#       than letting survey_circumcision dictate one level of interest
+#
+# The internal aggregating to get the obs_mmc etc. still works as the functions
+# now uses the new "space" variable defined above. These functions treat each
+# "space" as a stratification variable and therefore self-contained. This has
+# implications later where we have to specify the administrative boundaries
+# we are primarily modelling on.
+
+# TODO: Some countries only have the single age population on the aggregation
+# of interest so will need to be changed as we roll this update out.
 out <- create_shell_dataset(
   survey_circumcision = survey_circumcision,
   population_data     = populations,
@@ -142,7 +126,32 @@ out <- create_shell_dataset(
   circ                = "indweight_st"
 )
 
-#### Dataset & setup for modelling ####
+#### Dataset for modelling ####
+
+# # temporary fix required due to missing populations for ETH and MOZ
+# if (cntry %in% c("ETH", "MOZ")) {
+#     missing_pop_areas <- out %>%
+#         filter(is.na(population)) %>%
+#         distinct(area_id) %>%
+#         pull()
+#     if (length(missing_pop_areas) > 0) {
+#         message(paste0(
+#             paste(missing_pop_areas, collapse = ", "),
+#             " are missing populations, and will be removed"
+#         ))
+#         # remove areas with missing populations, change "space" accordingly
+#         areas <- areas %>%
+#             filter(!area_id %in% missing_pop_areas) %>%
+#             mutate(space = 1:n())
+#         out <- out %>%
+#             filter(!is.na(population)) %>%
+#             left_join(areas %>%
+#                           select(area_id, space_new = space),
+#                       by = "area_id") %>%
+#             mutate(space = space_new) %>%
+#             select(-space_new)
+#     }
+# }
 
 dat_tmb <- threemc_prepare_model_data(
   out        = out,
@@ -154,13 +163,14 @@ dat_tmb <- threemc_prepare_model_data(
 )
 
 
+#### Modelling circumcision probabilites ####
 # specify TMB model
 if (is_type == TRUE) {
   mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
 } else mod <- "Surv_SpaceAgeTime"
 
 # Initial values
-parameters_init <- parameters <- with(
+parameters <- with(
   dat_tmb,
   list(
     # intercept
@@ -203,24 +213,10 @@ parameters_init <- parameters <- with(
   )
 )
 
-#### Comparison Fits ####
-
-# set time variance hyperparameters to "test" values
-param_order <- names(parameters)
-parameters <- parameters[!names(parameters) %in% names(test_hyperparameters)]
-parameters <- c(parameters, as.list(test_hyperparameters))
-# reorder to correct, original ordering
-parameters <- parameters[match(param_order, names(parameters))]
-
-# hold time variance hyperparameters fixed!!
-maps <- lapply(rep(NA, length(test_hyperparameters)), factor)
-names(maps) <- names(test_hyperparameters)
-
 fit <- threemc_fit_model(
   dat_tmb    = dat_tmb,
   mod        = mod,
   parameters = parameters,
-  maps = maps,
   randoms    = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
                  "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
                  "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
@@ -228,70 +224,90 @@ fit <- threemc_fit_model(
 )
 
 # subset to specific area level and calculate quantiles for rates and hazard
-results <- compute_quantiles(out, fit, area_lev = area_lev)
+out_spec <- compute_quantiles(out, fit, area_lev = area_lev)
+
+
+#### saving results ####
+
+# prepare for output
+out_spec <- out_spec %>%
+  select(
+    area_id, area_name, area_level, year, age = circ_age,
+    contains("obs"),
+    cens, icens, N,
+    contains("rate_mmc"), contains("rate_tmc"), contains("rate"),
+    contains("surv"),
+    contains("cum_inc_mmc"), contains("cum_inc_tmc"), contains("cum_inc"),
+    contains("inc_mmc"), contains("inc_tmc"), contains("inc")
+  )
 
 # minimise fit object for saving
 fit_save <- minimise_fit_obj(fit, dat_tmb, parameters)
 
+# Saving results
 data.table::fwrite(
-  results,
-  file = paste0(save_loc_mod, "Results_DistrictAgeTime_ByType_test.csv.gz")
+  out_spec, file = paste0(save_dir, "Results_DistrictAgeTime_ByType.csv.gz")
 )
-saveRDS(
-  fit_save,
-  file = paste0(save_loc_mod, "TMBObjects_DistrictAgeTime_ByType_test.rds")
-)
+
+# save fit as .rds file
+saveRDS(fit_save, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
+rm(fit_save); gc()
 
 #### Aggregations ####
 
-# load shapefile
-areas <- areas_orig %>%
+areas <- areas_orig %>% 
   # Add a unique identifier within Admin code and merging to boundaries
   sf::st_drop_geometry() %>%
   group_by(area_level) %>%
   mutate(space = row_number()) %>%
   ungroup()
 
-# Model with Probability of MC
-
-results$model <- "No program data"
-# "small" model fit object
-# fit <- readRDS(paste0(
-#   mod_loc, "02_", cntry, "_TMBObjects_DistrictAgeTime_ByType_test.rds"
-# ))
+# re-sample from model, if required (shouldn't be!)
+if (is.null(fit$sample)) {
+  fit <- threemc_fit_model(
+    fit     = fit,
+    mod     = mod,
+    randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
+                "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
+                "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
+    N       = 1000
+  )
+}
 
 fit_no_prog <- fit
 rm(fit); gc()
 
-## Aggregating ##
-
-# want to aggregate for both discrete ages and "binned" age groups (only need groups)
-age_vars <- list("inputs" = c("age_group"), "names" = c("AgeGroup"))
-# want to aggregate for various
+# want to aggregate for both discrete ages and "binned" age groups
+age_vars <- list("inputs" = c("age", "age_group"), "names" = c("Age", "AgeGroup"))
+# want to aggregate for various types
 types <- c("probability", "incidence", "prevalence")
 
 # run aggregations for each combination of age_vars and types
+# aggregations <- lapply(seq_along(age_vars$inputs), function(i) {
 lapply(seq_along(age_vars$inputs), function(i) {
   lapply(seq_along(types), function(j) {
-    spec_results <-  threemc_aggregate(
-      .data       = results,
+    spec_results <- threemc_aggregate(
+      .data       = out_spec,
       fit         = fit_no_prog,
       areas       = areas,
       populations = populations,
       age_var     = age_vars$inputs[[i]],
       type        = types[j],
       area_lev = area_lev,
-      N = N,
+      N = 100,
       prev_year = 2008 # year to compare with for prevalence
     )
     readr::write_csv(
       x = spec_results,
       file = paste0(
-        save_loc_agg, "Results_",
+        save_dir, "Results_",
         age_vars$names[[i]], "_", stringr::str_to_title(types[j]),
-        "_test.csv.gz"
+        ".csv.gz"
       )
     )
+    
     rm(spec_results); gc()
   })
 })
+
+
