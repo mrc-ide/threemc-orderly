@@ -11,6 +11,7 @@ k_dt <- 5 # Age knot spacing
 start_year <-  2006
 if(cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
+forecast_year <- 2021
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
@@ -54,7 +55,7 @@ cens_year <- max(as.numeric(
 survey_circumcision <- prepare_survey_data(
   areas               = areas,
   # remove area_level column to avoid duplicating columns in prepare_survey_data
-  survey_circumcision = select(survey_circumcision, -area_level),
+  survey_circumcision = select(survey_circumcision, -matches("area_level")),
   area_lev            = area_lev,
   start_year          = start_year,
   cens_year           = cens_year,
@@ -96,13 +97,16 @@ if (all(is.na(survey_circumcision$circ_who) &
 # implications later where we have to specify the administrative boundaries
 # we are primarily modelling on.
 
-# TODO: Some countries only have the single age population on the aggregation
-# of interest so will need to be changed as we roll this update out.
+# take start year for skeleton dataset from surveys 
+start_year <- min(as.numeric(substr(survey_circumcision$survey_id, 4, 7)))
+
 out <- create_shell_dataset(
   survey_circumcision = survey_circumcision,
   population_data     = populations,
   areas               = areas,
   area_lev            = area_lev,
+  start_year          = start_year,
+  end_year            = forecast_year,
   time1               = "time1",
   time2               = "time2",
   strat               = "space",
