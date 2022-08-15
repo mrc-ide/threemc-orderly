@@ -1,0 +1,96 @@
+script: script.R
+
+artefacts:
+ # - data:
+ #      description:
+ #      - Details surveys used and removed
+ #      filenames:
+ #      - artefacts/used_survey_info.csv
+ # - data:
+ #      description: naomi fit object
+ #      filenames:
+ #      - artefacts/TMBObjects_DistrictAgeTime_ByType_OOS.rds
+ # - data:
+ #      description: Modelling results for area level of interest, including quantiles
+ #      filenames:
+ #      - artefacts/Results_DistrictAgeTime_ByType_OOS.csv.gz
+ # - staticgraph:
+ #      description: Plot of circumcision coverage for all areas modelled.
+ #      filenames:
+ #      - artefacts/Circ_Coverage.pdf
+ # - staticgraph:
+ #      description: Plot of circumcision rates for all areas modelled.
+ #      filenames:
+ #      - artefacts/Circ_Rates.pdf
+ # - data:
+ #      description: 
+ #      - Aggregated Probabilities of Circumcision for Age Groups
+ #      filenames: 
+ #      - artefacts/Results_AgeGroup_Probability_OOS.csv.gz
+ # - data:
+ #      description: 
+ #      - Aggregated Circumcision Incidences for Age Groups
+ #      filenames: 
+ #      - artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
+ - data:
+      description:
+      - 1000 samples from posterior for each respective observation in survey points. 
+      filenames:
+      - artefacts/ppd.csv.gz
+ - data:
+      description:
+      - Position of sample points within posterior predictive samples. 
+      filenames:
+      - artefacts/ppd_quant_pos.csv.gz
+      
+  
+displayname: |
+  - Posterior predictive distribution from Out of Sample Validation, for 
+  each survey point for prevalence, at four-year age groups. 
+
+parameters:
+  cntry:
+    default: ~
+    
+sources: 
+  - source.R
+
+packages:
+  - threemc
+  - sf
+  - data.table
+  - dplyr
+  - Matrix
+  - TMB
+  - rlang
+  - ggplot2
+  
+# move to pull from 00 orderly task series
+# global_resources:
+#   depends/areas.geojson: areas.geojson
+#   depends/survey_circumcision.csv.gz: survey_circumcision.csv.gz
+#   depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
+
+depends:
+  # areas file
+  - 00a2_areas_join:
+      id: latest
+      use:
+        depends/areas.geojson: artefacts/areas.geojson
+  # populations
+  - 00c4_pops_aggregate:
+      id: latest
+      use: 
+        depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
+  # survey prevalence points
+  - 00b4_survey_indicators:
+      id: latest 
+      use: 
+        depends/survey-circumcision-coverage.csv.gz: artefacts/survey-circumcision-coverage.csv.gz
+  # OOS validation fit
+  - val_00a_oos_validation:
+      id: latest(parameter:cntry == cntry)
+      use:
+        depends/used_survey_info.csv: artefacts/used_survey_info.csv
+        depends/TMBObjects_DistrictAgeTime_ByType_OOS.rds: artefacts/TMBObjects_DistrictAgeTime_ByType_OOS.rds
+        depends/Results_DistrictAgeTime_ByType_OOS.csv.gz: artefacts/Results_DistrictAgeTime_ByType_OOS.csv.gz
