@@ -22,9 +22,10 @@ rm_missing_type <- FALSE
 cntry <- "UGA"
 
 k_dt <- 5 # Age knot spacing
-start_year <-  2006
+start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
+forecast_year <- 2021
 
 #### Reading in data ####
 
@@ -67,10 +68,11 @@ survey_circumcision <- survey_circumcision %>%
 
 #### Preparing circumcision data ####
 
-# pull latest census year from survey_id
-cens_year <- max(as.numeric(
-  substr(unique(survey_circumcision$survey_id), 4, 7)
-))
+# pull latest and first census year from survey_id
+survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
+
+cens_year <- max(survey_years)
+start_year <- max(min(survey_years), start_year) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circumcision <- prepare_survey_data(
@@ -121,11 +123,16 @@ survey_circumcision[[rm_question]][
 # "space" as a stratification variable and therefore self-contained. This has
 # implications later where we have to specify the administrative boundaries
 # we are primarily modelling on.
+# take start year for skeleton dataset from surveys 
+start_year <- min(as.numeric(substr(survey_circumcision$survey_id, 4, 7)))
+
 out <- create_shell_dataset(
   survey_circumcision = survey_circumcision,
   population_data     = populations,
   areas               = areas,
   area_lev            = area_lev,
+  start_year          = start_year,
+  end_year            = forecast_year,
   time1               = "time1",
   time2               = "time2",
   strat               = "space",
