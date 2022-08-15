@@ -2796,7 +2796,7 @@ plt_empirical_model_rates <- function(
 #### OOS & Investigating Variance #### 
 
 # plots vs year, should allow it to plot vs age group as well!
-val_plt <- function(
+threemc_val_plt <- function(
     df_results_oos, 
     df_results_orig = NULL,
     df_results_survey = NULL, 
@@ -2831,11 +2831,13 @@ val_plt <- function(
   # title <- "test"
   # n_plots <- 12
   
-  if (!is.null(df_results_orig)) {
+  if (!is.null(df_results_orig) && !"indicator" %in% names(df_results_orig)) {
     df_results_oos <- bind_rows(
       mutate(df_results_oos, indicator = "OOS"),
       mutate(df_results_orig, indicator = "Original"),
     ) 
+  } else if (!is.null(df_results_orig)) {
+    df_results_oos <- bind_rows(df_results_oos, df_results_orig)
   }
   
   # filter data accordingly (need to add more arguments to this)
@@ -2860,7 +2862,9 @@ val_plt <- function(
       filter(area_name %in% df_results_oos$area_name)
   }
   
-  if (nrow(df_results_survey) == 0) df_results_survey <- NULL
+  if (!is.null(df_results_survey) && nrow(df_results_survey) == 0) {
+    df_results_survey <- NULL
+  }
   
   # convert to the log scale if desired
   if (take_log == TRUE) {
@@ -2883,6 +2887,11 @@ val_plt <- function(
     df_results_oos <- add_last_surveys(df_results_oos, all_surveys_orig, add_rows = TRUE)
     if(!is.null(df_results_survey)) {
       df_results_survey <- add_last_surveys(df_results_survey, all_surveys_orig, add_rows = TRUE)
+    }
+  } else {
+    df_results_oos$light <- "Surveyed"
+    if(!is.null(df_results_survey)) {
+      df_results_survey$light <- "Surveyed"
     }
   }
   
@@ -2937,7 +2946,6 @@ val_plt <- function(
       # scale_alpha_manual(
       #   values = c("Surveyed" = 0.8, "Projected" = 0.3)
       # )
-      
       if (!is.null(df_results_survey)) {
         p <- p + 
           # survey points (want clear points for surveys not included)
