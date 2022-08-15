@@ -99,9 +99,11 @@ if (all(is.na(survey_circumcision$circ_who) &
 
 #### Remove Specified Question Col ####
 
-survey_circumcision[[rm_question]][
-  survey_circumcision[[rm_question]] == "traditional"
-] <- NA
+# survey_circumcision[[rm_question]][
+#   survey_circumcision[[rm_question]] == "traditional"
+# ] <- NA
+survey_circumcision[[rm_question]] <- NA
+
 
 #### Shell dataset to estimate empirical rate ####
 
