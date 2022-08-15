@@ -1,46 +1,31 @@
 #### Posterior Predictive Check (Prevalence) ####
 
-#### Initial ####
+#### Preliminaries ####
 
-# directory to pull dependencies from
-dir_path <- "depends/"
-# save location
-save_loc <- "artefacts/"
-# ensure save loc exists
-create_dirs_r(save_loc)
+# save loc
+save_dir <- "artefacts/"
+threemc::create_dirs_r(save_dir) # ensure save_dir exists; create if not
+N <- 1000 # number of samples to take from posterior
 
-# age groups (should really make a 45-59 age group)
-spec_age_groups <- c("15-29", "15-49", "25-49", "30-49", "50-54", "55-59")
-
-# remove circumcisions with missing type?
-rm_missing_type <- FALSE
-
-
-#### Metadata to run the models ####
-
-# set country
-# cntry <- "MWI"
-
-k_dt <- 5 # Age knot spacing
-start_year <-  2006
-if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
-N <- 1000
-
-#### Reading in data ####
-
-# Revert to using planar rather than spherical geometry in `sf`
-sf::sf_use_s2(FALSE)
-
-# read in data, filter for specific country and male surveys only
-filters <- c("iso3" = cntry, sex = "male")
-areas <- read_circ_data(paste0(dir_path, "areas.geojson"), filters) %>%
-  dplyr::mutate(space = 1:dplyr::n()) # add space column to areas
-survey_circumcision <- read_circ_data(
-  paste0(dir_path, "survey_circumcision.csv.gz"), filters
+spec_age_groups <- c(
+  "0-4", "5-9", "10-14", "15-19", 
+  "20-24", "25-29", "30-34", "35-39", 
+  "40-44", "45-49", "50-54", "54-59"
 )
-populations <- read_circ_data(
-  paste0(dir_path, "population_singleage_aggr.csv.gz"), filters
-)
+
+
+#### Preparing location/shapefile information ####
+
+# load shapefile
+areas <- read_circ_data(
+  path    = "depends/areas.geojson",
+  filters = c("iso3" = cntry)
+  ) %>%
+  # Add a unique identifier within Admin code and merging to boundaries
+  sf::st_drop_geometry() %>%
+  group_by(area_level) %>%
+  mutate(space = row_number()) %>%
+  ungroup()
 
 # also take wide areas
 areas_wide <- sf::st_drop_geometry(areas) %>% 
@@ -49,10 +34,17 @@ areas_wide <- sf::st_drop_geometry(areas) %>%
   )) %>%
   spread_areas(space = FALSE)
 
+# load populations
+populations <- read_circ_data(
+  "depends/population_singleage_aggr.csv.gz",
+  filters = c("iso3" = cntry, "sex" = "male")
+)
+
 # Load survey points
 survey_estimates <- read_circ_data(
-  paste0(dir_path, "survey-circumcision-coverage.csv.gz"), filters
+  "depends/survey-circumcision-coverage.csv.gz"
 ) %>% 
+  filter(iso3 == cntry) %>% 
   rename(
     year = survey_mid_calendar_quarter,
     mean = estimate,
@@ -87,207 +79,36 @@ if (length(area_lev) == 0) {
   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
 }
 
-#### remove most recent survey #### 
+# Model with Probability of MC
+out <- read_circ_data("depends/Results_DistrictAgeTime_ByType_OOS.csv.gz")
 
-# If second last survey year is just one year previous, also remove it
+# "small" model fit object 
+fit <- readRDS("depends/TMBObjects_DistrictAgeTime_ByType_OOS.rds")
 
-# add survey year column
-survey_circumcision <- survey_circumcision %>% 
-  mutate(survey_year = as.numeric(substr(survey_id, 4, 7)))
-
-# save original surveys, without removing most recent survey(s)
-survey_circumcision_orig <- survey_circumcision
-
-# find survey years, rm max year (and also second largest year, if appropriate)
-survey_years <- sort(unique(survey_circumcision$survey_year))
-max_years <- max(survey_years)
-if (length(survey_years) > 1) {
-  if ((max_years - survey_years[length(survey_years) - 1]) == 1) {
-    max_years <- c(max_years, max_years - 1)
-  }
-  # record removed surveys
-  removed_surveys <- survey_circumcision %>% 
-    filter(survey_year %in% max_years) %>% 
-    distinct(survey_id) %>% 
-    pull()
-  message("removed surveys: ", paste(removed_surveys, collapse = ", "))
-  survey_circumcision <- survey_circumcision %>% 
-    filter(!survey_year %in% max_years)
+# specify model, depending on whether there is an mmc/tmc split in results
+if (all(out$obs_mmc == 0 & out$obs_tmc == 0)) {
+  mod <- "Surv_SpaceAgeTime"
 } else {
-  # don't continue if there is only one survey available for a country
-  stop(paste0(
-    "Only one survey available for ", 
-    cntry, 
-    ", so OOS Validation not possible")
-  )
-}
-
-# save used and unused surveys
-used_surveys <- paste(unique(survey_circumcision$survey_id), collapse = ", ")
-survey_info <- data.frame(
-  "used_surveys" = used_surveys,
-  "removed_surveys" = removed_surveys
-)
-readr::write_csv(survey_info, paste0(save_loc, "used_survey_info.csv"))
-
-# pull year(s) from removed_surveys
-removed_years <- as.numeric(substr(removed_surveys, 4, 7))
-
-
-#### Preparing circumcision data ####
-
-# perform following for both "OOS" surveys and all surveys
-# survey_circs <- list(survey_circumcision, survey_circumcision_orig)
-# 
-# survey_circs <- lapply(survey_circs, function(x) {
-#   # pull latest census year from survey_id (should I do this???)
-#   cens_year <- max(as.numeric(
-#     substr(unique(x$survey_id), 4, 7)
-#   ))
-#   
-#   # Prepare circ data, and normalise survey weights and apply Kish coefficients.
-#   x <- prepare_survey_data(
-#     areas               = areas,
-#     survey_circumcision = select(x, -matches("area_level")),
-#     area_lev            = area_lev,
-#     start_year          = start_year,
-#     cens_year           = cens_year,
-#     cens_age            = cens_age,
-#     rm_missing_type     = rm_missing_type,
-#     norm_kisk_weights   = TRUE
-#   )
-#   
-#   if (nrow(x) == 0) {
-#     message("no valid surveys at this level") # move inside function!
-#   }
-#   return(x)
-# })
-
-# Prepare circ data, and normalise survey weights and apply Kish coefficients
-cens_year <- max(as.numeric(
-  substr(unique(survey_circumcision$survey_id), 4, 7)
-))
-
-# Prepare circ data, and normalise survey weights and apply Kish coefficients.
-survey_circumcision <- prepare_survey_data(
-      areas               = areas,
-      survey_circumcision = select(survey_circumcision, -matches("area_level")),
-      area_lev            = area_lev,
-      start_year          = start_year,
-      cens_year           = cens_year,
-      cens_age            = cens_age,
-      rm_missing_type     = rm_missing_type,
-      norm_kisk_weights   = TRUE
-    )
-
-if (nrow(survey_circumcision) == 0) {
-  message("no valid surveys at this level") # move inside function!
-}
-
-# include indicator to determine whether there is any type distinction for cntry
-if (all(is.na(survey_circumcision$circ_who) &
-        is.na(survey_circumcision$circ_where))) {
-  print("No type distinction made in valid surveys for this country")
-  is_type <- FALSE
-} else is_type <- TRUE
-
-
-#### Shell dataset to estimate empirical rate ####
-
-# Skeleton dataset for both
-out <- create_shell_dataset(
-  survey_circumcision = survey_circumcision,
-  population_data     = populations,
-  areas               = areas,
-  area_lev            = area_lev,
-  time1               = "time1",
-  time2               = "time2",
-  strat               = "space",
-  age                 = "age",
-  circ                = "indweight_st"
-)
-
-
-#### Dataset for modelling ####
-
-dat_tmb <- threemc_prepare_model_data(
-    out        = out,
-    areas      = areas,
-    area_lev   = area_lev,
-    aggregated = TRUE,
-    weight     = "population",
-    k_dt       = k_dt
-)
-
-
-#### Modelling circumcision probabilites ####
-
-# specify TMB model
-if (is_type == TRUE) {
   mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
-} else mod <- "Surv_SpaceAgeTime"
+}
 
-# Initial values
-parameters <- with(
-  dat_tmb,
-  list(
-    # intercept
-    "u_fixed_mmc"            = rep(-5, ncol(X_fixed_mmc)),
-    "u_fixed_tmc"            = rep(-5, ncol(X_fixed_tmc)),
-    # age random effect
-    "u_age_mmc"              = rep(0, ncol(X_age_mmc)),
-    "u_age_tmc"              = rep(0, ncol(X_age_tmc)),
-    # time random effect for MMC
-    "u_time_mmc"             = rep(0, ncol(X_time_mmc)),
-    # Space random effect (district)
-    "u_space_mmc"            = rep(0, ncol(X_space_mmc)),
-    "u_space_tmc"            = rep(0, ncol(X_space_tmc)),
-    # Interactions for MMC
-    "u_agetime_mmc"          = matrix(0, ncol(X_age_mmc), ncol(X_time_mmc)),
-    "u_agespace_mmc"         = matrix(0, ncol(X_age_mmc), ncol(X_space_mmc)),
-    "u_spacetime_mmc"        = matrix(0, ncol(X_time_mmc), ncol(X_space_mmc)),
-    # Interactions for TMC
-    "u_agespace_tmc"         = matrix(0, ncol(X_age_tmc), ncol(X_space_tmc)),
-    # Autocorrelation parameters for priors
-    # Variance
-    "logsigma_age_mmc"       = 0,
-    "logsigma_time_mmc"      = 0,
-    "logsigma_space_mmc"     = 0,
-    "logsigma_agetime_mmc"   = 0,
-    "logsigma_agespace_mmc"  = 0,
-    "logsigma_spacetime_mmc" = 0,
-    "logsigma_age_tmc"       = 0,
-    "logsigma_space_tmc"     = 0,
-    "logsigma_agespace_tmc"  = 0,
-    # Mean
-    "logitrho_mmc_time1"     = 2,
-    "logitrho_mmc_time2"     = 2,
-    "logitrho_mmc_time3"     = 2,
-    "logitrho_mmc_age1"      = 2,
-    "logitrho_mmc_age2"      = 2,
-    "logitrho_mmc_age3"      = 2,
-    "logitrho_tmc_age1"      = 2,
-    "logitrho_tmc_age2"      = 2
-  )
-)
+# re-sample from model
+if (is.null(fit$sample)) {
+    fit <- threemc_fit_model(
+        fit     = fit,
+        mod     = mod,
+        randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
+                    "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
+                    "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
+        N       = N
+    )
+}
 
-fit <- threemc_fit_model(
-    dat_tmb    = dat_tmb,
-    mod        = mod,
-    parameters = parameters,
-    randoms    = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
-                   "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
-                   "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-    N = N
-)
-# saveRDS(fit, "~/imperial_repos/threemc-orderly/swz_fit_temp.RDS")
-# saveRDS(fit, paste0("~/imperial_repos/threemc-orderly/", cntry, "_fit_temp.RDS"))
+# load used survey information
+used_survey_df <- readr::read_csv("depends/used_survey_info.csv")
+# years for removed surveys from OOS validation
+removed_years <- as.numeric(substr(used_survey_df$removed_surveys, 4, 7))
 
-# fit <- readRDS("~/imperial_repos/threemc-orderly/swz_fit_temp.RDS")
-# fit <- readRDS(paste0("~/imperial_repos/threemc-orderly/", cntry, "_fit_temp.RDS"))
-
-# subset to specific area level and calculate quantiles for rates and hazard
-# out_spec <- compute_quantiles(out, fit, area_lev = area_lev)
 
 #### Joining Samples with Results ####
 
@@ -295,7 +116,11 @@ fit <- threemc_fit_model(
 out <- out %>%
   dplyr::filter(.data$area_level == area_lev)
 
-# pull 1000 samples for each desired output from fit
+# join in populations
+out <- out %>% 
+  left_join(select(populations, -c(area_name, area_level)))
+
+# pull N samples for each desired output from fit
 samples <- fit$sample
 # only want "cum_inc" or rates 
 samples <- samples[grepl("cum_inc", names(samples))]
@@ -314,49 +139,34 @@ types_out <- c("MC", "MMC", "TMC")
 out_types <- lapply(types_out, function(x) {
   out_spec <- select(out, area_id:population) # do I need pop? Maybe if aggregating
   n <- length(out_spec)
-  out_spec[, (n +1):(n + 1000)] <- samples[[x]]
+  out_spec[, (n +1):(n + N)] <- samples[[x]]
   out_spec <- out_spec %>% 
     mutate(indicator = x)
-    # filter(out_spec, year %in% removed_years)
+  # filter(out_spec, year %in% removed_years)
 }) %>% 
   bind_rows() %>% 
   # only take years of interest, in which surveys were removed from model data
   filter(year %in% removed_years, area_level == area_lev) # also modelled lev
 
-#### Add additional area levels ####
-
-# if (all(as.numeric(substr(out_types$area_id, 5, 5)) > 1)) {
-#   
-#   keep_cols <- c("indicator", "circ_age", names(out_types)[grepl("^V", names(out_types))])
-#   
-#   # collect data for lower area hierarchies by joining higher area
-#   # hierarchies (until you reach "area 0")
-#   out_types <- threemc:::combine_areas(
-#     out_types, 
-#     areas_wide, 
-#     area_lev, 
-#     add_keep_cols = keep_cols,
-#     join = FALSE
-#   )
-# } else out_types <- list(out_types)
-out_types <- list(out_types)
-
 
 #### Aggregate to Age Groups #### 
 
 # change col names to work in aggregate_sample_age_group
-out_types <- lapply(out_types, function(x) {
-  names(x)[grepl("V", names(x))] <- paste0("samp_", 1:1000)
-  return(rename(x, type = indicator))
-})
+# out_types <- lapply(out_types, function(x) {
+#   names(x)[grepl("V", names(x))] <- paste0("samp_", 1:N)
+#   return(rename(x, type = indicator))
+# })
+
+names(out_types)[grepl("V", names(out_types))] <- paste0("samp_", 1:N)
+out_types <- rename(out_types, type = indicator)
 
 out_types_agegroup <- threemc:::aggregate_sample_age_group(
-  out_types,
+  list(out_types),
   aggr_cols = c(
     "area_id", "area_name", "area_level", "year", "type"
   ), 
   age_groups = spec_age_groups, 
-  N = 1000
+  N = N
 ) %>% 
   rename(indicator = type) %>% # rename to match survey points df
   relocate(age_group, .before = samp_1) %>% # have sample cols last 
@@ -383,39 +193,37 @@ survey_estimates_ppd <- survey_estimates_prep %>%
   left_join(out_types_agegroup)
 
 # save for later analysis
-readr::write_csv(survey_estimates_ppd, "artefacts/ppd.csv.gz")
+readr::write_csv(survey_estimates_ppd, file.path(save_dir, "ppd.csv.gz"))
+
 
 #### Calculating Posterior Predictive Check for Prevalence Estimations ####
 
 # function to calculate where in model sample prevalence dist empirical rates are
-# quant_pos_sum <- function(y, x) if (y < x) 0 else 1
-# 
-# survey_estimates_ppd_dist <- survey_estimates_ppd %>% 
-#   relocate(mean, .before = samp_1) %>% 
-#   group_by(across(area_id:area_level)) %>% 
-#   rowwise() %>% 
-#  summarise(
-#   quant_pos = sum(across(starts_with("samp_"), ~quant_pos_sum(
-#     mean, .x
-#   ))),
-#   .groups = "drop"
-#  )
-# 
-# # Investigate 0s 
-# survey_estimates_ppd %>% 
-#   semi_join(filter(survey_estimates_ppd_dist, quant_pos == 0)) %>% 
-#   select(mean, contains("samp")) %>% 
-#   tidyr::pivot_longer(cols = contains("samp")) %>% 
-#   filter(mean > value)  
-# 
-# # investigate 1000s (lots for ZAF!)
-# survey_estimates_ppd %>% 
-#   semi_join(filter(survey_estimates_ppd_dist, quant_pos == 1000)) %>% 
-#   select(mean, contains("samp")) %>% 
-#   tidyr::pivot_longer(cols = contains("samp")) %>% 
-#   filter(mean < value)  
+quant_pos_sum <- function(y, x) if (y < x) 0 else 1
+ 
+survey_estimates_ppd_dist <- survey_estimates_ppd %>% 
+  relocate(mean, .before = samp_1) %>%
+  group_by(across(area_id:area_level)) %>%
+  rowwise() %>%
+ summarise(
+  quant_pos = sum(across(starts_with("samp_"), ~quant_pos_sum(
+    mean, .x
+  ))),
+  .groups = "drop"
+ )
 
-# No rows!! What could I be doing wrong here??? Or does my model just genuinely 
-# poor fit for SWZ at Region level?? Consult Shiny app!
-# Seems that OOS fit is quite good for younger ages, but declines for older people 
-# Check TMC and MMC too!
+# calculate percentage of samples within 95% CI from PPD
+x <- survey_estimates_ppd_dist$quant_pos
+x <- sum(x >= 0.025 * N & x <= 0.975 * N) / length(x)
+print(paste0(
+  "Percentage of survey points which fall within posterior predictive",
+  " distribution 95% CI: ", 
+  round(x * 100, 2), 
+  "%"
+))
+
+# also save
+readr::write_csv(
+  survey_estimates_ppd_dist, 
+  file.path(save_dir, "ppd_quant_pos.csv.gz")
+)
