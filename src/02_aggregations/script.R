@@ -1,8 +1,5 @@
 #### Preliminaries ####
 
-# Number of samples to use
-N <- 100
-
 # save loc
 save_dir <- "artefacts/"
 threemc::create_dirs_r(save_dir) # ensure save_dir exists; create if not
@@ -47,7 +44,7 @@ if (is.null(fit$sample)) {
         randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
                     "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
                     "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-        N       = 1000
+        N       = N
     )
 }
 

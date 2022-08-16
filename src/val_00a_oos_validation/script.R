@@ -21,7 +21,6 @@ rm_missing_type <- FALSE
 k_dt <- 5 # Age knot spacing
 start_year <-  2006
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
-N <- 1000
 forecast_year <- 2021
 paed_age_cutoff <- 10
 
@@ -246,7 +245,7 @@ fit <- threemc_fit_model(
     randoms    = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
                    "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
                    "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-    N = N
+    N          = N
 )
 
 # subset to specific area level and calculate quantiles for rates and hazard
@@ -336,7 +335,7 @@ if (is.null(fit$sample)) {
     randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
                 "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
                 "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-    N       = 1000
+    N       = N
   )
 }
 

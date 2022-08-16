@@ -50,7 +50,6 @@ rm_missing_type <- FALSE
 k_dt <- 5 # Age knot spacing
 start_year <-  2006
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
-N <- 1000
 forecase_date <- 2021
 paed_age_cutoff <- 10
 
