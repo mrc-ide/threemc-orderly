@@ -102,7 +102,7 @@ populations <- populations %>%
 area_lev <- 1
 
 #### Preparing circumcision data ####
-# pull latest census year from survey_id
+# pull latest censoring year from survey_id
 cens_year <- max(as.numeric(
   substr(unique(survey_circumcision$survey_id), 4, 7)
 ))

@@ -615,7 +615,7 @@ plt_coverage_map <- function(
                                  breaks = seq(0, 1, by = 0.1),
                                  limits = c(0, 1),
                                  label = scales::label_percent(accuracy = 1),
-                                 guide = guide_colorbar(label = TRUE,
+                                 guide = guide_colourbar(label = TRUE,
                                                         draw.ulim = TRUE,
                                                         draw.llim = TRUE,
                                                         frame.colour = "black",
@@ -933,7 +933,7 @@ plt_area_facet_coverage <- function(
                                                                NA_character_)),
                                            fontface = "bold",
                                            vjust = 0,
-                                           color = "grey30",
+                                           colour = "grey30",
                                            size = 6,
                                            nudge_y = 0.02,
                                            show.legend = FALSE)) +
@@ -946,7 +946,7 @@ plt_area_facet_coverage <- function(
                                                                NA_character_)),
                                            fontface = "bold",
                                            vjust = 0,
-                                           color = "grey30",
+                                           colour = "grey30",
                                            size = 6,
                                            nudge_y = 0.02,
                                            show.legend = FALSE)) +
@@ -1196,18 +1196,18 @@ plt_circ_age_ridge <- function(
                        y = area_name,
                        height = density,
                        fill = type,
-                       color = type)) +
+                       colour = type)) +
               ggridges::geom_density_ridges(
                 stat = "identity",
                 scale = 1,
                 alpha = 0.7,
-                color = NA
+                colour = NA
               )  +
               # Adding average age of circumcision
               geom_point(data = plt_data2,
                          aes(x = average_age,
                              y = as.integer(area_name) - 0.05,
-                             color = type),
+                             colour = type),
                          inherit.aes = FALSE,
                          show.legend = FALSE) +
               # Adding uncertainty interval of average age of circumcision
@@ -1216,7 +1216,7 @@ plt_circ_age_ridge <- function(
                                xend = average_age_upper,
                                y = as.integer(area_name) - 0.05,
                                yend = as.integer(area_name) - 0.05,
-                               color = type),
+                               colour = type),
                            inherit.aes = FALSE,
                            show.legend = FALSE) +
               # Colour palette
@@ -1230,7 +1230,7 @@ plt_circ_age_ridge <- function(
               ggtitle(spec_title) +
               labs(y = NULL,
                    x = "Age at circumcision",
-                   color = NULL,
+                   colour = NULL,
                    fill = NULL) +
               # Changing plot themes
               theme(
@@ -2465,7 +2465,7 @@ plt_coverage_year_national <- function(
         fontface = "bold",
         # vjust = 0,
         nudge_x = 1,
-        color = "grey30",
+        colour = "grey30",
         # size = 6,
         size = 6,
         # size = 17,
@@ -2494,7 +2494,7 @@ plt_coverage_year_national <- function(
         # vjust = 0,
         # vjust = 1,
         nudge_x = -1,
-        color = "grey30",
+        colour = "grey30",
         # size = 6,
         # size = 17,
         size = 6,
@@ -2796,7 +2796,7 @@ plt_empirical_model_rates <- function(
 #### OOS & Investigating Variance #### 
 
 # plots vs year, should allow it to plot vs age group as well!
-val_plt <- function(
+threemc_val_plt <- function(
     df_results_oos, 
     df_results_orig = NULL,
     df_results_survey = NULL, 
@@ -2831,11 +2831,13 @@ val_plt <- function(
   # title <- "test"
   # n_plots <- 12
   
-  if (!is.null(df_results_orig)) {
+  if (!is.null(df_results_orig) && !"indicator" %in% names(df_results_orig)) {
     df_results_oos <- bind_rows(
       mutate(df_results_oos, indicator = "OOS"),
       mutate(df_results_orig, indicator = "Original"),
     ) 
+  } else if (!is.null(df_results_orig)) {
+    df_results_oos <- bind_rows(df_results_oos, df_results_orig)
   }
   
   # filter data accordingly (need to add more arguments to this)
@@ -2860,7 +2862,9 @@ val_plt <- function(
       filter(area_name %in% df_results_oos$area_name)
   }
   
-  if (nrow(df_results_survey) == 0) df_results_survey <- NULL
+  if (!is.null(df_results_survey) && nrow(df_results_survey) == 0) {
+    df_results_survey <- NULL
+  }
   
   # convert to the log scale if desired
   if (take_log == TRUE) {
@@ -2883,6 +2887,11 @@ val_plt <- function(
     df_results_oos <- add_last_surveys(df_results_oos, all_surveys_orig, add_rows = TRUE)
     if(!is.null(df_results_survey)) {
       df_results_survey <- add_last_surveys(df_results_survey, all_surveys_orig, add_rows = TRUE)
+    }
+  } else {
+    df_results_oos$light <- "Surveyed"
+    if(!is.null(df_results_survey)) {
+      df_results_survey$light <- "Surveyed"
     }
   }
   
@@ -2937,7 +2946,6 @@ val_plt <- function(
       # scale_alpha_manual(
       #   values = c("Surveyed" = 0.8, "Projected" = 0.3)
       # )
-      
       if (!is.null(df_results_survey)) {
         p <- p + 
           # survey points (want clear points for surveys not included)

@@ -51,6 +51,7 @@ k_dt <- 5 # Age knot spacing
 start_year <-  2006
 cens_age <- 59
 N <- 1000
+forecase_date <- 2021
 
 #### Reading in data ####
 # Revert to using planar rather than spherical geometry in `sf`
@@ -96,10 +97,12 @@ if (length(area_lev) == 0) {
 }
 
 #### Preparing circumcision data ####
-# pull latest census year from survey_id
-cens_year <- max(as.numeric(
-  substr(unique(survey_circumcision$survey_id), 4, 7)
-))
+# pull latest and first censoring year from survey_id
+survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
+
+cens_year <- max(survey_years)
+start_year <- max(min(survey_years), start_year) # have lower bound on start
+
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circumcision <- prepare_survey_data(
@@ -128,20 +131,21 @@ if (all(is.na(survey_circumcision$circ_who) &
 
 #### Shell dataset to estimate empirical rate ####
 
-# Skeleton dataset
+start_year <- min(as.numeric(substr(survey_circumcision$survey_id, 4, 7)))
 
 out <- create_shell_dataset(
   survey_circumcision = survey_circumcision,
   population_data     = populations,
   areas               = areas,
   area_lev            = area_lev,
+  start_year          = start_year,
+  end_year            = forecast_year,
   time1               = "time1",
   time2               = "time2",
   strat               = "space",
   age                 = "age",
   circ                = "indweight_st"
 )
-
 #### Dataset & setup for modelling ####
 
 dat_tmb <- threemc_prepare_model_data(
