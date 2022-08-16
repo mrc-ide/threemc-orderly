@@ -34,7 +34,7 @@ survey_circumcision <- read_circ_data("depends/survey_circumcision.csv.gz", filt
 populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
 
 #### Preparing circumcision data ####
-# pull latest and first census year from survey_id
+# pull latest and first censoring year from survey_id
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 
 cens_year <- max(survey_years)

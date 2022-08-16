@@ -22,6 +22,7 @@ k_dt <- 5 # Age knot spacing
 start_year <-  2006
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
+forecast_year <- 2021
 
 #### Reading in data ####
 
@@ -95,14 +96,16 @@ readr::write_csv(survey_info, paste0(save_loc, "used_survey_info.csv"))
 
 #### Preparing circumcision data ####
 
-# pull latest census year from survey_id
-cens_year <- max(as.numeric(
-  substr(unique(survey_circumcision$survey_id), 4, 7)
-))
+# pull latest and first censoring year from survey_id
+survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
+
+cens_year <- max(survey_years)
+start_year <- max(min(survey_years), start_year) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circumcision <- prepare_survey_data(
   areas               = areas,
+  # remove area_level column to avoid duplicating columns in prepare_survey_data
   survey_circumcision = select(survey_circumcision, -matches("area_level")),
   area_lev            = area_lev,
   start_year          = start_year,
@@ -128,27 +131,16 @@ if (all(is.na(survey_circumcision$circ_who) &
 
 # Skeleton dataset
 
-# Shell dataset creation changed in the following ways:
-#    1) Single age population counts are now added to the output data set.
-#       This is needed early on, as we will be aggregating the estimated
-#       probabilities and cumulative incidence from the model on the district
-#       level in order to include survey data not on the district level (or
-#       administrative level of interest). These will be weighted by population.
-#    2) Now produced for multiple levels of area_level. Function sets
-#       up the shell dataset for all admin boundaries between national (admin 0)
-#       and the district level (or administrative level of interest) rather
-#       than letting survey_circumcision dictate one level of interest
-#
-# The internal aggregating to get the obs_mmc etc. still works as the functions
-# now uses the new "space" variable defined above. These functions treat each
-# "space" as a stratification variable and therefore self-contained. This has
-# implications later where we have to specify the administrative boundaries
-# we are primarily modelling on.
+# take start year for skeleton dataset from surveys 
+start_year <- min(as.numeric(substr(survey_circumcision$survey_id, 4, 7)))
+
 out <- create_shell_dataset(
   survey_circumcision = survey_circumcision,
   population_data     = populations,
   areas               = areas,
   area_lev            = area_lev,
+  start_year          = start_year,
+  end_year            = forecast_year,
   time1               = "time1",
   time2               = "time2",
   strat               = "space",
