@@ -22,9 +22,8 @@ age_groups <- c(
 rm_missing_type <- FALSE
 
 k_dt <- 5 # Age knot spacing
-start_year <-  2006
+start_year <-  2002
 cens_age <- 59
-N <- 1000
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
@@ -89,12 +88,12 @@ if (length(area_lev) == 0) {
 
 #### Process Data #### 
 
+
 # pull latest and first censoring year from survey_id
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 
 cens_year <- max(survey_years)
 start_year <- max(min(survey_years), start_year) # have lower bound on start
-
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 results <- threemc::prepare_survey_data(

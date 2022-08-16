@@ -9,8 +9,7 @@
 # !! Change this to use dataset stored in threemc
 k_dt <- 5 # Age knot spacing
 start_year <-  2002
-if(cntry == "LBR") cens_age <- 29 else cens_age <- 59
-N <- 1000
+if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 forecast_year <- 2021
 paed_age_cutoff <- 10
 
@@ -249,7 +248,7 @@ if (is.null(fit$sample)) {
     randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
                 "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
                 "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-    N       = 1000
+    N       = N
   )
 }
 
@@ -272,8 +271,8 @@ lapply(seq_along(age_vars$inputs), function(i) {
       populations = populations,
       age_var     = age_vars$inputs[[i]],
       type        = types[j],
-      area_lev = area_lev,
-      N = 100,
+      area_lev    = area_lev,
+      N           = N,
       prev_year = 2008 # year to compare with for prevalence
     )
     readr::write_csv(

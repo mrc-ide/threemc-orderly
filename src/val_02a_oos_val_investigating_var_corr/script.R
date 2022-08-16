@@ -49,7 +49,6 @@ rm_missing_type <- FALSE
 k_dt <- 5 # Age knot spacing
 start_year <-  2006
 cens_age <- 59
-N <- 1000
 forecast_date <- 2021
 paed_age_cutoff <- 10
 

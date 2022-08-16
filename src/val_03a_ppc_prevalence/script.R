@@ -5,7 +5,6 @@
 # save loc
 save_dir <- "artefacts/"
 threemc::create_dirs_r(save_dir) # ensure save_dir exists; create if not
-N <- 1000 # number of samples to take from posterior
 
 spec_age_groups <- c(
   "0-4", "5-9", "10-14", "15-19", 

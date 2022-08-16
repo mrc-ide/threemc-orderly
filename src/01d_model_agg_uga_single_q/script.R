@@ -24,7 +24,7 @@ cntry <- "UGA"
 k_dt <- 5 # Age knot spacing
 start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
-N <- 1000
+0
 forecast_year <- 2021
 paed_age_cutoff <- 10
 
@@ -155,7 +155,7 @@ dat_tmb <- threemc_prepare_model_data(
     area_lev        = area_lev,
     aggregated      = TRUE,
     weight          = "population",
-    k_dt            = k_dt
+    k_dt            = k_dt,
     paed_age_cutoff = paed_age_cutoff
 )
 
@@ -308,7 +308,7 @@ if (is.null(fit$sample)) {
     randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
                 "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
                 "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-    N       = 1000
+    N       = N
   )
 }
 

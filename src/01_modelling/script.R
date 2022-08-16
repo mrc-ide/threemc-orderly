@@ -8,7 +8,6 @@
 
 # !! Change this to use dataset stored in threemc
 k_dt <- 5 # Age knot spacing
-# start_year <-  2006
 start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
