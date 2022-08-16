@@ -23,6 +23,7 @@ start_year <-  2006
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
+paed_age_cutoff <- 10
 
 #### Reading in data ####
 
@@ -177,12 +178,13 @@ if (cntry %in% c("ETH", "MOZ")) {
 #### Dataset for modelling ####
 
 dat_tmb <- threemc_prepare_model_data(
-    out        = out,
-    areas      = areas,
-    area_lev   = area_lev,
-    aggregated = TRUE,
-    weight     = "population",
-    k_dt       = k_dt
+    out             = out,
+    areas           = areas,
+    area_lev        = area_lev,
+    aggregated      = TRUE,
+    weight          = "population",
+    k_dt            = k_dt,
+    paed_age_cutoff = paed_age_cutoff
 )
 
 

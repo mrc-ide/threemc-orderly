@@ -51,6 +51,7 @@ start_year <-  2006
 cens_age <- 59
 N <- 1000
 forecast_date <- 2021
+paed_age_cutoff <- 10
 
 #### Reading in data ####
 # Revert to using planar rather than spherical geometry in `sf`
@@ -193,12 +194,13 @@ out <- create_shell_dataset(
 #### Dataset & setup for modelling ####
 
 dat_tmb <- threemc_prepare_model_data(
-  out        = out,
-  areas      = areas,
-  area_lev   = area_lev,
-  aggregated = TRUE,
-  weight     = "population",
-  k_dt       = k_dt
+  out             = out,
+  areas           = areas,
+  area_lev        = area_lev,
+  aggregated      = TRUE,
+  weight          = "population",
+  k_dt            = k_dt
+  paed_age_cutoff = paed_age_cutoff
 )
 
 

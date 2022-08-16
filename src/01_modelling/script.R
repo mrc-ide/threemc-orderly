@@ -10,9 +10,10 @@
 k_dt <- 5 # Age knot spacing
 # start_year <-  2006
 start_year <-  2002
-if(cntry == "LBR") cens_age <- 29 else cens_age <- 59
+if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
+paed_age_cutoff <- 10
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
@@ -118,40 +119,15 @@ out <- create_shell_dataset(
 
 #### Dataset for modelling ####
 
-# # temporary fix required due to missing populations for ETH and MOZ
-# if (cntry %in% c("ETH", "MOZ")) {
-#     missing_pop_areas <- out %>%
-#         filter(is.na(population)) %>%
-#         distinct(area_id) %>%
-#         pull()
-#     if (length(missing_pop_areas) > 0) {
-#         message(paste0(
-#             paste(missing_pop_areas, collapse = ", "),
-#             " are missing populations, and will be removed"
-#         ))
-#         # remove areas with missing populations, change "space" accordingly
-#         areas <- areas %>%
-#             filter(!area_id %in% missing_pop_areas) %>%
-#             mutate(space = 1:n())
-#         out <- out %>%
-#             filter(!is.na(population)) %>%
-#             left_join(areas %>%
-#                           select(area_id, space_new = space),
-#                       by = "area_id") %>%
-#             mutate(space = space_new) %>%
-#             select(-space_new)
-#     }
-# }
-
 dat_tmb <- threemc_prepare_model_data(
-  out        = out,
-  areas      = areas,
-  area_lev   = area_lev,
-  aggregated = TRUE,
-  weight     = "population",
-  k_dt       = k_dt
+  out               = out,
+  areas             = areas,
+  area_lev          = area_lev,
+  aggregated        = TRUE,
+  weight            = "population",
+  k_dt              = k_dt,
+  paed_age_cutoff   = paed_age_cutoff
 )
-
 
 #### Modelling circumcision probabilites ####
 # specify TMB model
