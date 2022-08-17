@@ -15,6 +15,7 @@ remote:
       token: $ORDERLYWEB_GITHUB_TOKEN
     primary: true
     default_branch_only: true
+    default_branch: main
     
   fertility-web:
     driver: orderlyweb::orderlyweb_remote
