@@ -23,7 +23,9 @@ orderly_envir.yml
 runner
 backup
 # don't want to upload data in global, as it is large and may be sensitive
-global
+/global/*
+# except global dir needs to exist for orderly web, so add a palceholder file as an exception
+!/global/placeholder.txt
 .RData
 # don't upload temp files from orderly
 .orderly
