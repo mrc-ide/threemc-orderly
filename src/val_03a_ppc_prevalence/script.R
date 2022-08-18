@@ -88,7 +88,7 @@ fit <- readRDS("depends/TMBObjects_DistrictAgeTime_ByType_OOS.rds")
 if (all(out$obs_mmc == 0 & out$obs_tmc == 0)) {
   mod <- "Surv_SpaceAgeTime"
 } else {
-  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
+  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
 }
 
 # re-sample from model

@@ -132,7 +132,7 @@ dat_tmb <- threemc_prepare_model_data(
 #### Modelling circumcision probabilites ####
 # specify TMB model
 if (is_type == TRUE) {
-  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
+  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
 } else mod <- "Surv_SpaceAgeTime"
 
 # Initial values
