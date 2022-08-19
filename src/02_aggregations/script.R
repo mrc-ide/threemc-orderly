@@ -41,9 +41,11 @@ if (is.null(fit$sample)) {
     fit <- threemc_fit_model(
         fit     = fit,
         mod     = mod,
-        randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
-                    "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
-                    "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
+        randoms = c(
+          "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+          "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+          "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+        ), 
         N       = N
     )
 }
