@@ -111,7 +111,7 @@ results <- threemc::prepare_survey_data(
 # Create a skeleton dataset for the area level of interest
 results <- threemc::create_shell_dataset(
   survey_circumcision = results,
-  population_data     = populations,
+  populations     = populations,
   areas               = areas,
   area_lev            = area_lev,
   time1               = "time1",

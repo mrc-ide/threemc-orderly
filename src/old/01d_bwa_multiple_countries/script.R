@@ -158,7 +158,7 @@ if (all(is.na(survey_circumcision$circ_who) &
 # of interest so will need to be changed as we roll this update out.
 out <- create_shell_dataset(
   survey_circumcision = survey_circumcision,
-  population_data     = populations,
+  populations     = populations,
   areas               = areas,
   area_lev            = area_lev,
   time1               = "time1",
