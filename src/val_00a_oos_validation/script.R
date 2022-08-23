@@ -138,7 +138,7 @@ start_year <- min(as.numeric(substr(survey_circumcision$survey_id, 4, 7)))
 # create shell dataset from surveys
 out <- create_shell_dataset(
   survey_circumcision = survey_circumcision,
-  population_data     = populations,
+  populations     = populations,
   areas               = areas,
   area_lev            = area_lev,
   start_year          = start_year,

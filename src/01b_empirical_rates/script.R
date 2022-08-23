@@ -106,7 +106,7 @@ survey_circumcision_preprocessed <- threemc::prepare_survey_data(
 # Create a skeleton dataset for the area level of interest
 results <- threemc::create_shell_dataset(
   survey_circumcision = survey_circumcision_preprocessed,
-  population_data     = populations,
+  populations         = populations,
   areas               = areas,
   area_lev            = area_lev,
   time1               = "time1",
@@ -121,7 +121,7 @@ results <- threemc::create_shell_dataset(
 # age/time/area stratum weighted by population 
 # N is the total person years 
 
-results <- results %>% 
+results <- results %>%
   # calculate MC as MC + MMC + TMC
   mutate(
     obs_mc = case_when(
