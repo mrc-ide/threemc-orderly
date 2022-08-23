@@ -129,7 +129,7 @@ dat_tmb <- threemc_prepare_model_data(
   paed_age_cutoff   = paed_age_cutoff
 )
 
-#### Modelling circumcision probabilites ####
+#### Modelling circumcision probabilities ####
 
 # specify TMB model, depending on whether type distinction is available
 if (is_type == TRUE) {
