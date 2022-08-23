@@ -11,9 +11,11 @@ threemc::create_dirs_r(save_loc)
 
 # age groups to aggregate to 
 age_groups <- c(
+  # 5-year age groups from 0 to 60
   "0-4",   "5-9",   "10-14", "15-19",
   "20-24", "25-29", "30-34", "35-39",
   "40-44", "45-49", "50-54", "54-59",
+  # other, wider age groups of interest
   "15-24", "10-24", "15-29", "10-29", 
   "15-39", "10-39", "15-49", "10-49"
 )
@@ -38,16 +40,13 @@ sf::sf_use_s2(FALSE)
 #   "Results_DistrictAgeTime_ByType.csv.gz"
 # ))
 survey_circumcision <- readr::read_csv(file.path(
-  dir_loc, 
-  "survey_circumcision.csv.gz"
+  dir_loc, "survey_circumcision.csv.gz"
 )) %>% 
   filter(iso3 == cntry)
 
 # shapefiles
 areas <- sf::read_sf(file.path(
-  dir_loc, 
-  # "00a2_areas_join/20220621-162124-d75bc170/artefacts/areas.geojson"
-  "areas.geojson"
+  dir_loc, "areas.geojson"
 )) %>% 
   filter(iso3 == cntry)
 
@@ -65,9 +64,7 @@ areas_wide <- sf::st_drop_geometry(areas) %>%
 
 # populations
 populations <- readr::read_csv(file.path(
-  dir_loc, 
-  # "00c4_pops_aggregate/20220628-191440-ede1271e/artefacts/population_singleage_aggr.csv.gz"
-  "population_singleage_aggr.csv.gz"
+  dir_loc, "population_singleage_aggr.csv.gz"
 )) %>% 
   filter(iso3 == cntry)
 
@@ -88,7 +85,6 @@ if (length(area_lev) == 0) {
 
 #### Process Data #### 
 
-
 # pull latest and first censoring year from survey_id
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 
@@ -96,7 +92,7 @@ cens_year <- max(survey_years)
 start_year <- max(min(survey_years), start_year) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
-results <- threemc::prepare_survey_data(
+survey_circumcision_preprocessed <- threemc::prepare_survey_data(
   areas               = areas,
   survey_circumcision = select(survey_circumcision, -contains("area_level")),
   area_lev            = area_lev,
@@ -109,7 +105,7 @@ results <- threemc::prepare_survey_data(
 
 # Create a skeleton dataset for the area level of interest
 results <- threemc::create_shell_dataset(
-  survey_circumcision = results,
+  survey_circumcision = survey_circumcision_preprocessed,
   population_data     = populations,
   areas               = areas,
   area_lev            = area_lev,

@@ -19,7 +19,7 @@ rm_missing_type <- FALSE
 # cntry <- "MWI"
 
 k_dt <- 5 # Age knot spacing
-start_year <-  2006
+start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 forecast_year <- 2021
 paed_age_cutoff <- 10
@@ -54,6 +54,7 @@ if (length(area_lev) == 0) {
   area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
 }
+
 
 #### remove most recent survey #### 
 
@@ -94,6 +95,7 @@ survey_info <- data.frame(
 )
 readr::write_csv(survey_info, paste0(save_loc, "used_survey_info.csv"))
 
+
 #### Preparing circumcision data ####
 
 # pull latest and first censoring year from survey_id
@@ -130,11 +132,10 @@ if (all(is.na(survey_circumcision$circ_who) &
 
 #### Shell dataset to estimate empirical rate ####
 
-# Skeleton dataset
-
 # take start year for skeleton dataset from surveys 
 start_year <- min(as.numeric(substr(survey_circumcision$survey_id, 4, 7)))
 
+# create shell dataset from surveys
 out <- create_shell_dataset(
   survey_circumcision = survey_circumcision,
   population_data     = populations,
@@ -148,31 +149,6 @@ out <- create_shell_dataset(
   age                 = "age",
   circ                = "indweight_st"
 )
-
-# temporary fix required due to missing populations for ETH and MOZ
-if (cntry %in% c("ETH", "MOZ")) {
-    missing_pop_areas <- out %>%
-        filter(is.na(population)) %>%
-        distinct(area_id) %>%
-        pull()
-    if (length(missing_pop_areas) > 0) {
-        message(paste0(
-            paste(missing_pop_areas, collapse = ", "),
-            " are missing populations, and will be removed"
-        ))
-        # remove areas with missing populations, change "space" accordingly
-        areas <- areas %>%
-            filter(!area_id %in% missing_pop_areas) %>%
-            mutate(space = 1:n())
-        out <- out %>%
-            filter(!is.na(population)) %>%
-            left_join(areas %>%
-                          select(area_id, space_new = space),
-                      by = "area_id") %>%
-            mutate(space = space_new) %>%
-            select(-space_new)
-    }
-}
 
 
 #### Dataset for modelling ####
@@ -243,10 +219,12 @@ fit <- threemc_fit_model(
     dat_tmb    = dat_tmb,
     mod        = mod,
     parameters = parameters,
-    randoms    = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
-                   "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
-                   "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-    N          = N
+    randoms    = c(
+      "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+      "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+      "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+    ), 
+    N          = 1000
 )
 
 # subset to specific area level and calculate quantiles for rates and hazard
@@ -333,10 +311,12 @@ if (is.null(fit$sample)) {
   fit <- threemc_fit_model(
     fit     = fit,
     mod     = mod,
-    randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
-                "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
-                "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-    N       = N
+    randoms = c(
+      "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+      "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+      "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+    ), 
+    N       = 1000
   )
 }
 
@@ -360,9 +340,9 @@ lapply(seq_along(age_vars$inputs), function(i) {
       populations = populations,
       age_var     = age_vars$inputs[[i]],
       type        = types[j],
-      area_lev = area_lev,
-      N = N,
-      prev_year = 2008 # year to compare with for prevalence
+      area_lev    = area_lev,
+      N           = N,
+      prev_year   = 2008 # year to compare with for prevalence
     )
     readr::write_csv(
         x = spec_results,

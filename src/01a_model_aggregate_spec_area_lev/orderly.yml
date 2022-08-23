@@ -51,7 +51,7 @@ parameters:
   is_paper:
     default: TRUE
   N: 
-    default: 1000
+    default: 100
 
 packages:
   - threemc

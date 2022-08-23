@@ -47,7 +47,7 @@ rm_missing_type <- FALSE
 # cntry <- "MWI"
 
 k_dt <- 5 # Age knot spacing
-start_year <-  2006
+start_year <-  2002
 cens_age <- 59
 forecast_date <- 2021
 paed_age_cutoff <- 10
@@ -95,13 +95,14 @@ if (length(area_lev) == 0) {
   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
 }
 
+
 #### remove most recent survey #### 
 
 # If second last survey year is just one year previous, also remove it
 
 # add survey year column
 survey_circumcision <- survey_circumcision %>% 
-  mutate(survey_year = as.numeric(substr(survey_circumcision$survey_id, 4, 7)))
+  mutate(survey_year = as.numeric(substr(survey_id, 4, 7)))
 
 # find survey years, rm max year (and also second largest year, if appropriate)
 survey_years <- sort(unique(survey_circumcision$survey_year))
@@ -136,12 +137,12 @@ readr::write_csv(survey_info, paste0(save_loc, "used_survey_info.csv"))
 
 
 #### Preparing circumcision data ####
+
 # pull latest and first censoring year from survey_id
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 
 cens_year <- max(survey_years)
 start_year <- max(min(survey_years), start_year) # have lower bound on start
-
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circumcision <- prepare_survey_data(
@@ -199,7 +200,7 @@ dat_tmb <- threemc_prepare_model_data(
   area_lev        = area_lev,
   aggregated      = TRUE,
   weight          = "population",
-  k_dt            = k_dt
+  k_dt            = k_dt,
   paed_age_cutoff = paed_age_cutoff
 )
 
@@ -270,11 +271,13 @@ fit <- threemc_fit_model(
   dat_tmb    = dat_tmb,
   mod        = mod,
   parameters = parameters,
-  maps = maps,
-  randoms    = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
-                 "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
-                 "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-  N = N
+  maps       = maps,
+  randoms    = c(
+    "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+    "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+    "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+  ), 
+  N          = 1000
 )
 
 # subset to specific area level and calculate quantiles for rates and hazard
@@ -330,9 +333,9 @@ lapply(seq_along(age_vars$inputs), function(i) {
       populations = populations,
       age_var     = age_vars$inputs[[i]],
       type        = types[j],
-      area_lev = area_lev,
-      N = N,
-      prev_year = 2008 # year to compare with for prevalence
+      area_lev    = area_lev,
+      N           = N,
+      prev_year   = 2008 # year to compare with for prevalence
     )
     readr::write_csv(
       x = spec_results,

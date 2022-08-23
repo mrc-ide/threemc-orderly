@@ -47,7 +47,7 @@ parameters:
   rm_question: 
     default: ~
   N: 
-    default: 1000
+    default: 100
 
 packages:
   - threemc

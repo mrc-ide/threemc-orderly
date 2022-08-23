@@ -33,6 +33,7 @@ areas <- st_make_valid(areas)
 survey_circumcision <- read_circ_data("depends/survey_circumcision.csv.gz", filters)
 populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
 
+
 #### Preparing circumcision data ####
 # pull latest and first censoring year from survey_id
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
@@ -68,28 +69,10 @@ if (all(is.na(survey_circumcision$circ_who) &
 
 #### Shell dataset to estimate empirical rate ####
 
-# Skeleton dataset
-
-# Shell dataset creation changed in the following ways:
-#    1) Single age population counts are now added to the output data set.
-#       This is needed early on, as we will be aggregating the estimated
-#       probabilities and cumulative incidence from the model on the district
-#       level in order to include survey data not on the district level (or
-#       administrative level of interest). These will be weighted by population.
-#    2) Now produced for multiple levels of area_level. Function sets
-#       up the shell dataset for all admin boundaries between national (admin 0)
-#       and the district level (or administrative level of interest) rather
-#       than letting survey_circumcision dictate one level of interest
-#
-# The internal aggregating to get the obs_mmc etc. still works as the functions
-# now uses the new "space" variable defined above. These functions treat each
-# "space" as a stratification variable and therefore self-contained. This has
-# implications later where we have to specify the administrative boundaries
-# we are primarily modelling on.
-
 # take start year for skeleton dataset from surveys 
 start_year <- min(as.numeric(substr(survey_circumcision$survey_id, 4, 7)))
 
+# create shell dataset from surveys
 out <- create_shell_dataset(
   survey_circumcision = survey_circumcision,
   population_data     = populations,
@@ -106,38 +89,13 @@ out <- create_shell_dataset(
 
 #### Dataset for modelling ####
 
-# # temporary fix required due to missing populations for ETH and MOZ
-# if (cntry %in% c("ETH", "MOZ")) {
-#     missing_pop_areas <- out %>%
-#         filter(is.na(population)) %>%
-#         distinct(area_id) %>%
-#         pull()
-#     if (length(missing_pop_areas) > 0) {
-#         message(paste0(
-#             paste(missing_pop_areas, collapse = ", "),
-#             " are missing populations, and will be removed"
-#         ))
-#         # remove areas with missing populations, change "space" accordingly
-#         areas <- areas %>%
-#             filter(!area_id %in% missing_pop_areas) %>%
-#             mutate(space = 1:n())
-#         out <- out %>%
-#             filter(!is.na(population)) %>%
-#             left_join(areas %>%
-#                           select(area_id, space_new = space),
-#                       by = "area_id") %>%
-#             mutate(space = space_new) %>%
-#             select(-space_new)
-#     }
-# }
-
 dat_tmb <- threemc_prepare_model_data(
   out             = out,
   areas           = areas,
   area_lev        = area_lev,
   aggregated      = TRUE,
   weight          = "population",
-  k_dt            = k_dt
+  k_dt            = k_dt,
   paed_age_cutoff = paed_age_cutoff
 )
 
@@ -196,10 +154,12 @@ fit <- threemc_fit_model(
   dat_tmb    = dat_tmb,
   mod        = mod,
   parameters = parameters,
-  randoms    = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
-                 "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
-                 "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-  N = N
+  randoms    = c(
+    "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+    "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+    "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+  ),
+  N          = 1000
 )
 
 # subset to specific area level and calculate quantiles for rates and hazard
@@ -246,10 +206,12 @@ if (is.null(fit$sample)) {
   fit <- threemc_fit_model(
     fit     = fit,
     mod     = mod,
-    randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
-                "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
-                "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-    N       = N
+    randoms = c(
+      "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+      "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+      "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+    ),
+    N       = 1000
   )
 }
 
@@ -284,9 +246,6 @@ lapply(seq_along(age_vars$inputs), function(i) {
         ".csv.gz"
       )
     )
-    
     rm(spec_results); gc()
   })
 })
-
-
