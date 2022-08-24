@@ -100,7 +100,7 @@ order_area_name <- function(.data, areas = NULL) {
 
     # join area_sort_order into data
     .data <- .data %>%
-      select(-matches("area_name")) %>% 
+      select(-matches("area_name")) %>%
       left_join(areas, by = c("area_id", "area_name"))
   }
   # get age column present in data
@@ -123,7 +123,7 @@ add_area_info <- function(.data, areas, area_names_from = "areas") {
       area_level, area_level_label, area_sort_order
     ) %>%
     distinct()
-  
+
   # where do we want the area_names column to come from?
   if (area_names_from == "data") {
     areas_join <- select(areas_join, - matches("area_name"))
@@ -182,7 +182,7 @@ plt_mc_coverage_prevalence <- function(
   results_agegroup, areas, spec_age_group, spec_years, area_levels, spec_model,
   main = NULL, str_save = NULL, save_width, save_height, n_plots = 1
   ) {
-  
+
   if (length(spec_years) == 2) {
     spec_years <- spec_years[1]:last(spec_years)
   }
@@ -258,7 +258,7 @@ plt_mc_coverage_prevalence <- function(
 
   # split tmp by area level and number of desired plots
   tmp <- split_area_level(tmp, n_plots = n_plots)
-  
+
   plots <- lapply(tmp, function(a) {
     lapply(a, function(b) {
 
@@ -364,7 +364,7 @@ plt_age_coverage_by_type <- function(
   results_age, areas, spec_years, area_levels, spec_model, spec_ages = c(0, 60),
   main = NULL, str_save = NULL, save_width, save_height, n_plots = 1
 ) {
-  
+
   # Subsetting
   tmp1 <- results_age %>%
     filter(
@@ -505,8 +505,8 @@ plt_age_coverage_by_type <- function(
 # Plot Map (fig 3). Works for multiple or single countries. Multiple can be either as
 # a single plot of SSA (only way currently supported), or faceted by country
 plt_coverage_map <- function(
-    results_agegroup, areas, colourPalette, 
-    spec_age_group, spec_years, spec_model, 
+    results_agegroup, areas, colourPalette,
+    spec_age_group, spec_years, spec_model,
     plot_type, # = c("single", "map", "split"),
     spec_main_title = NULL,
     spec_countries = NULL, results_area_level = NULL, country_area_level = NULL,
@@ -517,7 +517,7 @@ plt_coverage_map <- function(
     # To Do:
     # 1. Maybe add warning if there are missing iso3 codes?
     # 2. Get working for faceted plots for all/several countries (use cowplot)
-  
+
     # if we just want to look at a single country
     if (plot_type == "single" & is.null(spec_countries)) {
         if(is.null(spec_countries)) {
@@ -547,9 +547,9 @@ plt_coverage_map <- function(
         results_agegroup <- results_agegroup %>%
             filter(area_level == results_area_level)
     } else {
-      results_agegroup <- results_agegroup %>% 
-        group_by(iso3) %>% 
-        filter(area_level == max(area_level)) %>% 
+      results_agegroup <- results_agegroup %>%
+        group_by(iso3) %>%
+        filter(area_level == max(area_level)) %>%
         ungroup()
     }
     tmp <- results_agegroup %>%
@@ -561,7 +561,7 @@ plt_coverage_map <- function(
             model ==        spec_model,
             type %in%       c("MC coverage", "MMC coverage", "TMC coverage")
         ) %>%
-        select(-matches("area_name")) %>% 
+        select(-matches("area_name")) %>%
         # Merging to shapefiles
         left_join(areas_join) %>%
         # filter out areas with missing iso3, which cause errors with below
@@ -640,24 +640,24 @@ plt_coverage_map <- function(
             p <- p + facet_wrap(type ~ year)
         }
     }
-    
+
     # Add difference, if specified
     tmp$year <- as.factor(tmp$year)
     if (inc_difference == TRUE) {
-      diff_df <- tmp %>% 
-        arrange(year) %>% 
-        group_split(area_id, model, type, age_group) %>% 
+      diff_df <- tmp %>%
+        arrange(year) %>%
+        group_split(area_id, model, type, age_group) %>%
         purrr::map(~ slice(
           .data = mutate(.x, across(mean:upper, ~ max(0, diff(.)))),
           n()
-        )) %>% 
-        bind_rows() %>% 
+        )) %>%
+        bind_rows() %>%
         mutate(
           # year = paste0("Difference, ", spec_years[1], "-", last(spec_years))
           # year = paste0("% Change, ", spec_years[1], "-", last(spec_years))
           year = "% Change"
         )
-      
+
       tmp <- bind_rows(tmp, diff_df)
     }
 
@@ -676,9 +676,9 @@ plt_coverage_map <- function(
     if (plot_type == "single") {
         areas_plot <- areas_plot %>%
             filter(iso3 %in% tmp$iso3)
-        
+
         plots <- lapply(tmp1, function(x) {
-          
+
             if (is.null(spec_main_title)) {
               spec_main_title_single <- paste(x$iso3[1],
                                               x$type[1],
@@ -689,27 +689,27 @@ plt_coverage_map <- function(
             }
             # ensure change in percentage is last
             if (inc_difference == TRUE) {
-              # ensure change in 
+              # ensure change in
               x$year <- factor(
-                x$year, 
+                x$year,
                 levels = c(
-                  spec_years[1], 
+                  spec_years[1],
                   spec_years[2],
                   # paste0("% Change, ", spec_years[1], "-", last(spec_years))
                   "% Change"
                 )
               )
             }
-          
+
             map_plot(x, areas_plot, colourPalette) +
                 ggtitle(spec_main_title_single)
         })
-        
+
         # insert something to join these plots here!
-        
+
     } else if (plot_type == "map") {
         # create plot for each specific type
-      
+
         plots <- lapply(tmp1, function(x) {
             # change year to factor, to change facet titles
             if (is.null(spec_main_title)) {
@@ -722,9 +722,9 @@ plt_coverage_map <- function(
                                               "year olds"))
             } else {
               x$year <- factor(
-                x$year, 
+                x$year,
                 levels = c(
-                  spec_years[1], 
+                  spec_years[1],
                   spec_years[2],
                   # paste0("% Change, ", spec_years[1], "-", last(spec_years))
                   "% Change"
@@ -733,14 +733,14 @@ plt_coverage_map <- function(
             }
             map_plot(x, areas_plot, colourPalette)
         })
-        
+
         if (!is.null(spec_main_title)) {
           plots <- lapply(plots, function(x) {
             x + ggtitle(spec_main_title)
           })
         }
     } else if (plot_type == "split") {
-      
+
         plots <- lapply(tmp1, function(a) {
             lapply(a, function(b) {
                 spec_areas <- filter(areas_plot, iso3 %in% b$iso3)
@@ -803,7 +803,7 @@ plt_coverage_map <- function(
             plots[[i]] <- plots2
         }
         plots <- rlang::squash(plots)
-        
+
         if (!is.null(spec_main_title)) {
           plots <- lapply(plots, function(x) {
             x + ggtitle(spec_main_title)
@@ -843,7 +843,7 @@ plt_area_facet_coverage <- function(
     save_height = 21,
     n_plots = 12
 ) {
-  
+
     # Subsetting
     tmp <- results_agegroup %>%
         filter(
@@ -1127,7 +1127,7 @@ plt_circ_age_ridge <- function(
     save_height = 7,
     n_plots = 8
 ) {
-    
+
     # temp fix
     if (length(spec_ages) != 31 || !all(spec_ages == 0:30)) {
       spec_ages <- 0:30
@@ -1144,7 +1144,7 @@ plt_circ_age_ridge <- function(
             age %in% spec_ages
             # area_level %in% c(0:1)# ,
             # model == "With program data"
-        ) %>% 
+        ) %>%
     # Getting density for the ridge plot
         # Grouping for normalising
         group_by(area_id, year, type) %>%
@@ -1177,12 +1177,12 @@ plt_circ_age_ridge <- function(
     plots <- lapply(seq_along(tmp), function(i) {
         # lapply(seq_along(tmp[[i]]), function(j) {
           # lapply(seq_along(tmp[[i]][[j]]), function(k) {
-            
+
             # plt_data <- tmp[[i]][[j]][[k]]
             # plt_data2 <- tmp2[[i]][[j]][[k]]
             plt_data <- tmp[[i]]
             plt_data2 <- tmp2[[i]]
-            
+
             spec_title <- paste(
               plt_data$year[1],
               plt_data$iso3[1],
@@ -1190,7 +1190,7 @@ plt_circ_age_ridge <- function(
               plt_data$area_level_label[1],
               sep = ", "
             )
-            
+
             ggplot(plt_data,
                    aes(x = age,
                        y = area_name,
@@ -1247,7 +1247,7 @@ plt_circ_age_ridge <- function(
           # })
         # })
     })
-    
+
     plots <- rlang::squash(plots)
     if (!is.null(str_save)) {
         ggsave(
@@ -1264,9 +1264,9 @@ plt_circ_age_ridge <- function(
 
 #### Plots for comparing survey points with model fit ####
 plt_MC_modelfit_spec_age <- function(
-  df_results, df_results_survey, 
-  mc_type_model, mc_type_survey, 
-  age_per, years, area_level_select = unique(df_results$area_level), 
+  df_results, df_results_survey,
+  mc_type_model, mc_type_survey,
+  age_per, years, area_level_select = unique(df_results$area_level),
   model_type = "No program data",
   facet_vars = "area_name",
   col_fill_vars = "parent_area_name",
@@ -1292,22 +1292,22 @@ plt_MC_modelfit_spec_age <- function(
   df_results_survey <- df_results_survey %>%
       filter(
         area_name %in% df_results$area_name,
-        year %in% df_results$year  
+        year %in% df_results$year
       )
-  
+
   # do the same for model estimates if they don't align with surveys
   if (
-    length(unique(df_results$area_id)) != 
+    length(unique(df_results$area_id)) !=
     length(unique(df_results_survey$area_id))
   ) {
-    message("Area IDs in model estimates and surveys are misaligned") 
+    message("Area IDs in model estimates and surveys are misaligned")
     df_results <- df_results %>%
       filter(
         area_name %in% df_results_survey$area_name # ,
-        # year %in% df_results_survey$year  
+        # year %in% df_results_survey$year
       )
   }
-  
+
   # manipulate facet variables
   # by_expr <- rlang::enexpr(facet_vars)
   # if(length(by_expr) == 1) {
@@ -1316,18 +1316,18 @@ plt_MC_modelfit_spec_age <- function(
   #   args_vars <- as.list(by_expr)[-1]
   # }
   # quoted_args_vars <- sapply(args_vars, rlang::quo_name)
-  
+
   # by <- rlang::enexpr(facet_vars) %>%
   #   tidyselect::eval_select(df_results)
-  
+
   # split results by area level, and number of plots desired
   df_results <- split_area_level(df_results, n_plots = n_plots)
   df_results_survey <- split_area_level(df_results_survey, n_plots = n_plots)
-  
+
   # plot for each (nested) loop
   plots <- lapply(seq_along(df_results), function(i) {
     lapply(seq_along(df_results[[i]]), function(j) {
-      
+
       plt_data1 <- df_results[[i]][[j]]
       plt_data2 <- df_results_survey[[i]][[j]]
 
@@ -1342,7 +1342,7 @@ plt_MC_modelfit_spec_age <- function(
         plt_data1$area_level_label[1],
         sep = ", "
       )
-      
+
       ggplot(plt_data1, aes(x = year)) +
       # ggplot(df_results[[i]], aes(x = year)) +
         # Credible interval
@@ -1358,8 +1358,8 @@ plt_MC_modelfit_spec_age <- function(
         geom_pointrange(
             data = plt_data2,
             aes(
-              y    = mean, 
-              ymin = lower, 
+              y    = mean,
+              ymin = lower,
               ymax = upper,
               col  = age_group
               # col = col_fill_vars
@@ -1373,7 +1373,7 @@ plt_MC_modelfit_spec_age <- function(
         # Faceting by area
         facet_wrap(~ area_name) +
         # facet_wrap(quoted_args_vars) +
-        # facet_wrap(names(by)) + 
+        # facet_wrap(names(by)) +
         scale_x_continuous(breaks = seq(min(plt_data1$year),
         # scale_x_continuous(breaks = seq(min(df_results[[i]]$year),
                                         2021,
@@ -1391,7 +1391,7 @@ plt_MC_modelfit_spec_age <- function(
               legend.position = "bottom")
     })
   })
-  
+
   # flatten nested list of plots
   plots <- rlang::squash(plots)
   if (!is.null(str_save)) {
@@ -1408,25 +1408,25 @@ plt_MC_modelfit_spec_age <- function(
 }
 
 plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
-                            mc_type_survey, 
+                            mc_type_survey,
                             age_per = c(
-                              "0-4",   "5-9",   "10-14", "15-19", "20-24", 
-                              "25-29", "30-34", "35-39", "40-44", 
+                              "0-4",   "5-9",   "10-14", "15-19", "20-24",
+                              "25-29", "30-34", "35-39", "40-44",
                               "45-49", "50-54", "54-59", "60-64"
                             ),
                             survey_years, model_type,
                             area_level_select = unique(df_results$area_level),
                             # area_level_select,
-                            # facet_vars = "area_name", 
+                            # facet_vars = "area_name",
                             # col_fill_vars = "parent_area_name",
                             # for year: "facet", have separate plots ("split"), or "colour"
                             facet_year = "split",
                             xlab, ylab, title,
-                            str_save = NULL, 
-                            save_width = 16, 
-                            save_height = 12, 
+                            str_save = NULL,
+                            save_width = 16,
+                            save_height = 12,
                             n_plots = 12) {
-  
+
   # Preparing dataset for plots
   initial_filter <- function(.data, spec_type) {
     .data <- .data %>%
@@ -1442,26 +1442,26 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   }
   tmp1 <- initial_filter(df_results, mc_type_model)
   tmp2 <- initial_filter(df_results_survey, mc_type_survey)
-  
+
   # make sure surveys and model estimates are aligned
   tmp2 <- tmp2 %>%
     filter(
       area_name %in% tmp1$area_name,
-      year %in% tmp1$year  
+      year %in% tmp1$year
     )
-  
+
   if (
-    length(unique(tmp1$area_id)) != 
+    length(unique(tmp1$area_id)) !=
     length(unique(tmp2$area_id))
   ) {
-    message("Area IDs in model estimates and surveys are misaligned") 
+    message("Area IDs in model estimates and surveys are misaligned")
     tmp1 <- tmp1 %>%
       filter(
         area_name %in% tmp2$area_name,
-        year %in% tmp2$year  
+        year %in% tmp2$year
       )
   }
- 
+
 
   # Ordering age groups (needed??)
   tmp1$age_group <- as.numeric(factor(tmp1$age_group, levels = age_per))
@@ -1470,7 +1470,7 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   # make sure areas are the same for both
   tmp2 <- filter(tmp2, area_name %in% tmp1$area_name)
   tmp1 <- filter(tmp1, year %in% tmp2$year) # make sure years are the same
-  
+
   # replace NAs with "NA" in parent_area_name
   tmp1 <- tmp1 %>%
     mutate(
@@ -1479,13 +1479,13 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
         "NA",
         parent_area_name
       )
-   ) 
-  
+   )
+
   # final label for plot
   final_label <- last(age_per)
   final_label <- as.numeric(stringr::str_split(final_label, "-")[[1]][[2]])
   final_label <- paste0(final_label + 1, "+")
-  
+
   # manipulate facet variables
   # by_expr <- rlang::enexpr(facet_vars)
   # if(length(by_expr) == 1) {
@@ -1494,10 +1494,10 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   #   args_vars <- as.list(by_expr)[-1]
   # }
   # quoted_args_vars <- sapply(args_vars, rlang::quo_name)
-  
+
   # by <- rlang::enexpr(facet_vars) %>%
-  #   tidyselect::eval_select(tmp1) 
-  
+  #   tidyselect::eval_select(tmp1)
+
   # split results by area level, year and number of plots desired
   # if ("year" %in% col_fill_vars) {
   #   year_split <- FALSE
@@ -1507,10 +1507,10 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   } else {
     year_split <- FALSE
   }
-  
+
   tmp1 <- split_area_level(tmp1, year = year_split, n_plots = n_plots)
   tmp2 <- split_area_level(tmp2, year = year_split, n_plots = n_plots)
-  
+
   plot_fun <- function(plt_data1, plt_data2) {
     # get specific title for each plot page
     add_title <- paste(
@@ -1523,22 +1523,41 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
     # if (!"year" %in% col_fill_vars) {
     #   add_title <- paste(add_title, plt_data1$year, sep = ", ")
     # }
-    
+
     if (facet_year == "colour") {
       colour_var <- "year"
     } else {
       colour_var <- "parent_area_id"
     }
-    
-    plt_data1 <- plt_data1 %>% 
+
+    plt_data1 <- plt_data1 %>%
       mutate(
-        parent_area_name = ifelse(
-          is.na(parent_area_name), 
-          "NA", 
-          parent_area_name
+        # parent_area_name = ifelse(
+        #   is.na(parent_area_name),
+        #   "NA",
+        #   parent_area_name
+        # ),
+        parent_area_id = ifelse(
+            is.na(parent_area_id),
+            "NA",
+            parent_area_id
         )
       )
-    
+
+    plt_data2 <- plt_data2 %>%
+        mutate(
+            # parent_area_name = ifelse(
+            #     is.na(parent_area_name),
+            #     "NA",
+            #     parent_area_name
+            # ),
+            parent_area_id = ifelse(
+                is.na(parent_area_id),
+                "NA",
+                parent_area_id
+            )
+        )
+
     p <- ggplot(plt_data1, aes(x = age_group)) +
       # geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(year)),
       geom_ribbon(
@@ -1553,8 +1572,8 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
       geom_pointrange(
         data = plt_data2,
         aes(
-          y      = mean, 
-          ymin   = lower, 
+          y      = mean,
+          ymin   = lower,
           ymax   = upper,
           # colour = as.factor(year)
           colour = as.factor(.data[[colour_var]])
@@ -1567,7 +1586,7 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
       scale_x_continuous(
         breaks = 1:(length(age_per) + 1),
         labels = c(age_per, final_label),
-      ) + 
+      ) +
       scale_y_continuous(breaks = seq(0, 1,  by =  0.2),
                          limits = c(0, 1),
                          labels = scales::label_percent()) +
@@ -1578,10 +1597,10 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
             legend.text = element_text(size = 18),
             axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10),
             legend.position = "bottom")
-      
+
     if (facet_year == "facet") {
       # p <- p + facet_wrap(
-      #   ~area_name + year, 
+      #   ~area_name + year,
       #   nrow = length(survey_years)
       # )
       p <- p + facet_grid(year ~ area_name)
@@ -1592,7 +1611,7 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
     }
     return(p)
   }
-  
+
   recursive_plot_fun <- function(plt_data1, plt_data2, ...) {
     if (!inherits(plt_data1, "data.frame")) {
       lapply(seq_along(plt_data1), function(i) {
@@ -1602,13 +1621,13 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
       plot_fun(plt_data1, plt_data2, ...)
     }
   }
-  
+
   # plot for each (nested) loop
   # plots <- recursive_plot_fun(tmp1, tmp2)
   plots <- lapply(seq_along(tmp1), function(i) {
     recursive_plot_fun(tmp1[[i]], tmp2[[i]])
   })
-  
+
   # flatten nested list of plots
   plots <- rlang::squash(plots)
   # if (!"data.frame" %in% class(plots[[1]][[1]])) {
@@ -1632,7 +1651,7 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
 
 # would make a good function to add to aggregations code! Doesn't work for 0+ though
 change_agegroup_convention <- function(.data) {
-  
+
   lower <- as.numeric(substr(.data$age_group, 3, 4))
   if (all(!is.na(as.numeric(lower)))) {
     upper <- as.numeric(substr(.data$age_group, 7, 8))
@@ -1652,15 +1671,15 @@ initial_filter <- function(.data, col, val) {
 # shamelessly stolen from naomi.utils@sexbehav-vars-jeff, used to calculate
 # credible intervals on the logit scale
 calc_logit_confint <- function(estimate, std_error, tail, conf.level = 0.95) {
-  
+
   stopifnot(length(estimate) == length(std_error))
   stopifnot(tail %in% c("lower", "upper"))
   stopifnot(conf.level > 0 & conf.level < 1)
-  
+
   crit <- qnorm(1 - (1 - conf.level) / 2) * switch(tail, "lower" = -1, "upper" = 1)
   lest <- stats::qlogis(estimate)
   lest_se <- std_error / (estimate * (1 - estimate))
-  
+
   ifelse(estimate < 1 & estimate > 0, stats::plogis(lest + crit * lest_se), NA_real_)
 }
 
@@ -1679,7 +1698,7 @@ plt_dmppt2_compare_year <- function(circ_data,
                                     save_width = NULL,
                                     save_height = NULL,
                                     n_plots = 12) {
-  
+
   # circ_data_test <- circ_data
   # dmppt2_data_test <- dmppt2_data
   # survey_data_test <- survey_data
@@ -1699,7 +1718,7 @@ plt_dmppt2_compare_year <- function(circ_data,
   #     "15-29 Prevalence - ",
   #     "Black line denotes DMPPT2 coverage, Blue dots denote Surveyed coverage - "
   # )
-  
+
   # initial filtering
   cols <- c("age_group", "area_level", "year", "model")
   vals <- list(age_per, area_levels, years, model_type)
@@ -1708,36 +1727,36 @@ plt_dmppt2_compare_year <- function(circ_data,
     dmppt2_data <- initial_filter(dmppt2_data, cols[i], vals[[i]])
     survey_data <- initial_filter(survey_data, cols[i], vals[[i]])
   }
-  
+
   # join data together
   circ_data <- circ_data %>%
     left_join(
-      select(dmppt2_data, 
-             area_id, 
-             year, 
+      select(dmppt2_data,
+             area_id,
+             year,
              age_group,
              dmppt2_circumcision_coverage)
     ) %>%
     left_join(
       select(
-        survey_data, 
-        area_id, 
-        year, 
-        age_group, 
-        p_ind = mean, 
+        survey_data,
+        area_id,
+        year,
+        age_group,
+        p_ind = mean,
         sd_ind = sd
       )
     )
-  
+
   # For LSO, DMPPT2 models medical, not all circumcision
   if (all(circ_data$iso3 == "LSO")) {
-    circ_data <- circ_data %>% 
+    circ_data <- circ_data %>%
       filter(type == "MMC coverage")
   } else {
-    circ_data <- circ_data %>% 
+    circ_data <- circ_data %>%
       filter(type == "MC coverage")
   }
-  
+
   # replace NAs with "NA" in parent_area_name
   circ_data <- circ_data %>%
     mutate(
@@ -1747,16 +1766,16 @@ plt_dmppt2_compare_year <- function(circ_data,
         parent_area_name
       )
     )
-  
+
   # split results by area level, and number of plots desired
   circ_data <- split_area_level(circ_data, n_plots = n_plots)
-  
+
   # plot for each (nested) loop
   plots <- lapply(seq_along(circ_data), function(i) {
     lapply(seq_along(circ_data[[i]]), function(j) {
-      
+
       spec_circ_data <- circ_data[[i]][[j]]
-      
+
       # get specific title for each plot page
       add_title <- paste(
         spec_circ_data$iso3[1],
@@ -1764,7 +1783,7 @@ plt_dmppt2_compare_year <- function(circ_data,
         spec_circ_data$area_level_label[1],
         sep = ", "
       )
-      
+
       p <- ggplot(spec_circ_data, aes(x = year)) +
         # Credible interval
         geom_ribbon(aes(ymin = lower, ymax = upper, fill = parent_area_name),
@@ -1783,7 +1802,7 @@ plt_dmppt2_compare_year <- function(circ_data,
       #     aes(y = p_ind, col = "blue"),
       #     colour = "blue"
       # ) +
-      
+
       if (!all(is.na(spec_circ_data$p_ind))) {
         p <- p +
           geom_pointrange(
@@ -1797,7 +1816,7 @@ plt_dmppt2_compare_year <- function(circ_data,
             colour = "blue"
           )
       }
-      
+
       p <- p +
         # Labels
         labs(x = xlab, y = ylab, colour = "", fill = "Parent Area") +
@@ -1812,7 +1831,7 @@ plt_dmppt2_compare_year <- function(circ_data,
                            label = scales::label_percent(accuracy = 1)) +
         theme_bw() +
         guides(colour = guide_legend(nrow = 2))
-      
+
       # don't add parent area legend for i = j = 1 (country level)
       if (i == 1 & j == 1) {
         p <- p +
@@ -1828,7 +1847,7 @@ plt_dmppt2_compare_year <- function(circ_data,
       return(p)
     })
   })
-  
+
   plots <- rlang::squash(plots)
   if (!is.null(str_save)) {
     # save
@@ -1858,8 +1877,8 @@ plt_dmppt2_compare_age_group <- function(circ_data,
                                          save_width = NULL,
                                          save_height = NULL,
                                          n_plots = 1) {
-  
-  
+
+
   # circ_data_test <- circ_data
   # dmppt2_data_test <-dmppt2_data
   # survey_data_test <- survey_data
@@ -1883,18 +1902,18 @@ plt_dmppt2_compare_age_group <- function(circ_data,
   # save_width = 16
   # save_height = 12
   # n_plots = 6
-  
-  
+
+
   # ensure age_per is ordered properly
   age_per <- age_per[
     order(as.numeric(sapply(stringr::str_split(age_per, "-"), `[[`, 2)))
   ]
-  
+
   # take age above age_per as last label for plot
   final_label <- last(age_per)
   final_label <- as.numeric(stringr::str_split(final_label, "-")[[1]][[2]])
   final_label <- paste0(final_label + 1, "+")
-  
+
   cols <- c("age_group", "area_level", "year", "model")
   vals <- list(age_per, area_levels, years, model_type)
   for (i in seq_along(cols)) {
@@ -1904,16 +1923,16 @@ plt_dmppt2_compare_age_group <- function(circ_data,
                                                              cols[i],
                                                              vals[[i]])
   }
-  
+
   # For LSO, DMPPT2 models medical, not all circumcision
   if (all(circ_data$iso3 == "LSO")) {
-    circ_data <- circ_data %>% 
+    circ_data <- circ_data %>%
       filter(type == "MMC coverage")
   } else {
-    circ_data <- circ_data %>% 
+    circ_data <- circ_data %>%
       filter(type == "MC coverage")
   }
-  
+
   # join data
   circ_data <- circ_data %>%
     left_join((dmppt2_data %>%
@@ -1947,7 +1966,7 @@ plt_dmppt2_compare_age_group <- function(circ_data,
                       levels = c("threemc", "DMPPT2", "Survey"))
     ) %>%
     filter(!is.na(value))
-  
+
   # replace NAs with "NA" in parent_area_name
   circ_data <- circ_data %>%
     mutate(
@@ -1957,26 +1976,26 @@ plt_dmppt2_compare_age_group <- function(circ_data,
         parent_area_name
       )
   )
-  
+
   # split results by area level, year and number of plots desired
   circ_data <- split_area_level(circ_data, year = TRUE, n_plots = n_plots)
-  
+
   # if (n_plots > 1) {
-  #  circ_data <- 
+  #  circ_data <-
   # }
-  
+
   # remove one list level from circ_data
   # circ_data <- purrr::flatten(circ_data)
   # circ_data <- lapply(circ_data, purrr::flatten)
-  
+
   # plot for each (nested) loop
   plots <- lapply(seq_along(circ_data), function(i) { # area
     lapply(seq_along(circ_data[[i]]), function(j) { # year
       lapply(seq_along(circ_data[[i]][[j]]), function(k) { # cap n plots
-        
+
         spec_circ_data <- circ_data[[i]][[j]][[k]]
         # spec_circ_data <- circ_data[[i]][[j]]
-        
+
         # get specific title for each plot page
         add_title <- paste(
           spec_circ_data$iso3[1],
@@ -1985,7 +2004,7 @@ plt_dmppt2_compare_age_group <- function(circ_data,
           spec_circ_data$year[1],
           sep = ", "
         )
-        
+
         # plot barchart for different ages and sources for each area
         ggplot(spec_circ_data,
                aes(x = age_group, y = value, fill = source)) +
@@ -2021,7 +2040,7 @@ plt_dmppt2_compare_age_group <- function(circ_data,
             legend.position = "bottom") +
           facet_wrap(~ area_name)
           # facet_wrap(~ area_name + year)
-        
+
         # ggplot(spec_circ_data, aes(x = age_group)) +
         #     geom_ribbon(aes(ymin = lower, ymax = upper, fill = parent_area_name),
         #                 alpha = 0.75,
@@ -2057,7 +2076,7 @@ plt_dmppt2_compare_age_group <- function(circ_data,
       })
     })
   })
-  
+
   plots <- rlang::squash(plots)
   if (!is.null(str_save)) {
     # save
@@ -2090,7 +2109,7 @@ plt_dmppt2_compare_fits <- function(circ_data,
                                     save_height = NULL,
                                     # n_plots = 1) {
                                     n_plots = 1) {
-  
+
   # circ_data_test <- circ_data
   # dmppt2_data_test <- dmppt2_data
   # circ_data <- circ_data_test
@@ -2107,12 +2126,12 @@ plt_dmppt2_compare_fits <- function(circ_data,
   # title <- xlab <- ylab <- "TEST"
   # save_width = 16
   # save_height = 12
-  
+
   # by default take highest area in dmppt2
   # if (is.null(area_levels)) {
   #     area_levels <- max(dmppt2_data$area_level, na.rm = TRUE)
   # }
-  
+
   # perform initial filtering
   cols <- c("age_group", "area_level", "year", "model")
   vals <- list(age_per, area_levels, years, model_type)
@@ -2120,22 +2139,22 @@ plt_dmppt2_compare_fits <- function(circ_data,
     circ_data <- initial_filter(circ_data, cols[i], vals[[i]])
     dmppt2_data <- initial_filter(dmppt2_data, cols[i], vals[[i]])
   }
-  
+
   # For LSO, DMPPT2 models medical, not all circumcision
   if (all(circ_data$iso3 == "LSO")) {
-    circ_data <- circ_data %>% 
+    circ_data <- circ_data %>%
       filter(type == "MMC coverage")
   } else {
-    circ_data <- circ_data %>% 
+    circ_data <- circ_data %>%
       filter(type == "MC coverage")
   }
-  
+
   # join datasets
   circ_data <- circ_data %>%
     left_join((dmppt2_data %>%
                  select(area_id, year, age_group,
                         dmppt2_circumcision_coverage)))
-  
+
   # replace NAs with "NA" in parent_area_name
   circ_data <- circ_data %>%
     mutate(
@@ -2145,7 +2164,7 @@ plt_dmppt2_compare_fits <- function(circ_data,
         parent_area_name
       )
     )
-  
+
   # split results by area level, year and number of plots desired (no need
   # for area level)
   # circ_data <- purrr::flatten(
@@ -2156,11 +2175,11 @@ plt_dmppt2_compare_fits <- function(circ_data,
   # )
   # don't use n_plots arg here
   circ_data <- purrr::flatten(split_area_level(circ_data, years = TRUE))
-  
+
   plots <- lapply(seq_along(circ_data), function(i) { # area
-    
+
     spec_circ_data <- circ_data[[i]]
-    
+
     # x and y axes labels should be the same, to align abline
     lims <- c(
       min(min(
@@ -2174,7 +2193,7 @@ plt_dmppt2_compare_fits <- function(circ_data,
         na.rm = TRUE), na.rm = TRUE)
     )
     # lims <- c(0, 1)
-    
+
     # get specific title for each plot page
     add_title <- paste(
       spec_circ_data$iso3[1],
@@ -2183,7 +2202,7 @@ plt_dmppt2_compare_fits <- function(circ_data,
       spec_circ_data$year[1],
       sep = ", "
     )
-    
+
     ggplot(spec_circ_data, aes(x = dmppt2_circumcision_coverage)) +
       geom_point(aes(y = mean, col = parent_area_name), size = 3) +
       # geom_errorbar(
@@ -2228,7 +2247,7 @@ plt_dmppt2_compare_fits <- function(circ_data,
         legend.position = "bottom"
       )
   })
-  
+
   # plots <- purrr::flatten(plots)
   # if (!"data.frame" %in% class(plots[[1]][[1]])) {
   #     plots <- purrr::flatten(plots)
@@ -2250,32 +2269,32 @@ plt_dmppt2_compare_fits <- function(circ_data,
 #### Abstract Plot ####
 
 plt_coverage_year_national <- function(
-  results_agegroup, 
-  areas, 
+  results_agegroup,
+  areas,
   last_surveys,
-  spec_age_group, 
-  spec_years, 
+  spec_age_group,
+  spec_years,
   spec_model = "No program data",
   # esa_wca_split = FALSE,
-  main = NULL, 
-  str_save = NULL, 
-  save_width = NULL, 
-  save_height = NULL, 
+  main = NULL,
+  str_save = NULL,
+  save_width = NULL,
+  save_height = NULL,
   n_plots = 1
 ) {
-  
+
   if (length(spec_years) == 2 && (spec_years[2] - spec_years[1]) > 1) {
     message("Changing spec_years to a sequence from the first to last year")
     spec_years <- sort(spec_years)
     spec_years <- spec_years[1]:spec_years[2]
   }
-  
+
   # Subset results
   tmp <- results_agegroup %>%
     filter(
       area_level == 0,
       type     %in% c("MC coverage", "MMC coverage", "TMC coverage"),
-      age_group  == spec_age_group, 
+      age_group  == spec_age_group,
       year     %in% spec_years
     ) %>%
     summary_col_renamer(letter = "y") %>%
@@ -2290,12 +2309,12 @@ plt_coverage_year_national <- function(
                            "Traditional Male Circumcision (TMC)",
                            "Male Circumcision (MC)"))
     )
-  
+
   # add last surveys for each country
   tmp <- tmp %>%
     # left_join(last_surveys, by = "area_id") %>%
     left_join(
-      distinct(select(last_surveys, -matches("iso3"))), 
+      distinct(select(last_surveys, -matches("iso3"))),
       by = c("area_id")
     ) %>%
     # add alpha to plot if the circumcisions are projected
@@ -2306,12 +2325,12 @@ plt_coverage_year_national <- function(
     mutate(light = "Projected")
   tmp <- rbind(tmp, extra_rows) %>%
     arrange(area_id, type, year)
-  
+
   # add in required columns from areas and order area names
-  tmp <- add_area_info(tmp, areas, area_names_from = "data") # 
-  
+  tmp <- add_area_info(tmp, areas, area_names_from = "data") #
+
   if (!is.factor(tmp$area_name)) {
-    tmp <- tmp %>% 
+    tmp <- tmp %>%
       mutate(
         area_name = case_when(
           grepl("Tanzania", area_name)              ~ "Tanzania",
@@ -2322,23 +2341,23 @@ plt_coverage_year_national <- function(
           area_name == "Central African Repulic"    ~ "Cent. Af. Rep.",
           TRUE                                      ~ area_name
         )
-      ) 
+      )
   }
-  
+
   # reorder panels geographically (Roughly West to East, North to South)
   if (!is.factor(tmp$area_name)) {
     ordered_areas <- distinct(tmp, area_id, area_name)
     levs <- c(
       # West Coast and Central as far as Angola
-      "SEN", "GMB", "MLI", "BFA", "NER", "GNB", "GIN", "SLE", "LBR", "CIV", "GHA",  
-      "TGO", "BEN", "NGA", "TCD", "CMR", "CAF", "GNQ", "GAB", "COG", "COD", "AGO", 
+      "SEN", "GMB", "MLI", "BFA", "NER", "GNB", "GIN", "SLE", "LBR", "CIV", "GHA",
+      "TGO", "BEN", "NGA", "TCD", "CMR", "CAF", "GNQ", "GAB", "COG", "COD", "AGO",
       # switching to East Coast and Southern
-      "ETH", "KEN", "UGA", "TZA", "RWA", "BDI", "MOZ", "MWI", "ZMB", "ZWE", "BWA", 
+      "ETH", "KEN", "UGA", "TZA", "RWA", "BDI", "MOZ", "MWI", "ZMB", "ZWE", "BWA",
       "NAM", "ZAF", "SWZ", "LSO"
     )
-    
+
     levs <- levs[levs %in% ordered_areas$area_id]
-    
+
     ordered_areas$area_id <-  factor(
       ordered_areas$area_id,
       levels = levs
@@ -2351,39 +2370,39 @@ plt_coverage_year_national <- function(
       levels = ordered_areas$area_name
     )
   }
-  
+
   # allow for ESA-WCA Split
   # if (esa_wca_split == TRUE) {
-  #   tmp <- tmp %>% 
+  #   tmp <- tmp %>%
   #     left_join(
   #       select(threemc::esa_wca_regions, -matches("four_region")),
   #       by = "iso3"
   #     )
   # }
-  
+
   # data for specific total circumcision, to add to plot labels
   tmp1 <- tmp %>%
-    filter(type == "Male Circumcision (MC)") %>% 
+    filter(type == "Male Circumcision (MC)") %>%
     arrange(area_name)
-  
+
   dat_all <- tmp %>%
     # plot TMC in front of MC, relabel MC to MMC
     filter(
       type != "Male Circumcision (MC)",
       mean.y > 0
     )
-  
+
   missing_type_iso3 <- unique(tmp1$iso3)
   missing_type_iso3 <- missing_type_iso3[!missing_type_iso3 %in% unique(dat_all$iso3)]
   if (length(missing_type_iso3) > 0) {
-    missing_dat_all <- tmp1 %>% 
-      filter(iso3 %in% missing_type_iso3) %>% 
+    missing_dat_all <- tmp1 %>%
+      filter(iso3 %in% missing_type_iso3) %>%
       mutate(type = "Unknown")
     dat_all <- bind_rows(dat_all, missing_dat_all)
   }
-  
-  dat_all <- dat_all %>% 
-    arrange(area_name) %>% 
+
+  dat_all <- dat_all %>%
+    arrange(area_name) %>%
     mutate(
       light = factor(light, levels = c("Surveyed", "Projected")),
       type = case_when(
@@ -2393,10 +2412,10 @@ plt_coverage_year_national <- function(
       ),
       type = forcats::fct_drop(type)
     )
-  
+
   dat_all <- purrr::flatten(split_area_level(dat_all, n_plots = n_plots))
   tmp1 <- purrr::flatten(split_area_level(tmp1, n_plots = n_plots))
-  
+
   if (is.null(main)) {
     spec_title <- paste0(
       "Male Circumcision Coverage, ",
@@ -2404,20 +2423,20 @@ plt_coverage_year_national <- function(
       "-",
       last(spec_years),
       " age ",
-      spec_age_group, 
+      spec_age_group,
       " years"
     )
   } else spec_title <- main
-  
+
   plot_fun <- function(all_data, mc_data, spec_years, spec_age_group, n_plots) {
-    
+
     manual_fill <- wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
-    
+
     # add purple for unknown type, to be in line with map plots
     if ("Unknown" %in% all_data$type) {
       manual_fill <- c(manual_fill, "#5e4fa2")
     }
-    
+
     all_data %>%
       ggplot(
         aes(
@@ -2437,11 +2456,11 @@ plt_coverage_year_national <- function(
       ) +
       # Prevalence as area plot
       geom_area(
-        position = "stack", 
+        position = "stack",
         data = filter(all_data, light == "Surveyed")
       ) +
       geom_area(
-        position = "stack", 
+        position = "stack",
         data = filter(all_data, light == "Projected")
       ) +
       # add alpha and associated legend
@@ -2543,7 +2562,7 @@ plt_coverage_year_national <- function(
         plot.tag = element_text(face = "bold", size = 22)
       )
   }
-  
+
   recursive_plot_fun <- function(all_data, mc_data, ...) {
     if (!inherits(all_data, "data.frame")) {
       lapply(seq_along(all_data), function(i) {
@@ -2553,7 +2572,7 @@ plt_coverage_year_national <- function(
       plot_fun(all_data, mc_data, ...)
     }
   }
-  
+
   # plots <- recursive_plot_fun(dat_all, tmp1, spec_years, spec_age_group, n_plots)
   plots <- lapply(seq_along(dat_all), function(i) {
     recursive_plot_fun(
@@ -2580,28 +2599,28 @@ plt_coverage_year_national <- function(
 #### Function to Plot Empirical vs Modelled Rates ####
 
 plt_empirical_model_rates <- function(
-    results, 
+    results,
     empirical_rates,
     areas = NULL,
     spec_type,
-    # spec_age_groups, 
-    spec_ages = 0:60, 
+    # spec_age_groups,
+    spec_ages = 0:60,
     spec_years,  # from surveys
     spec_area_levels,
     spec_model = "No program data",
     take_log = TRUE,
-    main = NULL, 
-    str_save = NULL, 
-    save_width = NULL, 
-    save_height = NULL, 
-    n_plots = 1    
+    main = NULL,
+    str_save = NULL,
+    save_width = NULL,
+    save_height = NULL,
+    n_plots = 1
 ) {
-  
+
   # temp
   if (grepl("coverage", spec_type)) {
     spec_type <- stringr::str_replace_all(spec_type, "coverage", "probability")
   }
-  
+
   # Preparing dataset for plots
   initial_filter <- function(.data) {
     .data <- .data %>%
@@ -2617,22 +2636,22 @@ plt_empirical_model_rates <- function(
   }
   results <- initial_filter(results)
   empirical_rates <- initial_filter(empirical_rates)
-  
+
   # merge area information
   # if (!is.null(areas)) {
   #   if (inherits(areas, "sf")) {
   #     areas <- sf::st_drop_geometry(areas)
   #   }
-  #   results <- results %>% 
+  #   results <- results %>%
   #     select(-any_of(names(areas)), area_id)
-  #   empirical_rates <- empirical_rates %>% 
+  #   empirical_rates <- empirical_rates %>%
   #     select(-any_of(names(areas)), area_id)
-  #   
+  #
   #   results <- threemc:::merge_area_info(results, areas)
   #   empirical_rates <- threemc:::merge_area_info(empirical_rates, areas)
   # }
-  
-  results <- results %>% 
+
+  results <- results %>%
     mutate(
       type = case_when(
         grepl("MMC", type) ~ "MMC",
@@ -2640,7 +2659,7 @@ plt_empirical_model_rates <- function(
         TRUE               ~ "MC"
       )
     )
-  empirical_rates <- empirical_rates %>% 
+  empirical_rates <- empirical_rates %>%
     mutate(
       type = case_when(
         grepl("MMC", type) ~ "MMC",
@@ -2648,28 +2667,28 @@ plt_empirical_model_rates <- function(
         TRUE               ~ "MC"
       )
     )
-  
+
   spec_type <- unique(results$type)
-  
+
   # make sure surveys and model estimates are aligned
   empirical_rates <- empirical_rates %>%
     filter(
       area_name %in% results$area_name,
-      year %in% results$year  
+      year %in% results$year
     )
-  
+
   if (
-    length(unique(results$area_id)) != 
+    length(unique(results$area_id)) !=
     length(unique(empirical_rates$area_id))
   ) {
-    message("Area IDs in model estimates and survey estimates are misaligned") 
+    message("Area IDs in model estimates and survey estimates are misaligned")
     results <- results %>%
       filter(
         area_name %in% empirical_rates$area_name,
-        year %in% empirical_rates$year  
+        year %in% empirical_rates$year
       )
   }
-  
+
   # Ordering age groups (needed??)
   # results$age_group <- as.numeric(factor(
   #   results$age_group, levels = spec_age_groups
@@ -2677,33 +2696,33 @@ plt_empirical_model_rates <- function(
   # empirical_rates$age_group <- as.numeric(factor(
   #   empirical_rates$age_group, levels = spec_age_groups
   # ))
-  
+
   # make sure areas are the same for both
   empirical_rates <- filter(empirical_rates, area_name %in% results$area_name)
   # make sure years are the same
-  results <- filter(results, year %in% empirical_rates$year) 
-  
+  results <- filter(results, year %in% empirical_rates$year)
+
   # take age above age_groups as last label for plot
   # final_label <- last(spec_age_groups)
   # final_label <- as.numeric(stringr::str_split(final_label, "-")[[1]][[2]])
   # final_label <- paste0(final_label + 1, "+")
-  
+
   if (take_log == TRUE) {
     # results$mean <- log(results$mean)
-    results <- results %>% 
+    results <- results %>%
       mutate(across(mean:upper, log))
     empirical_rates$mean <- log(empirical_rates$mean)
     ylab <- "Log Circumcision Rate (%)"
   } else ylab <- "Circumcision Rate (%)"
-  
+
   # split by area_level & year
   results <- split_area_level(results, year = TRUE, n_plots = n_plots)
   empirical_rates <- split_area_level(empirical_rates, year = TRUE, n_plots = n_plots)
-  
+
   plot_fun <- function(data, emp_data) {
-    
+
     # browser()
-    
+
     add_title <- paste(
       emp_data$iso3[1],
       paste0("area_level: ", data$area_level[1]),
@@ -2712,10 +2731,10 @@ plt_empirical_model_rates <- function(
       data$type[1],
       sep = ", "
     )
-    
+
     data <- mutate(data, indicator = "Model Rates")
     emp_data <- mutate(emp_data, indicator = "Empirical Rates")
-    
+
     p <- data %>%
       ggplot(
         aes(y = mean, fill = indicator, colour = indicator)
@@ -2762,7 +2781,7 @@ plt_empirical_model_rates <- function(
       ) +
       guides(colour = "none")
   }
-  
+
   recursive_plot_fun <- function(data, emp_data, ...) {
     if (!inherits(data, "data.frame")) {
       lapply(seq_along(data), function(i) {
@@ -2772,14 +2791,14 @@ plt_empirical_model_rates <- function(
       plot_fun(data, emp_data, ...)
     }
   }
-  
+
   plots <- lapply(seq_along(results), function(i) {
     recursive_plot_fun(results[[i]], empirical_rates[[i]])
   })
-  
+
   # flatten nested list of plots
   plots <- rlang::squash(plots)
-  
+
   if (!is.null(str_save)) {
     # save
     plots <-  gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
@@ -2793,28 +2812,28 @@ plt_empirical_model_rates <- function(
   }
 }
 
-#### OOS & Investigating Variance #### 
+#### OOS & Investigating Variance ####
 
 # plots vs year, should allow it to plot vs age group as well!
 threemc_val_plt <- function(
-    df_results_oos, 
+    df_results_oos,
     df_results_orig = NULL,
-    df_results_survey = NULL, 
+    df_results_survey = NULL,
     all_surveys,
-    spec_agegroup, 
-    spec_years = unique(df_results_oos$year), 
+    spec_agegroup,
+    spec_years = unique(df_results_oos$year),
     spec_type,
     # take_log = TRUE,
-    spec_area_level = unique(df_results_oos$area_level), 
-    take_log = FALSE, 
+    spec_area_level = unique(df_results_oos$area_level),
+    take_log = FALSE,
     facet = TRUE,
-    xlab, ylab, title, 
-    str_save = NULL, save_width = 16, save_height = 12, 
+    xlab, ylab, title,
+    str_save = NULL, save_width = 16, save_height = 12,
     n_plots = 12
 ) {
-  
+
   # browser()
-  
+
   # df_results_oos <- results_oos_val
   # df_results_orig <- results_agegroup_comparison
   # df_results_survey <- survey_data
@@ -2830,16 +2849,16 @@ threemc_val_plt <- function(
   # ylab <- "test"
   # title <- "test"
   # n_plots <- 12
-  
+
   if (!is.null(df_results_orig) && !"indicator" %in% names(df_results_orig)) {
     df_results_oos <- bind_rows(
       mutate(df_results_oos, indicator = "OOS"),
       mutate(df_results_orig, indicator = "Original"),
-    ) 
+    )
   } else if (!is.null(df_results_orig)) {
     df_results_oos <- bind_rows(df_results_oos, df_results_orig)
   }
-  
+
   # filter data accordingly (need to add more arguments to this)
   initial_filter <- function(.data, type_filter) {
     .data <- .data %>%
@@ -2856,16 +2875,16 @@ threemc_val_plt <- function(
   df_results_oos <- initial_filter(df_results_oos, spec_type)
   if (!is.null(df_results_survey)) {
     df_results_survey <- initial_filter(df_results_survey, spec_type)
-    
+
     # make sure areas are the same for both
     df_results_survey <- df_results_survey %>%
       filter(area_name %in% df_results_oos$area_name)
   }
-  
+
   if (!is.null(df_results_survey) && nrow(df_results_survey) == 0) {
     df_results_survey <- NULL
   }
-  
+
   # convert to the log scale if desired
   if (take_log == TRUE) {
     df_results_oos <- df_results_oos %>%
@@ -2875,14 +2894,14 @@ threemc_val_plt <- function(
         mutate(across(mean:upper, log))
     }
   }
-  
+
   # add alpha/shape column for aggregations and surveys
   if (!is.null(all_surveys)) {
-    all_surveys_orig <- all_surveys %>% 
-      filter(iso3 %in% df_results_oos$iso3) %>% 
-      filter(survey_year == max(survey_year)) %>% 
+    all_surveys_orig <- all_surveys %>%
+      filter(iso3 %in% df_results_oos$iso3) %>%
+      filter(survey_year == max(survey_year)) %>%
       slice(1)
-    
+
     # add "light" column to aggregation and survey results
     df_results_oos <- add_last_surveys(df_results_oos, all_surveys_orig, add_rows = TRUE)
     if(!is.null(df_results_survey)) {
@@ -2894,17 +2913,17 @@ threemc_val_plt <- function(
       df_results_survey$light <- "Surveyed"
     }
   }
-  
+
   # split results by area level, and number of plots desired
   df_results_oos <- split_area_level(df_results_oos, n_plots = n_plots)
   if (!is.null(df_results_survey)) {
     df_results_survey <- split_area_level(df_results_survey, n_plots = n_plots)
   }
-  
+
   # plot for each (nested) loop
   plots <- lapply(seq_along(df_results_oos), function(i) {
     lapply(seq_along(df_results_oos[i]), function(j) {
-      
+
       plt_data1 <- df_results_oos[[i]][[j]]
       if (!is.null(df_results_survey)) {
         plt_data2 <- df_results_survey[[i]][[j]]
@@ -2912,13 +2931,13 @@ threemc_val_plt <- function(
       } # else {
       # plt_data1$alpha <- ifelse(plt_data1$light == "Surveyed", 0.8, 0.3)
       # }
-      
+
       # browser()
-      
+
       if (i == 1 && j == 1) {
         plt_data1$parent_area_name <- NA_character_
       }
-      
+
       # get specific title for each plot page
       add_title <- paste(
         plt_data1$iso3[1],
@@ -2926,11 +2945,11 @@ threemc_val_plt <- function(
         plt_data1$area_level_label[1],
         sep = ", "
       )
-      
+
       if ("indicator" %in% names(plt_data1)) {
         colour_var <- "indicator"
       } else colour_var <- "parent_area_id"
-      
+
       p <- ggplot(plt_data1, aes(x = year)) +
         # Credible interval
         geom_ribbon(
@@ -2947,7 +2966,7 @@ threemc_val_plt <- function(
       #   values = c("Surveyed" = 0.8, "Projected" = 0.3)
       # )
       if (!is.null(df_results_survey)) {
-        p <- p + 
+        p <- p +
           # survey points (want clear points for surveys not included)
           geom_pointrange(
             data = filter(plt_data2, light == "Surveyed"),
@@ -2963,20 +2982,20 @@ threemc_val_plt <- function(
             colour = "black",
             # size = 0.3,
             show.legend = FALSE
-          )  # + 
+          )  # +
         # guides(alpha = "none")
       } else {
-        p <- p + 
+        p <- p +
           scale_alpha_manual(
             values = c("Surveyed" = 0.8, "Projected" = 0.3)
           )
       }
-      p <- p +   
+      p <- p +
         guides(
           alpha = guide_legend(override.aes = list(
             fill = wesanderson::wes_palette("Zissou1", 1)
           ))
-        ) + 
+        ) +
         # Labels
         labs(
           x = xlab,
@@ -2989,8 +3008,8 @@ threemc_val_plt <- function(
         scale_x_continuous(
           breaks = seq(min(plt_data1$year), 2021, by = 2)
         )
-      
-      
+
+
       if (grepl(paste("coverage", "probability", sep = "|") , spec_type) && take_log == FALSE) {
         p <- p +
         scale_y_continuous(
@@ -3002,17 +3021,17 @@ threemc_val_plt <- function(
       p <- p +
         theme_bw() +
         theme(legend.position = "bottom")
-      
+
       if (facet == TRUE) {
         p <- p +
           # Faceting by area
           facet_wrap(~ area_name)
       }
-      
+
       return(p)
     })
   })
-  
+
   # flatten nested list of plots
   plots <- purrr::flatten(plots)
   if (!is.null(str_save)) {
