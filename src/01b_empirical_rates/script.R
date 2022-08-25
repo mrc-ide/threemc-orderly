@@ -25,7 +25,6 @@ age_groups <- c(five_year_age_groups, add_age_groups)
 # remove circumcisions with missing type?
 rm_missing_type <- FALSE
 
-k_dt <- 5 # Age knot spacing
 start_year <-  2002
 forecast_year <- 2021
 cens_age <- 59
@@ -37,30 +36,22 @@ sf::sf_use_s2(FALSE)
 #### Load Data ####
 
 # load surveys
-survey_circumcision <- readr::read_csv(file.path(
+survey_circumcision <- read_circ_data(file.path(
   dir_loc, "survey_circumcision.csv.gz"
 ))
 # load populations
-populations <- readr::read_csv(file.path(
+populations <- read_circ_data(file.path(
   dir_loc, "population_singleage_aggr.csv.gz"
 ))
 
 # load shapefiles
 areas <- sf::read_sf(file.path(
   dir_loc, "areas.geojson"
-))
-# wide formatted areas
-areas_wide <- sf::st_drop_geometry(areas) %>% 
-  dplyr::group_by(.data$area_level) %>%
-  dplyr::mutate(space = dplyr::row_number()) %>%
-  dplyr::ungroup() %>% 
-  dplyr::select(dplyr::all_of(
-    c("iso3", "area_id", "area_name", "parent_area_id", "area_level", "space")
-  )) %>%
-  group_split(iso3) %>% 
-  purrr::map(~ spread_areas(areas = .x, space = FALSE)) %>% 
-  bind_rows()
-
+)) %>% 
+  group_by(iso3) %>% 
+  mutate(space = 1:n()) %>%  # add space column to areas
+  ungroup() %>% 
+  sf::st_make_valid()
 
 #### Process Data #### 
 
@@ -96,15 +87,20 @@ out_list <- lapply(survey_circumcision_preprocessed, function(x) {
     strat               = "space",
     age                 = "age",
     circ                = "indweight_st"
-  ) %>% 
-    filter(area_level == max(x$area_level))
+  )
 })
 
 #### Calculate Empirical Rates from Shell Datasets ####
 
 # calculate empirical rates from these shell datasets
 empirical_rates_list <- lapply(out_list, function(x) {
-  threemc_empirical_rates(x, areas, max(x$area_level), populations, age_groups)
+  threemc_empirical_rates(
+    x, 
+    filter(areas, iso3 == x$area_id[1]), 
+    max(x$area_level), 
+    populations, 
+    age_groups
+  )
 })
 
 # return results
