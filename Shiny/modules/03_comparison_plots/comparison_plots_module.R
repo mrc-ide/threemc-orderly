@@ -41,10 +41,10 @@ comparison_plots_UI <- function(id) {
                   "DMPPT2 - Barchart"                                = "plt_2",
                   "DMPPT2 Coverage vs Model Coverage"                = "plt_3",
                   # Survey Comparison Plots
-                  "Surveys - Coverage vs Year, by Type"              = "plt_4",
-                  "Surveys - Coverage vs Age Group, by Type"         = "plt_5",
-                  # "Surveys - Empirical vs Model Rates, by Age Group" = "plt_6"
-                  "Surveys - Empirical vs Model Rates"               = "plt_6"
+                  "Surveys - Coverage vs Year"                       = "plt_4",
+                  "Surveys - Coverage vs Age Group"                  = "plt_5",
+                  "Surveys - Empirical and Model Rates vs Year"      = "plt_6",
+                  "Surveys - Empirical and Model Rates vs Age Group" = "plt_7"
                 )
               ),
               selectInput(
@@ -67,7 +67,8 @@ comparison_plots_UI <- function(id) {
               conditionalPanel(
                 condition = "input.plot_type == 'plt_4' ||
                 input.plot_type == 'plt_5' || 
-                input.plot_type == 'plt_6'",
+                input.plot_type == 'plt_6' || 
+                input.plot_type == 'plt_7'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("spec_type"),
@@ -79,7 +80,8 @@ comparison_plots_UI <- function(id) {
               conditionalPanel(
                 condition = "input.plot_type == 'plt_4' || 
                 input.plot_type == 'plt_5' || 
-                input.plot_type == 'plt_6'", 
+                input.plot_type == 'plt_6' || 
+                input.plot_type = 'plt_7'", 
                 ns        = ns,
                 selectInput(
                   inputId  = ns("facet_vars"),
@@ -127,7 +129,8 @@ comparison_plots_UI <- function(id) {
                               input.plot_type == 'plt_3' || 
                               input.plot_type == 'plt_4' || 
                               input.plot_type == 'plt_5' || 
-                              input.plot_type == 'plt_6'",
+                              input.plot_type == 'plt_6' ||
+                              input.plot_type == 'plt_7'",
                 ns         = ns,
                 selectInput(
                   inputId  = ns("age_group_multiple"),
@@ -157,7 +160,8 @@ comparison_plots_UI <- function(id) {
                 condition = "input.plot_type == 'plt_2' || 
                 input.plot_type == 'plt_3' || 
                 input.plot_type == 'plt_5' || 
-                input.plot_type == 'plt_6'",
+                input.plot_type == 'plt_6' ||
+                input.plot_type == 'plt_7'",
                 ns        = ns,
                 selectInput(
                   inputId  = ns("year_select"), # also updated below
@@ -272,7 +276,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     req(input$dataset)
     req(input$plot_type)
     
-    if (input$plot_type == "plt_6") {
+    if (input$plot_type %in% c("plt_6", "plt_7")) {
       return(filter(data$results_agegroup_probs, iso3 == input$country))
       # return(filter(data$results_age, iso3 == input$country))
     } else if (input$dataset == "subnational") {
@@ -305,7 +309,7 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
   observe({
     req(circ_data())
     
-    if (input$plot_type == "plt_6") {
+    if (input$plot_type %in% c("plt_6", "plt_7")) {
       choices <- c(
         "Total Circumcision"       = "MC probability",
         "Medical Circumcision"     = "MMC probability",
@@ -456,14 +460,14 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
       plt_years <- sort(unique(c(DMPPT2_last_year, year_2013)))
       
     # for coverage vs age group, choose all years with survey data as default
-    } else if (input$plot_type %in% c("plt_5", "plt_6")) {
+    } else if (input$plot_type %in% c("plt_5", "plt_6", "plt_7")) {
     # } else if (input$plot_type %in% c("plt_5")) {
       
       plt_years <- sort(unique(add_data()$survey_data$year))
       plt_years <- plt_years[!is.na(plt_years)]
       
       # for empirical rates, look at the year before surveys (only for last survey)
-      if (input$plot_type == "plt_6") {
+      if (input$plot_type %in% c("plt_6", "plt_7")) {
         plt_years[length(plt_years)] <- last(plt_years) - 1 
       }
       
@@ -718,11 +722,8 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     } else if (input$plot_type == "plt_6") {
       
       req(input$spec_type)
-      # req(input$age_group_multiple)
-      req(input$year_select)
-      # req(input$year_slider)
       req(input$area_levels)
-      # req(input$n_plot)
+      req(input$year_select)
       
       plt_empirical_model_rates(
         empirical_rates = add_data()$empirical_rates,
@@ -731,7 +732,8 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
         spec_area_levels = as.numeric(input$area_levels),
         # spec_years = as.numeric(input$year_slider[[1]]):as.numeric(last(input$year_slider)),
         spec_years = as.numeric(input$year_select),
-        xlab = "Age Group",
+        facet_var = "age_group",
+        xlab = "Year",
         ylab = "Circumcision Rate", 
         title = "Circumcision rate vs year, split by age group, "
       )
@@ -739,19 +741,19 @@ comparison_plots_server <- function(input, output, session, selected = reactive(
     } else if (input$plot_type == "plt_7") {
       
       req(input$spec_type)
-      req(input$year_select)
       req(input$area_levels)
+      req(input$year_select)
       
       plt_empirical_model_rates(
         empirical_rates = add_data()$empirical_rates,
         df_results = circ_data(), 
         spec_type = input$spec_type,
         spec_area_levels = as.numeric(input$area_levels),
-        # spec_years = as.numeric(input$year_slider[[1]]):as.numeric(last(input$year_slider)),
         spec_years = as.numeric(input$year_select),
+        facet_var = "year",
         xlab = "Age Group",
         ylab = "Circumcision Rate", 
-        title = "Circumcision rate vs year, split by age group, "
+        title = "Circumcision rate vs age group, split by year, "
       )
     }
   })
