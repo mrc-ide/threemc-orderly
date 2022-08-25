@@ -1440,6 +1440,7 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
     # if (nrow(.data) == 0) stop("Filtering has resulted in an empty dataframe")
     return(.data)
   }
+  # browser()
   tmp1 <- initial_filter(df_results, mc_type_model)
   tmp2 <- initial_filter(df_results_survey, mc_type_survey)
 
@@ -1529,34 +1530,39 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
     } else {
       colour_var <- "parent_area_id"
     }
-
-    plt_data1 <- plt_data1 %>%
-      mutate(
-        # parent_area_name = ifelse(
-        #   is.na(parent_area_name),
-        #   "NA",
-        #   parent_area_name
-        # ),
-        parent_area_id = ifelse(
-            is.na(parent_area_id),
-            "NA",
-            parent_area_id
-        )
-      )
-
-    plt_data2 <- plt_data2 %>%
+    
+    if ("parent_area_id" %in% names(plt_data1)) {
+      plt_data1 <- plt_data1 %>%
         mutate(
-            # parent_area_name = ifelse(
-            #     is.na(parent_area_name),
-            #     "NA",
-            #     parent_area_name
-            # ),
-            parent_area_id = ifelse(
-                is.na(parent_area_id),
-                "NA",
-                parent_area_id
-            )
+          # parent_area_name = ifelse(
+          #   is.na(parent_area_name),
+          #   "NA",
+          #   parent_area_name
+          # ),
+          parent_area_id = ifelse(
+              is.na(parent_area_id),
+              "NA",
+              parent_area_id
+          )
         )
+    }
+    if ("parent_area_id" %in% names(plt_data2)) {
+      plt_data2 <- plt_data2 %>%
+          mutate(
+              # parent_area_name = ifelse(
+              #     is.na(parent_area_name),
+              #     "NA",
+              #     parent_area_name
+              # ),
+              parent_area_id = ifelse(
+                  is.na(parent_area_id),
+                  "NA",
+                  parent_area_id
+              )
+          )  
+    }
+
+    
 
     p <- ggplot(plt_data1, aes(x = age_group)) +
       # geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(year)),
@@ -1667,6 +1673,18 @@ initial_filter <- function(.data, col, val) {
   }
   return(.data)
 }
+
+# recursively apply filtering function (removing need to loop)
+initial_filter_recursive <- function(.data, cols, vals) {
+  
+  .data <- initial_filter(.data, cols[1], vals[[1]])
+  if (length(cols) == 1) {
+    return(.data)
+  } else {
+    initial_filter_recursive(.data, cols[-1], vals[-1])
+  }
+}
+
 
 # shamelessly stolen from naomi.utils@sexbehav-vars-jeff, used to calculate
 # credible intervals on the logit scale
@@ -2599,218 +2617,193 @@ plt_coverage_year_national <- function(
 #### Function to Plot Empirical vs Modelled Rates ####
 
 plt_empirical_model_rates <- function(
-    results,
     empirical_rates,
-    areas = NULL,
+    df_results = NULL,
     spec_type,
-    # spec_age_groups,
-    spec_ages = 0:60,
-    spec_years,  # from surveys
-    spec_area_levels,
-    spec_model = "No program data",
-    take_log = TRUE,
-    main = NULL,
+    spec_age_groups = c(
+      "0-4",   "5-9",   "10-14", "15-19", "20-24", "25-29",
+      "30-34", "35-39", "40-44", "45-49", "50-54", "54-59"
+    ),
+    spec_area_levels = NULL,
+    spec_years = NULL,
+    facet_var = "age_group",
+    take_log = FALSE,
+    xlab = NULL,
+    ylab = NULL,
+    title = NULL,
     str_save = NULL,
-    save_width = NULL,
-    save_height = NULL,
-    n_plots = 1
+    save_width = 9,
+    save_height = 7
 ) {
-
-  # temp
-  if (grepl("coverage", spec_type)) {
-    spec_type <- stringr::str_replace_all(spec_type, "coverage", "probability")
+  
+  cols <- sort(c("type", "age_group", "area_level", "year"))
+  # pull values in arguments
+  vals <- as.list(environment())
+  vals <- vals[names(vals) %in% names(formals(plt_empirical_model_rates))]
+  vals <- vals[grepl("spec", names(vals))]
+  vals <- vals[order(names(vals))]
+  
+  # function to preprocess data for plotting
+  preprocess_fun <- function(.data, spec_age_groups, take_log) {
+    # filter for specified type, age_group(s), area_level and year(s)
+    .data <- initial_filter_recursive(
+      .data, cols, vals
+    )
+    # Order age groups (make all of this into "prep" function)
+    .data$age_group <- factor(
+      .data$age_group, levels = spec_age_groups
+    )
+    .data$year <- as.factor(.data$year)
+    
+    if (take_log) {
+      last_num_col <- "mean"
+      if ("upper" %in% names(.data)) last_num_col <- "upper"
+      .data <- .data %>%
+        mutate(
+          across(matches("mean"):matches(last_num_col), log),
+          across(
+            matches("mean"):matches(last_num_col),
+            ~ ifelse(is.infinite(.), NA, .)
+          )
+        )
+    }
+    # split by area level and number of areas desired in each plot
+    .data <- split_area_level(.data, n_plots = 1)
   }
-
-  # Preparing dataset for plots
-  initial_filter <- function(.data) {
-    .data <- .data %>%
-      filter(
-        type == spec_type,
-        # age_group %in% spec_age_groups,
-        age %in% spec_ages,
-        # year %in% (spec_years - 1),
-        year %in% spec_years,
-        area_level %in% spec_area_levels
-      )
-    return(.data)
+  
+  empirical_rates_plt <- preprocess_fun(
+    empirical_rates, spec_age_groups, take_log
+  )
+  if (!is.null(df_results)) {
+    df_results_plt <- preprocess_fun(
+      df_results, spec_age_groups, take_log
+    )
+    dot_col <- "black"
+  } else {
+    message("No model estimates provided, only showing empirical rates")
+    df_results_plt <- NULL
+    dot_col <- "red"
   }
-  results <- initial_filter(results)
-  empirical_rates <- initial_filter(empirical_rates)
-
-  # merge area information
-  # if (!is.null(areas)) {
-  #   if (inherits(areas, "sf")) {
-  #     areas <- sf::st_drop_geometry(areas)
-  #   }
-  #   results <- results %>%
-  #     select(-any_of(names(areas)), area_id)
-  #   empirical_rates <- empirical_rates %>%
-  #     select(-any_of(names(areas)), area_id)
-  #
-  #   results <- threemc:::merge_area_info(results, areas)
-  #   empirical_rates <- threemc:::merge_area_info(empirical_rates, areas)
-  # }
-
-  results <- results %>%
-    mutate(
-      type = case_when(
-        grepl("MMC", type) ~ "MMC",
-        grepl("TMC", type) ~ "TMC",
-        TRUE               ~ "MC"
-      )
-    )
-  empirical_rates <- empirical_rates %>%
-    mutate(
-      type = case_when(
-        grepl("MMC", type) ~ "MMC",
-        grepl("TMC", type) ~ "TMC",
-        TRUE               ~ "MC"
-      )
-    )
-
-  spec_type <- unique(results$type)
-
-  # make sure surveys and model estimates are aligned
-  empirical_rates <- empirical_rates %>%
-    filter(
-      area_name %in% results$area_name,
-      year %in% results$year
-    )
-
-  if (
-    length(unique(results$area_id)) !=
-    length(unique(empirical_rates$area_id))
-  ) {
-    message("Area IDs in model estimates and survey estimates are misaligned")
-    results <- results %>%
-      filter(
-        area_name %in% empirical_rates$area_name,
-        year %in% empirical_rates$year
-      )
+  
+  if (!facet_var %in% c("age_group", "year")) {
+    stop("please specify 'facet_var' as one of of 'age_group' or 'year'")
   }
-
-  # Ordering age groups (needed??)
-  # results$age_group <- as.numeric(factor(
-  #   results$age_group, levels = spec_age_groups
-  # ))
-  # empirical_rates$age_group <- as.numeric(factor(
-  #   empirical_rates$age_group, levels = spec_age_groups
-  # ))
-
-  # make sure areas are the same for both
-  empirical_rates <- filter(empirical_rates, area_name %in% results$area_name)
-  # make sure years are the same
-  results <- filter(results, year %in% empirical_rates$year)
-
-  # take age above age_groups as last label for plot
-  # final_label <- last(spec_age_groups)
-  # final_label <- as.numeric(stringr::str_split(final_label, "-")[[1]][[2]])
-  # final_label <- paste0(final_label + 1, "+")
-
-  if (take_log == TRUE) {
-    # results$mean <- log(results$mean)
-    results <- results %>%
-      mutate(across(mean:upper, log))
-    empirical_rates$mean <- log(empirical_rates$mean)
-    ylab <- "Log Circumcision Rate (%)"
-  } else ylab <- "Circumcision Rate (%)"
-
-  # split by area_level & year
-  results <- split_area_level(results, year = TRUE, n_plots = n_plots)
-  empirical_rates <- split_area_level(empirical_rates, year = TRUE, n_plots = n_plots)
-
-  plot_fun <- function(data, emp_data) {
-
-    # browser()
-
-    add_title <- paste(
-      emp_data$iso3[1],
-      paste0("area_level: ", data$area_level[1]),
-      # data$area_level_label[1],
-      paste0("year: ", data$year[1]),
-      data$type[1],
-      sep = ", "
-    )
-
-    data <- mutate(data, indicator = "Model Rates")
-    emp_data <- mutate(emp_data, indicator = "Empirical Rates")
-
-    p <- data %>%
-      ggplot(
-        aes(y = mean, fill = indicator, colour = indicator)
-      ) +
-      geom_ribbon(
-        # aes(x = seq_along(age_group), ymin = lower, ymax = upper),
-        aes(x = age, ymin = lower, ymax = upper),
-        alpha = 0.5
-      ) +
-      # geom_line(aes(x = seq_along(age_group), group = 1), size = 1) +
-      geom_line(aes(x = age), size = 1) +
-      # geom_line(
-      #   data = emp_data,
-      #   # aes(x = seq_along(age_group), y = mean, colour = indicator),
-      #   aes(x = age, y = mean, colour = indicator),
-      #   size = 1
-      # ) +
+  
+  x_var <- c("age_group", "year")
+  x_var <- x_var[x_var != facet_var]
+  
+  # function for creating individual plots
+  plot_fun <- function(empirical_rates, df_results = NULL) {
+    # start with black dots for empirical rates
+    p <- ggplot(
+      empirical_rates,
+      # aes(x = year, y = mean)
+      aes(x = .data[[x_var]], y = mean)
+    ) +
       geom_point(
-        data = emp_data,
-        # aes(x = seq_along(age_group), y = mean, colour = indicator),
-        aes(x = age, y = mean, colour = indicator),
-        size = 3,
-        show.legend = FALSE
-      ) +
-      # scale_x_continuous(
-      #   breaks = 1:(length(spec_age_groups) + 1),
-      #   labels = c(spec_age_groups, final_label),
-      # ) +
-      # scale_y_continuous(breaks = seq(0, 1,  by =  0.2),
-      #                    limits = c(0, 1),
-      #                    labels = scales::label_percent()) +
-      facet_wrap(~area_name) +
+        colour = dot_col,
+        size = 2
+      )
+    # if desired, add model estimates with associated error bounds
+    if (!is.null(df_results)) {
+      p <- p +
+        geom_ribbon(
+          data = df_results,
+          aes(
+            # x     = year,
+            x     = .data[[x_var]],
+            y     = mean,
+            ymin  = lower,
+            ymax  = upper,
+            fill  = .data[[facet_var]],
+            group = .data[[facet_var]]
+          ),
+          alpha = 0.7
+        ) +
+        geom_line(
+          data = df_results,
+          aes(
+            # x      = year,
+            x      = .data[[x_var]],
+            y      = mean,
+            colour = age_group,
+            group  = age_group
+          ),
+          size = 1
+        )
+    }
+    # facet and format plot
+    if (!take_log) {
+      p <- p +
+        scale_y_continuous(
+          # breaks = seq(0, 1, by = 0.2),
+          # limits = c(0, 1),
+          labels = scales::label_percent()
+        )
+    }
+    
+    # if (facet_var == "age_group") {
+    #   p <- p + 
+    #     scale_x_continuous(
+    #       breaks = seq(spec_years[1], last(spec_years), by = 2)
+    #     )
+    # }
+    
+    p <- p +
+      # facet_wrap(~ age_group) +
+      facet_wrap(~ .data[[facet_var]]) +
       theme_bw() +
-      labs(
-        title = add_title,
-        x = "Age at Circumcision",
-        y = ylab,
-        fill = "Type"
-      ) +
       theme(
-        legend.text = element_text(size = 15),
-        axis.text.x = element_text(vjust = 0.5, size = 12),
-        legend.position = "right"
-      ) +
-      guides(colour = "none")
+        axis.text = element_text(size = 14),
+        strip.text = element_text(size = 12),
+        axis.title = element_text(size = 18),
+        legend.text = element_text(size = 18),
+        axis.text.x = element_text(angle = 45, vjust = 0.5, size = 10),
+        plot.title = element_text(size = 20, hjust = 0.5),
+        legend.position = "none"
+      )
+    
+    # label plot
+    if (!is.null(xlab)) p <- p + xlab(xlab)
+    if (!is.null(ylab)) p <- p + ylab(ylab)
+    main <- paste0(
+      empirical_rates$area_name[[1]],
+      ", area level ", empirical_rates$area_level[1]
+    )
+    if (!is.null(title)) main <- paste0(title, main)
+    p <- p + ggtitle(main)
   }
-
-  recursive_plot_fun <- function(data, emp_data, ...) {
-    if (!inherits(data, "data.frame")) {
-      lapply(seq_along(data), function(i) {
-        recursive_plot_fun(data[[i]], emp_data[[i]], ...)
+  
+  # function which creates plots recursively for each split
+  recursive_plot_fun <- function(empirical_rates, model_rates, ...) {
+    if (!inherits(empirical_rates, "data.frame")) {
+      lapply(seq_along(empirical_rates), function(i) {
+        if (!is.null(model_rates)) model_rates <- model_rates[[i]]
+        recursive_plot_fun(empirical_rates[[i]], model_rates, ...)
       })
     } else {
-      plot_fun(data, emp_data, ...)
+      plot_fun(empirical_rates, model_rates, ...)
     }
   }
-
-  plots <- lapply(seq_along(results), function(i) {
-    recursive_plot_fun(results[[i]], empirical_rates[[i]])
-  })
-
-  # flatten nested list of plots
-  plots <- rlang::squash(plots)
-
+  
+  plots <- recursive_plot_fun(empirical_rates_plt, df_results_plt)
+  
+  # save plots, if desired
   if (!is.null(str_save)) {
-    # save
-    plots <-  gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
-    ggsave(filename = str_save,
-           plot = plots,
-           dpi = "retina",
-           width = save_width,
-           height = save_height)
+    ggsave(
+      filename = str_save,
+      plot = gridExtra::marrangeGrob(
+        rlang::squash(plots), nrow = 1, ncol = 1
+      ),
+      dpi = "retina",
+      width = save_width,
+      height = save_height
+    )
   } else {
-    return(plots)
+    return(rlang::squash(plots))
   }
 }
+
 
 #### OOS & Investigating Variance ####
 
