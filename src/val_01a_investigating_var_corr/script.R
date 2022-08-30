@@ -17,22 +17,11 @@ create_dirs_r(save_loc_agg)
 
 
 # initial hyperparameters for each modelled country
-# init_hyperparameters <- readr::read_csv("data/threemc_hyperpars.csv")
-init_hyperparameters <- readr::read_csv(paste0(dir_path, "threemc_hyperpars.csv"))
+init_hyperparameters <- readr::read_csv(file.path(dir_path, "high_var_hyperpars.csv.gz"))
 
 # Median variance time hyperpars for countries with the widest error bounds
-# (for circumcision rate) (which are ZWE, NAM, UGA, ZMB, MOZ):
-#logsigma_time_mmc = 0.32550794 (vs -0.05520797 for all countries)
-# logsigma_agetime_mmc = 1.82913044 (vs 0.21878839)
-# logsigma_spacetime_mmc = -2.30655943 (vs -2.09773799)
-# corr: ?
 test_hyperparameters <- init_hyperparameters %>%
-  filter(iso3 %in% c("ZWE", "NAM", "UGA", "ZMB", "MOZ")) %>%
-  # select(contains("logsigma") & contains("time_mmc")) %>%
-  select(
-    (contains("logsigma") & contains("time_mmc")) | # var hyperpars
-      (contains("logitrho_mmc_time"))
-  ) %>%
+  select(-iso3) %>% 
   summarise(across(everything(), median, na.rm = TRUE)) %>%
   # convert to vector
   tidyr::pivot_longer(everything()) %>%
@@ -43,6 +32,7 @@ test_hyperparameters <- round(test_hyperparameters, 9) # ensure hyperparams are 
 # remove circumcisions with missing type?
 rm_missing_type <- FALSE
 
+
 #### Metadata to run the models ####
 # set country
 # cntry <- "MWI"
@@ -50,7 +40,7 @@ rm_missing_type <- FALSE
 k_dt <- 5 # Age knot spacing
 start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
-forecase_date <- 2021
+forecast_year <- 2021
 paed_age_cutoff <- 10
 
 #### Reading in data ####
