@@ -2859,6 +2859,7 @@ threemc_val_plt <- function(
     spec_area_level = unique(df_results_oos$area_level),
     take_log = FALSE,
     facet = TRUE,
+    indicator_labels = c("OOS", "Original"),
     xlab, ylab, title,
     str_save = NULL, save_width = 16, save_height = 12,
     n_plots = 12
@@ -2884,8 +2885,8 @@ threemc_val_plt <- function(
 
   if (!is.null(df_results_orig) && !"indicator" %in% names(df_results_orig)) {
     df_results_oos <- bind_rows(
-      mutate(df_results_oos, indicator = "OOS"),
-      mutate(df_results_orig, indicator = "Original"),
+      mutate(df_results_oos, indicator = indicator_labels[1]),
+      mutate(df_results_orig, indicator = indicator_labels[2]),
     )
   } else if (!is.null(df_results_orig)) {
     df_results_oos <- bind_rows(df_results_oos, df_results_orig)
