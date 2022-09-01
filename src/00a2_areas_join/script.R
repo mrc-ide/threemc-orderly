@@ -40,5 +40,14 @@ areas <- bind_rows(areas) %>%
 #   distinct(iso3) %>%
 #   pull()
 
+
+# add space column to areas for each country
+areas <- areas %>% 
+  group_by(iso3) %>% 
+  mutate(space = 1:n()) %>%  # add space column to areas
+  ungroup() %>% 
+  sf::st_make_valid()
+
+
 # save data
 sf::write_sf(areas, paste0(save_dir, "areas.geojson"))
