@@ -39,6 +39,8 @@ displayname: |
 parameters:
   cntry:
     default: ~
+  N:
+    default: 100
   is_paper:
     default: TRUE
     

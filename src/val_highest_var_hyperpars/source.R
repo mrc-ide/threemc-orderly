@@ -175,45 +175,6 @@ split_area_level <- function(.data, years = FALSE, n_plots = NULL) {
   }
 }
 
-#### survey_points_dmppt2_convert_convention #### 
-
-# function to convert survey points & dmppt2 data to match results convention 
-survey_points_dmppt2_convert_convention <- function(.data) {
-  # change naming convention of survey data
-  if ("survey_mid_calendar_quarter" %in% names(.data)) {
-    .data <- .data %>%
-      rename(
-        year = survey_mid_calendar_quarter,
-        type = indicator,
-        mean = estimate,
-        sd = std_error,
-        lower = ci_lower,
-        upper = ci_upper
-      )
-  } else if ("dmppt2_circumcision_coverage" %in% names(.data)) {
-    .data <- .data %>% 
-      rename(
-        mean = dmppt2_circumcision_coverage
-      )
-  }
-  .data <- .data %>% 
-    mutate(across(
-      matches("type"), ~ case_when(
-        . == "circumcised"  ~ "MC coverage",
-        . == "circ_medical" ~ "MMC coverage",
-        TRUE                   ~ "TMC coverage"
-      )
-    ))
-  
-  # need to convert dmpppt2 (and survey) age group to our convention
-  # (i.e. Y000_004 -> 0-4)
-  if (grepl("Y", .data$age_group[1])) {
-    .data <- change_agegroup_convention(.data)
-  }
-  return(.data)
-}
-
-
 #### Plots from paper ####
 # figure 1 (coverage and number of circumcisions performed)
 # if str_save is left blank, just return the plot
@@ -2859,7 +2820,6 @@ threemc_val_plt <- function(
     spec_area_level = unique(df_results_oos$area_level),
     take_log = FALSE,
     facet = TRUE,
-    indicator_labels = c("OOS", "Original"),
     xlab, ylab, title,
     str_save = NULL, save_width = 16, save_height = 12,
     n_plots = 12
@@ -2885,8 +2845,8 @@ threemc_val_plt <- function(
 
   if (!is.null(df_results_orig) && !"indicator" %in% names(df_results_orig)) {
     df_results_oos <- bind_rows(
-      mutate(df_results_oos, indicator = indicator_labels[1]),
-      mutate(df_results_orig, indicator = indicator_labels[2]),
+      mutate(df_results_oos, indicator = "OOS"),
+      mutate(df_results_orig, indicator = "Original"),
     )
   } else if (!is.null(df_results_orig)) {
     df_results_oos <- bind_rows(df_results_oos, df_results_orig)

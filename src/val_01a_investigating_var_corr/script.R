@@ -17,22 +17,11 @@ create_dirs_r(save_loc_agg)
 
 
 # initial hyperparameters for each modelled country
-# init_hyperparameters <- readr::read_csv("data/threemc_hyperpars.csv")
-init_hyperparameters <- readr::read_csv(paste0(dir_path, "threemc_hyperpars.csv"))
+init_hyperparameters <- readr::read_csv(file.path(dir_path, "high_var_hyperpars.csv.gz"))
 
 # Median variance time hyperpars for countries with the widest error bounds
-# (for circumcision rate) (which are ZWE, NAM, UGA, ZMB, MOZ):
-#logsigma_time_mmc = 0.32550794 (vs -0.05520797 for all countries)
-# logsigma_agetime_mmc = 1.82913044 (vs 0.21878839)
-# logsigma_spacetime_mmc = -2.30655943 (vs -2.09773799)
-# corr: ?
 test_hyperparameters <- init_hyperparameters %>%
-  filter(iso3 %in% c("ZWE", "NAM", "UGA", "ZMB", "MOZ")) %>%
-  # select(contains("logsigma") & contains("time_mmc")) %>%
-  select(
-    (contains("logsigma") & contains("time_mmc")) | # var hyperpars
-      (contains("logitrho_mmc_time"))
-  ) %>%
+  select(-iso3) %>% 
   summarise(across(everything(), median, na.rm = TRUE)) %>%
   # convert to vector
   tidyr::pivot_longer(everything()) %>%
@@ -43,15 +32,16 @@ test_hyperparameters <- round(test_hyperparameters, 9) # ensure hyperparams are 
 # remove circumcisions with missing type?
 rm_missing_type <- FALSE
 
+
 #### Metadata to run the models ####
 # set country
 # cntry <- "MWI"
 
 k_dt <- 5 # Age knot spacing
-start_year <-  2006
-cens_age <- 59
-N <- 1000
-forecase_date <- 2021
+start_year <-  2002
+if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
+forecast_year <- 2021
+paed_age_cutoff <- 10
 
 #### Reading in data ####
 # Revert to using planar rather than spherical geometry in `sf`
@@ -103,7 +93,6 @@ survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 cens_year <- max(survey_years)
 start_year <- max(min(survey_years), start_year) # have lower bound on start
 
-
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circumcision <- prepare_survey_data(
   areas               = areas,
@@ -125,7 +114,8 @@ if (nrow(survey_circumcision) == 0) {
 if (all(is.na(survey_circumcision$circ_who) &
         is.na(survey_circumcision$circ_where))) {
   print("No type distinction made in valid surveys for this country")
-  is_type <- FALSE
+  is_type <- FALSE 
+  paed_age_cutoff <- NULL
 } else is_type <- TRUE
 
 
@@ -149,63 +139,81 @@ out <- create_shell_dataset(
 #### Dataset & setup for modelling ####
 
 dat_tmb <- threemc_prepare_model_data(
-  out        = out,
-  areas      = areas,
-  area_lev   = area_lev,
-  aggregated = TRUE,
-  weight     = "population",
-  k_dt       = k_dt
+  out             = out,
+  areas           = areas,
+  area_lev        = area_lev,
+  aggregated      = TRUE,
+  weight          = "population",
+  k_dt            = k_dt,
+  paed_age_cutoff = paed_age_cutoff
 )
 
-
-# specify TMB model
+# specify TMB model, depending on whether type distinction is available
 if (is_type == TRUE) {
-  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
-} else mod <- "Surv_SpaceAgeTime"
+  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
+} else {
+  mod <- "Surv_SpaceAgeTime"
+  # empty df for paed design matrices so parameter assignment doesn't fail
+  X_fixed_mmc_paed <- X_age_mmc_paed <- X_space_mmc_paed <- data.frame(0)
+}
 
 # Initial values
-parameters_init <- parameters <- with(
+parameters <- with(
   dat_tmb,
   list(
     # intercept
     "u_fixed_mmc"            = rep(-5, ncol(X_fixed_mmc)),
+    "u_fixed_mmc_paed"       = rep(-5, ncol(X_fixed_mmc_paed)),
     "u_fixed_tmc"            = rep(-5, ncol(X_fixed_tmc)),
     # age random effect
     "u_age_mmc"              = rep(0, ncol(X_age_mmc)),
+    "u_age_mmc_paed"         = rep(0, ncol(X_age_mmc_paed)),
     "u_age_tmc"              = rep(0, ncol(X_age_tmc)),
-    # time random effect for MMC
+    # time random effect for (non-paed) MMC
     "u_time_mmc"             = rep(0, ncol(X_time_mmc)),
     # Space random effect (district)
     "u_space_mmc"            = rep(0, ncol(X_space_mmc)),
+    "u_space_mmc_paed"       = rep(0, ncol(X_space_mmc_paed)),
     "u_space_tmc"            = rep(0, ncol(X_space_tmc)),
     # Interactions for MMC
     "u_agetime_mmc"          = matrix(0, ncol(X_age_mmc), ncol(X_time_mmc)),
     "u_agespace_mmc"         = matrix(0, ncol(X_age_mmc), ncol(X_space_mmc)),
     "u_spacetime_mmc"        = matrix(0, ncol(X_time_mmc), ncol(X_space_mmc)),
+    "u_agespace_mmc_paed"    = matrix(0, ncol(X_age_mmc_paed), ncol(X_space_mmc_paed)),
     # Interactions for TMC
     "u_agespace_tmc"         = matrix(0, ncol(X_age_tmc), ncol(X_space_tmc)),
     # Autocorrelation parameters for priors
     # Variance
-    "logsigma_age_mmc"       = 0,
-    "logsigma_time_mmc"      = 0,
-    "logsigma_space_mmc"     = 0,
-    "logsigma_agetime_mmc"   = 0,
-    "logsigma_agespace_mmc"  = 0,
-    "logsigma_spacetime_mmc" = 0,
-    "logsigma_age_tmc"       = 0,
-    "logsigma_space_tmc"     = 0,
-    "logsigma_agespace_tmc"  = 0,
+    "logsigma_age_mmc"            = 0,
+    "logsigma_age_mmc_paed"       = 0,
+    "logsigma_time_mmc"           = 0,
+    "logsigma_space_mmc"          = 0,
+    "logsigma_space_mmc_paed"     = 0,
+    "logsigma_agetime_mmc"        = 0,
+    "logsigma_agespace_mmc"       = 0,
+    "logsigma_agespace_mmc_paed"  = 0,
+    "logsigma_spacetime_mmc"      = 0,
+    "logsigma_age_tmc"            = 0,
+    "logsigma_space_tmc"          = 0,
+    "logsigma_agespace_tmc"       = 0,
     # Mean
-    "logitrho_mmc_time1"     = 2,
-    "logitrho_mmc_time2"     = 2,
-    "logitrho_mmc_time3"     = 2,
-    "logitrho_mmc_age1"      = 2,
-    "logitrho_mmc_age2"      = 2,
-    "logitrho_mmc_age3"      = 2,
-    "logitrho_tmc_age1"      = 2,
-    "logitrho_tmc_age2"      = 2
+    "logitrho_mmc_time1"          = 2,
+    "logitrho_mmc_time2"          = 2,
+    "logitrho_mmc_time3"          = 2,
+    "logitrho_mmc_age1"           = 2,
+    "logitrho_mmc_paed_age1"      = 2,
+    "logitrho_mmc_age2"           = 2,
+    "logitrho_mmc_paed_age2"      = 2,
+    "logitrho_mmc_age3"           = 2,
+    "logitrho_tmc_age1"           = 2,
+    "logitrho_tmc_age2"           = 2
   )
 )
+
+if (is_type == FALSE) {
+  # remove paed-related parameters
+  parameters <- parameters[!grepl("paed", names(parameters))]
+}
 
 #### Comparison Fits ####
 
@@ -224,11 +232,13 @@ fit <- threemc_fit_model(
   dat_tmb    = dat_tmb,
   mod        = mod,
   parameters = parameters,
-  maps = maps,
-  randoms    = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
-                 "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
-                 "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
-  N = N
+  maps       = maps,
+  randoms    = c(
+    "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+    "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+    "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+  ), 
+  N          = 1000
 )
 
 # subset to specific area level and calculate quantiles for rates and hazard
@@ -284,9 +294,9 @@ lapply(seq_along(age_vars$inputs), function(i) {
       populations = populations,
       age_var     = age_vars$inputs[[i]],
       type        = types[j],
-      area_lev = area_lev,
-      N = N,
-      prev_year = 2008 # year to compare with for prevalence
+      area_lev    = area_lev,
+      N           = N,
+      prev_year   = 2008 # year to compare with for prevalence
     )
     readr::write_csv(
       x = spec_results,

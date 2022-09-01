@@ -76,25 +76,6 @@ readr::write_csv(
 )
 rm(results_age); gc()
 
-# Rates of circumcision from surveys, not model
-empirical_rates <- agg_results_saver("empirical_rates.", dir_path)
-
-readr::write_csv( 
-    x = empirical_rates,
-    file = file.path(save_loc, "empirical_rates.csv.gz")
-  )
-rm(empirical_rates); gc()
-
-# empirical rates for single ages
-empirical_rates_singleage <- agg_results_saver("empirical_rates_singleage", dir_path)
-
-readr::write_csv( 
-  x = empirical_rates_singleage,
-  file = file.path(save_loc, "empirical_rates_singleage.csv.gz")
-)
-rm(empirical_rates_singleage); gc()
-
-
 results_agegroup_n_circ <- agg_results_saver("agegroup_", dir_path, filter = FALSE)
 results_agegroup_n_circ <- results_agegroup_n_circ %>% 
   filter(grepl("Number circumcised", type))

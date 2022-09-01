@@ -5,13 +5,23 @@
 # save loc
 save_dir <- "artefacts/"
 threemc::create_dirs_r(save_dir) # ensure save_dir exists; create if not
-N <- 1000 # number of samples to take from posterior
 
-spec_age_groups <- c(
+five_year_age_groups <- c(
   "0-4", "5-9", "10-14", "15-19", 
   "20-24", "25-29", "30-34", "35-39", 
   "40-44", "45-49", "50-54", "54-59"
 )
+
+# other age groups of interest
+add_age_groups <- c(
+  # age groups with only minimum cutoff
+  "0+", "10+", "15+", 
+  # other, wider age groups of interest
+  "10-24", "15-24", "10-29", "15-29", 
+  "10-39", "15-39", "10-49", "15-49"
+)
+
+spec_age_groups <- c(five_year_age_groups, add_age_groups)
 
 
 #### Preparing location/shapefile information ####
@@ -46,9 +56,9 @@ survey_estimates <- read_circ_data(
 ) %>% 
   filter(iso3 == cntry) %>% 
   rename(
-    year = survey_mid_calendar_quarter,
-    mean = estimate,
-    sd = std_error,
+    year  = survey_mid_calendar_quarter,
+    mean  = estimate,
+    sd    = std_error,
     lower = ci_lower,
     upper = ci_upper
   ) %>% 
@@ -89,7 +99,7 @@ fit <- readRDS("depends/TMBObjects_DistrictAgeTime_ByType_OOS.rds")
 if (all(out$obs_mmc == 0 & out$obs_tmc == 0)) {
   mod <- "Surv_SpaceAgeTime"
 } else {
-  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
+  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
 }
 
 # re-sample from model
@@ -97,9 +107,11 @@ if (is.null(fit$sample)) {
     fit <- threemc_fit_model(
         fit     = fit,
         mod     = mod,
-        randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
-                    "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
-                    "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
+        randoms = c(
+          "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+          "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+          "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+        ),
         N       = N
     )
 }
@@ -162,11 +174,11 @@ out_types <- rename(out_types, type = indicator)
 
 out_types_agegroup <- threemc:::aggregate_sample_age_group(
   list(out_types),
-  aggr_cols = c(
+  aggr_cols  = c(
     "area_id", "area_name", "area_level", "year", "type"
   ), 
   age_groups = spec_age_groups, 
-  N = N
+  N          = N
 ) %>% 
   rename(indicator = type) %>% # rename to match survey points df
   relocate(age_group, .before = samp_1) %>% # have sample cols last 
