@@ -27,7 +27,7 @@ displayname: |
   
 # parameters:
 #   is_paper:
-#     default: TRUE 
+#     default: TRUE
 
 packages:
   - threemc
@@ -200,6 +200,7 @@ depends:
   #       depends/Results_MOZ_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
   #       depends/Results_MOZ_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
   - val_00a_oos_validation:
+      # id: latest(parameter:cntry == "MWI" && parameter:is_paper == is_paper)
       id: latest(parameter:cntry == "MWI")
       use: 
         depends/Results_MWI_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
@@ -274,6 +275,7 @@ depends:
         depends/Results_TZA_AgeGroup_Probability_OOS.csv.gz: artefacts/Results_AgeGroup_Probability_OOS.csv.gz
   - val_00a_oos_validation:
       id: latest(parameter:cntry == "UGA")
+      # id: latest(parameter:cntry == "UGA" && parameter:is_paper == is_paper)
       use:
         depends/Results_UGA_AgeGroup_Incidence_OOS.csv.gz: artefacts/Results_AgeGroup_Incidence_OOS.csv.gz
         depends/Results_UGA_AgeGroup_Prevalence_OOS.csv.gz: artefacts/Results_AgeGroup_Prevalence_OOS.csv.gz
@@ -300,30 +302,30 @@ depends:
         depends/ZWE_used_survey_info.csv: artefacts/used_survey_info.csv
         
   # Results from Investigating Variance
-  - val_01a_investigating_var_corr:
-     id: latest(parameter:cntry == "AGO")
-     use:
-       depends/Results_AGO_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-       depends/Results_AGO_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-       depends/Results_AGO_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "BDI")
-      use: 
-        depends/Results_BDI_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_BDI_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_BDI_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "BEN")
-      use: 
-        depends/Results_BEN_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_BEN_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_BEN_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "BFA")
-      use: 
-        depends/Results_BFA_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_BFA_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_BFA_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #    id: latest(parameter:cntry == "AGO")
+  #    use:
+  #      depends/Results_AGO_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #      depends/Results_AGO_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #      depends/Results_AGO_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "BDI")
+  #     use: 
+  #       depends/Results_BDI_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_BDI_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_BDI_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "BEN")
+  #     use: 
+  #       depends/Results_BEN_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_BEN_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_BEN_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "BFA")
+  #     use: 
+  #       depends/Results_BFA_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_BFA_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_BFA_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_01a_investigating_var_corr:
   #     id: latest(parameter:cntry == "BWA")
   #     use: 
@@ -336,36 +338,36 @@ depends:
   #       depends/Results_CAF_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_CAF_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_CAF_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "CIV")
-      use: 
-        depends/Results_CIV_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_CIV_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_CIV_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "CMR")
-      use: 
-        depends/Results_CMR_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_CMR_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_CMR_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "CIV")
+  #     use: 
+  #       depends/Results_CIV_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_CIV_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_CIV_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "CMR")
+  #     use: 
+  #       depends/Results_CMR_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_CMR_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_CMR_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_01a_investigating_var_corr:
   #     id: latest(parameter:cntry == "COD")
   #     use:
   #       depends/Results_COD_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_COD_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_COD_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "COG")
-      use: 
-        depends/Results_COG_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_COG_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_COG_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "ETH")
-      use: 
-        depends/Results_ETH_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_ETH_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_ETH_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "COG")
+  #     use: 
+  #       depends/Results_COG_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_COG_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_COG_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "ETH")
+  #     use: 
+  #       depends/Results_ETH_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_ETH_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_ETH_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_01a_investigating_var_corr:
   #     id: latest(parameter:cntry == "GAB")
   #     use:
@@ -384,12 +386,12 @@ depends:
   #       depends/Results_GIN_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_GIN_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_GIN_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "GMB")
-      use:
-        depends/Results_GMB_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_GMB_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_GMB_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "GMB")
+  #     use:
+  #       depends/Results_GMB_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_GMB_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_GMB_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_01a_investigating_var_corr:
   #     id: latest(parameter:cntry == "GNB")
   #     use: 
@@ -402,60 +404,60 @@ depends:
   #       depends/Results_GNQ_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_GNQ_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_GNQ_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "KEN")
-      use: 
-        depends/Results_KEN_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_KEN_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_KEN_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "KEN")
+  #     use: 
+  #       depends/Results_KEN_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_KEN_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_KEN_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_01a_investigating_var_corr:
   #     id: latest(parameter:cntry == "LBR")
   #     use: 
   #       depends/Results_LBR_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_LBR_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_LBR_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "LSO")
-      use: 
-        depends/Results_LSO_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_LSO_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_LSO_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "MLI")
-      use: 
-        depends/Results_MLI_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_MLI_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_MLI_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "MOZ")
-      use:
-        depends/Results_MOZ_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_MOZ_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_MOZ_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "MWI")
-      use: 
-        depends/Results_MWI_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_MWI_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_MWI_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "NAM")
-      use: 
-        depends/Results_NAM_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_NAM_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_NAM_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "LSO")
+  #     use: 
+  #       depends/Results_LSO_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_LSO_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_LSO_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "MLI")
+  #     use: 
+  #       depends/Results_MLI_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_MLI_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_MLI_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "MOZ")
+  #     use:
+  #       depends/Results_MOZ_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_MOZ_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_MOZ_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "MWI" && parameter:is_paper == is_paper)
+  #     use: 
+  #       depends/Results_MWI_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_MWI_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_MWI_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "NAM")
+  #     use: 
+  #       depends/Results_NAM_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_NAM_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_NAM_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_01a_investigating_var_corr:
   #     id: latest(parameter:cntry == "NER")
   #     use: 
   #       depends/Results_NER_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_NER_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_NER_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "NGA")
-      use: 
-        depends/Results_NGA_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_NGA_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_NGA_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "NGA")
+  #     use: 
+  #       depends/Results_NGA_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_NGA_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_NGA_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   - val_01a_investigating_var_corr:
       id: latest(parameter:cntry == "RWA")
       use: 
@@ -468,30 +470,30 @@ depends:
   #       depends/Results_SEN_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_SEN_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_SEN_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "SLE")
-      use: 
-        depends/Results_SLE_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_SLE_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_SLE_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "SWZ")
-      use: 
-        depends/Results_SWZ_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_SWZ_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_SWZ_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "TCD")
-      use: 
-        depends/Results_TCD_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_TCD_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_TCD_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "TGO")
-      use:
-        depends/Results_TGO_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_TGO_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_TGO_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "SLE")
+  #     use: 
+  #       depends/Results_SLE_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_SLE_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_SLE_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "SWZ")
+  #     use: 
+  #       depends/Results_SWZ_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_SWZ_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_SWZ_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "TCD")
+  #     use: 
+  #       depends/Results_TCD_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_TCD_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_TCD_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "TGO")
+  #     use:
+  #       depends/Results_TGO_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_TGO_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_TGO_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_01a_investigating_var_corr:
   #     id: latest(parameter:cntry == "TZA")
   #     use: 
@@ -499,23 +501,23 @@ depends:
   #       depends/Results_TZA_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_TZA_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_01a_investigating_var_corr:
-  #     id: latest(parameter:cntry == "UGA")
+  #     id: latest(parameter:cntry == "UGA" && parameter:is_paper == is_paper)
   #     use: 
   #       depends/Results_UGA_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_UGA_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_UGA_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "ZAF")
-      use: 
-        depends/Results_ZAF_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_ZAF_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_ZAF_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_01a_investigating_var_corr:
-      id: latest(parameter:cntry == "ZMB")
-      use:
-        depends/Results_ZMB_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_ZMB_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_ZMB_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "ZAF")
+  #     use: 
+  #       depends/Results_ZAF_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_ZAF_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_ZAF_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_01a_investigating_var_corr:
+  #     id: latest(parameter:cntry == "ZMB")
+  #     use:
+  #       depends/Results_ZMB_AgeGroup_Incidence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_ZMB_AgeGroup_Prevalence_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_ZMB_AgeGroup_Probability_test.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_01a_investigating_var_corr:
   #     id: latest(parameter:cntry == "ZWE")
   #     use: 
@@ -530,18 +532,18 @@ depends:
   #       depends/Results_AGO_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_AGO_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_AGO_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_02a_oos_val_investigating_var_corr:
-      id: latest(parameter:cntry == "BDI")
-      use: 
-        depends/Results_BDI_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_BDI_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_BDI_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_02a_oos_val_investigating_var_corr:
-      id: latest(parameter:cntry == "BEN")
-      use: 
-        depends/Results_BEN_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_BEN_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_BEN_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_02a_oos_val_investigating_var_corr:
+  #     id: latest(parameter:cntry == "BDI")
+  #     use: 
+  #       depends/Results_BDI_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_BDI_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_BDI_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_02a_oos_val_investigating_var_corr:
+  #     id: latest(parameter:cntry == "BEN")
+  #     use: 
+  #       depends/Results_BEN_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_BEN_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_BEN_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_02a_oos_val_investigating_var_corr:
   #     id: latest(parameter:cntry == "BFA")
   #     use: 
@@ -578,18 +580,18 @@ depends:
   #       depends/Results_COD_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_COD_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_COD_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_02a_oos_val_investigating_var_corr:
-      id: latest(parameter:cntry == "COG")
-      use: 
-        depends/Results_COG_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_COG_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_COG_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_02a_oos_val_investigating_var_corr:
-      id: latest(parameter:cntry == "ETH")
-      use: 
-        depends/Results_ETH_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_ETH_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_ETH_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_02a_oos_val_investigating_var_corr:
+  #     id: latest(parameter:cntry == "COG")
+  #     use: 
+  #       depends/Results_COG_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_COG_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_COG_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_02a_oos_val_investigating_var_corr:
+  #     id: latest(parameter:cntry == "ETH")
+  #     use: 
+  #       depends/Results_ETH_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_ETH_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_ETH_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_02a_oos_val_investigating_var_corr:
   #     id: latest(parameter:cntry == "GAB")
   #     use: 
@@ -638,30 +640,30 @@ depends:
   #       depends/Results_LBR_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_LBR_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_LBR_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_02a_oos_val_investigating_var_corr:
-      id: latest(parameter:cntry == "LSO")
-      use: 
-        depends/Results_LSO_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_LSO_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_LSO_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_02a_oos_val_investigating_var_corr:
-      id: latest(parameter:cntry == "MLI")
-      use: 
-        depends/Results_MLI_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_MLI_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_MLI_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_02a_oos_val_investigating_var_corr:
+  #     id: latest(parameter:cntry == "LSO")
+  #     use: 
+  #       depends/Results_LSO_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_LSO_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_LSO_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_02a_oos_val_investigating_var_corr:
+  #     id: latest(parameter:cntry == "MLI")
+  #     use: 
+  #       depends/Results_MLI_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_MLI_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_MLI_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_02a_oos_val_investigating_var_corr:
   #     id: latest(parameter:cntry == "MOZ")
   #     use: 
   #       depends/Results_MOZ_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_MOZ_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_MOZ_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_02a_oos_val_investigating_var_corr:
-      id: latest(parameter:cntry == "MWI")
-      use: 
-        depends/Results_MWI_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_MWI_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_MWI_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_02a_oos_val_investigating_var_corr:
+  #     id: latest(parameter:cntry == "MWI" && parameter:is_paper == is_paper)
+  #     use: 
+  #       depends/Results_MWI_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_MWI_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_MWI_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_02a_oos_val_investigating_var_corr:
   #     id: latest(parameter:cntry == "NAM")
   #     use: 
@@ -680,24 +682,24 @@ depends:
   #       depends/Results_NGA_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_NGA_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_NGA_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  # - val_02a_oos_val_investigating_var_corr:
-  #     id: latest(parameter:cntry == "RWA")
-  #     use: 
-  #       depends/Results_RWA_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-  #       depends/Results_RWA_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-  #       depends/Results_RWA_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  - val_02a_oos_val_investigating_var_corr:
+      id: latest(parameter:cntry == "RWA")
+      use:
+        depends/Results_RWA_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+        depends/Results_RWA_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+        depends/Results_RWA_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_02a_oos_val_investigating_var_corr:
   #     id: latest(parameter:cntry == "SEN")
   #     use: 
   #       depends/Results_SEN_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_SEN_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_SEN_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_02a_oos_val_investigating_var_corr:
-      id: latest(parameter:cntry == "SLE")
-      use: 
-        depends/Results_SLE_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_SLE_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_SLE_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  # - val_02a_oos_val_investigating_var_corr:
+  #     id: latest(parameter:cntry == "SLE")
+  #     use: 
+  #       depends/Results_SLE_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_SLE_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_SLE_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_02a_oos_val_investigating_var_corr:
   #     id: latest(parameter:cntry == "SWZ")
   #     use: 
@@ -723,7 +725,7 @@ depends:
   #       depends/Results_TZA_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_TZA_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_02a_oos_val_investigating_var_corr:
-  #     id: latest(parameter:cntry == "UGA")
+  #     id: latest(parameter:cntry == "UGA" && parameter:is_paper == is_paper)
   #     use: 
   #       depends/Results_UGA_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_UGA_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
@@ -734,15 +736,15 @@ depends:
   #       depends/Results_ZAF_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
   #       depends/Results_ZAF_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
   #       depends/Results_ZAF_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
-  - val_02a_oos_val_investigating_var_corr:
-      id: latest(parameter:cntry == "ZMB")
-      use:
-        depends/Results_ZMB_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-        depends/Results_ZMB_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-        depends/Results_ZMB_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
   # - val_02a_oos_val_investigating_var_corr:
-  #     id: latest(parameter:cntry == "ZWE")
-  #     use: 
-  #       depends/Results_ZWE_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
-  #       depends/Results_ZWE_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
-  #       depends/Results_ZWE_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  #     id: latest(parameter:cntry == "ZMB")
+  #     use:
+  #       depends/Results_ZMB_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+  #       depends/Results_ZMB_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+  #       depends/Results_ZMB_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
+  - val_02a_oos_val_investigating_var_corr:
+      id: latest(parameter:cntry == "ZWE")
+      use:
+        depends/Results_ZWE_AgeGroup_Incidence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Incidence_test.csv.gz
+        depends/Results_ZWE_AgeGroup_Prevalence_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Prevalence_test.csv.gz
+        depends/Results_ZWE_AgeGroup_Probability_test&OOS.csv.gz: artefacts/aggregations/Results_AgeGroup_Probability_test.csv.gz
