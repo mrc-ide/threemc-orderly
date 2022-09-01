@@ -108,10 +108,10 @@ cens_year <- max(as.numeric(
 ))
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
-survey_circumcision <- prepare_survey_data(
+survey_circ_preprocess <- prepare_survey_data(
   areas               = areas,
   # remove area_level column to avoid duplicating columns in prepare_survey_data
-  survey_circumcision = select(survey_circumcision, -matches("area_level")),
+  survey_circumcision = survey_circumcision,
   area_lev            = area_lev,
   start_year          = start_year,
   cens_year           = cens_year,
@@ -121,13 +121,13 @@ survey_circumcision <- prepare_survey_data(
 ) # %>% 
   # bind_rows()
 
-if (nrow(survey_circumcision) == 0) {
+if (nrow(survey_circ_preprocess) == 0) {
   message("no valid surveys at this level") # move inside function!
 }
 
 # include indicator to determine whether there is any type distinction for cntry
-if (all(is.na(survey_circumcision$circ_who) &
-        is.na(survey_circumcision$circ_where))) {
+if (all(is.na(survey_circ_preprocess$circ_who) &
+        is.na(survey_circ_preprocess$circ_where))) {
   print("No type distinction made in valid surveys for this country")
   is_type <- FALSE 
   paed_age_cutoff <- NULL
@@ -158,8 +158,8 @@ if (all(is.na(survey_circumcision$circ_who) &
 # TODO: Some countries only have the single age population on the aggregation
 # of interest so will need to be changed as we roll this update out.
 out <- create_shell_dataset(
-  survey_circumcision = survey_circumcision,
-  populations     = populations,
+  survey_circumcision = survey_circ_preprocess,
+  populations         = populations,
   areas               = areas,
   area_lev            = area_lev,
   time1               = "time1",
