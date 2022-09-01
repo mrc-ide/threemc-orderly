@@ -96,7 +96,6 @@ start_year <- max(min(survey_years), start_year) # have lower bound on start
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
   areas               = areas,
-  # remove area_level column to avoid duplicating columns in prepare_survey_data
   survey_circumcision = survey_circumcision,
   area_lev            = area_lev,
   start_year          = start_year,
