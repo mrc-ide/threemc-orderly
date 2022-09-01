@@ -1,5 +1,8 @@
 #### Preliminaries ####
 
+# Number of samples to use
+N <- 100
+
 # save loc
 save_dir <- "artefacts/"
 threemc::create_dirs_r(save_dir) # ensure save_dir exists; create if not
@@ -33,7 +36,7 @@ fit <- readRDS("depends/TMBObjects_DistrictAgeTime_ByType.rds")
 if (all(results$obs_mmc == 0 & results$obs_tmc == 0)) {
   mod <- "Surv_SpaceAgeTime"
 } else {
-  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
+  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
 }
 
 # re-sample from model
@@ -41,12 +44,10 @@ if (is.null(fit$sample)) {
     fit <- threemc_fit_model(
         fit     = fit,
         mod     = mod,
-        randoms = c(
-          "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
-          "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-          "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
-        ), 
-        N       = N
+        randoms = c("u_time_mmc", "u_age_mmc", "u_space_mmc",
+                    "u_agetime_mmc", "u_agespace_mmc", "u_spacetime_mmc",
+                    "u_age_tmc", "u_space_tmc", "u_agespace_tmc"),
+        N       = 1000
     )
 }
 

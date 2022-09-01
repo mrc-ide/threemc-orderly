@@ -46,8 +46,6 @@ parameters:
   # can be either "circ_where" or "circ_who"
   rm_question: 
     default: ~
-  N: 
-    default: 100
 
 packages:
   - threemc

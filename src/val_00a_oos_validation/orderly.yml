@@ -48,8 +48,6 @@ displayname: |
 parameters:
   cntry:
     default: ~
-  N:
-    default: 100
 
 packages:
   - threemc

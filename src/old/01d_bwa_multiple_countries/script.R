@@ -129,8 +129,7 @@ if (nrow(survey_circumcision) == 0) {
 if (all(is.na(survey_circumcision$circ_who) &
         is.na(survey_circumcision$circ_where))) {
   print("No type distinction made in valid surveys for this country")
-  is_type <- FALSE 
-  paed_age_cutoff <- NULL
+  is_type <- FALSE
 } else is_type <- TRUE
 
 
@@ -221,7 +220,7 @@ dat_tmb <- threemc_prepare_model_data(
 #### Modelling circumcision probabilites ####
 # specify TMB model
 # if (is_type == TRUE) {
-#   mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
+#   mod <- "Surv_SpaceAgeTime_ByType_withUnknownType"
 # } else mod <- "Surv_SpaceAgeTime"
 mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_No_AgeTime_Interaction"
 

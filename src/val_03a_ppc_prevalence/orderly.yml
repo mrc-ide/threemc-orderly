@@ -51,8 +51,6 @@ displayname: |
 parameters:
   cntry:
     default: ~
-  N: 
-    default: 1000
     
 sources: 
   - source.R

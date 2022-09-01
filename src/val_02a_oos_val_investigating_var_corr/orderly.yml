@@ -40,10 +40,6 @@ displayname: |
 parameters:
   cntry:
     default: ~
-  is_paper:
-    default: TRUE
-  N:
-    default: 100
 
 packages:
   - threemc
@@ -55,15 +51,11 @@ packages:
   - rlang
   - ggplot2
   
-# global_resources:
-#   depends/threemc_hyperpars.csv: threemc_hyperpars.csv
-
+# move to pull from 00 orderly task series
+global_resources:
+  depends/threemc_hyperpars.csv: threemc_hyperpars.csv
+  
 depends:
-  # hyperpars for the countries with the largest variance
-  - val_highest_var_hyperpars:
-      id: latest(parameter:is_paper == is_paper)
-      use:
-        depends/high_var_hyperpars.csv.gz: artefacts/high_var_hyperpars.csv.gz
   # areas file
   - 00a2_areas_join:
       id: latest
@@ -71,7 +63,7 @@ depends:
         depends/areas.geojson: artefacts/areas.geojson
   # surveys
   - 00b3_survey_join:
-      id: latest(parameter:is_paper == is_paper)
+      id: latest
       use: 
         depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
   # populations

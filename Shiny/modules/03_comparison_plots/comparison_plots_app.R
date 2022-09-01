@@ -55,8 +55,8 @@ dir_name <- orderly::orderly_search(
   name = "03_shiny_consolidation",
   parameters = list(is_paper = FALSE)
 )
-dir_name <- last(dir_name)
-# dir_name <- dir_name[length(dir_name) - 1]
+# dir_name <- last(dir_name)
+dir_name <- dir_name[length(dir_name) - 1]
 
 results_agegroup_comparison <- readr::read_csv(paste0(
   orderly_root, 
@@ -99,13 +99,13 @@ results_agegroup_national_comparison <-  readr::read_csv(paste0(
 )) %>% 
   filter(iso3 %in% ssa_iso3)
 
-results_agegroup_probs <-  readr::read_csv(paste0(
-  orderly_root,
-  "/archive/03_shiny_consolidation/",
-  dir_name,
-  "/artefacts/results_agegroup.csv.gz"
-)) %>%
-  filter(iso3 %in% ssa_iso3, grepl("probability", type))
+# results_agegroup_probs <-  readr::read_csv(paste0(
+#   orderly_root, 
+#   "/archive/03_shiny_consolidation/",
+#   dir_name,
+#   "/artefacts/results_agegroup.csv.gz"
+# )) %>% 
+#   filter(iso3 %in% ssa_iso3, grepl("probability", type))
 
 # Need single ages as well
 # results_age <- readr::read_csv(paste0(
@@ -124,20 +124,6 @@ results_agegroup_probs <-  readr::read_csv(paste0(
 #   "/artefacts/empirical_rates_singleage.csv.gz"
 # )) %>% 
 #   filter(iso3 %in% ssa_iso3)
-empirical_rates_task <- orderly::orderly_search(
-  "latest(is_paper == is_paper)", 
-  "01b_empirical_rates", 
-  parameters = list(is_paper = FALSE)
-)
-
-empirical_rates <- readr::read_csv(paste0(
- orderly_root,
- "/archive/01b_empirical_rates/",
- empirical_rates_task,
- "/artefacts/empirical_rates.csv.gz"
-)) %>% 
-  filter(iso3 %in% ssa_iso3)
-
 
 # shapefiles
 areas_loc <- archives %>%
@@ -191,8 +177,8 @@ comparison_plots_data <- list(
   "dmppt2_iso3"                          = dmppt2_iso3,
   "dmppt2_data"                          = dmppt2_data,
   "survey_data"                          = survey_data,
-  "empirical_rates"                      = empirical_rates,
-  "results_agegroup_probs"               = results_agegroup_probs,
+  # "empirical_rates"                      = empirical_rates,
+  # "results_agegroup_probs"               = results_agegroup_probs,
   "orderly_root"                         = orderly_root
 )
 

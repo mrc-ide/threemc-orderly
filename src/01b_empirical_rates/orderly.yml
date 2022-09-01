@@ -6,18 +6,18 @@ artefacts:
       - Empirical rates of circumcision. 
       filenames:
       - artefacts/empirical_rates.csv.gz
-  # - data:
-  #     description: 
-  #     - Empirical rates of circumcision for single ages. 
-  #     filenames:
-  #     - artefacts/empirical_rates_singleage.csv.gz
+  - data:
+      description: 
+      - Empirical rates of circumcision for single ages. 
+      filenames:
+      - artefacts/empirical_rates_singleage.csv.gz
       
 displayname: |
   - Preprocess empirical rates for plotting vs modelled rates. 
 
 parameters:
-  # cntry:
-  #   default: ~
+  cntry:
+    default: ~
   is_paper:
     default: TRUE
     
