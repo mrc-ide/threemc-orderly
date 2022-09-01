@@ -60,8 +60,8 @@ survey_circumcision <- read_circ_data(
   filters
 )
 
-if (all(is.na(survey_circ_preprocess$circ_who))) {
-  stop("No type distinction for this country, OOS validation non-applicable")
+if (all(is.na(survey_circumcision$circ_who)) && all(is.na(survey_circumcision$circ_where))) {
+  stop("No type distinction for this country, MMC hyperparameter investigation non-applicable")
 }
 
 populations <- read_circ_data(
