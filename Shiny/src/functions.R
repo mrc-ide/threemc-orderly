@@ -16,8 +16,8 @@ results_reader <- function(cntry = NULL, type, dir_path, pattern = NULL,
   if (length(f) > 3) message("some unexpected data may be present!")
 
   # load files and append them together. Return this appended df
-  results_age <- as.data.frame(rbindlist(
-    lapply(f, fread, ...), use.names = T
+  results_age <- as.data.frame(data.table::rbindlist(
+    lapply(f, data.table::fread, ...), use.names = TRUE
   ))
   if (!is.null(model_type)) {
     results_age <- results_age %>%
@@ -29,6 +29,30 @@ results_reader <- function(cntry = NULL, type, dir_path, pattern = NULL,
       mutate(model = stringr::str_replace(model, "programme", "program"))
   }
   return(results_age)
+}
+
+#### read aggregation results from orderly task ####
+orderly_results_reader <- function(
+    task, query = "latest(parameter:cntry == cntry)", cntry, ...
+) {
+  task_id <- orderly::orderly_search(
+    query = query,
+    task,
+    parameters = list(cntry = cntry)
+  )
+  print(task_id)
+  x <- lapply(task_id, function(i) {
+    dir_path <- file.path("archive", task, i, "artefacts/")
+    if ("aggregations" %in% list.dirs(dir_path, full.names = FALSE)) {
+      dir_path <- file.path(dir_path, "aggregations/")
+    }
+    results_reader(
+      dir_path = dir_path,
+      type = "age group"
+    )
+  })
+  if (length(x) == 1) x <- x[[1]]
+  return(x)
 }
 
 #### Function to Add "Light" Column to Data ####
@@ -607,7 +631,7 @@ plt_coverage_map <- function(
         filter(!is.na(iso3)) %>%
         # take maximum area level for known regions
         group_by(iso3) %>%
-        filter(area_level == max(area_level, na.rm = T)) %>%
+        filter(area_level == max(area_level, na.rm = TRUE)) %>%
         ungroup() %>%
         # Altering labels for the plot
         dplyr::mutate(
@@ -1552,6 +1576,9 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
   tmp2 <- split_area_level(tmp2, year = year_split, n_plots = n_plots)
 
   plot_fun <- function(plt_data1, plt_data2) {
+    
+    # browser()
+    
     # get specific title for each plot page
     add_title <- paste(
       plt_data1$iso3[1],
@@ -2930,6 +2957,11 @@ threemc_val_plt <- function(
 
   # add alpha/shape column for aggregations and surveys
   if (!is.null(all_surveys)) {
+    
+    if (!"iso3" %in% names(df_results_oos)) {
+      df_results_oos$iso3 <- substr(df_results_oos$area_id, 0, 3)
+    }
+    
     all_surveys_orig <- all_surveys %>%
       filter(iso3 %in% df_results_oos$iso3) %>%
       filter(survey_year == max(survey_year)) %>%
@@ -2974,8 +3006,8 @@ threemc_val_plt <- function(
       # get specific title for each plot page
       add_title <- paste(
         plt_data1$iso3[1],
-        plt_data1$area_level[1],
-        plt_data1$area_level_label[1],
+        # plt_data1$area_level[1],
+        # plt_data1$area_level_label[1],
         sep = ", "
       )
 
