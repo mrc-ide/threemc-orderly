@@ -114,7 +114,8 @@ out <- create_shell_dataset(
   strat               = "space",
   age                 = "age",
   circ                = "indweight_st"
-)
+) %>% 
+  filter(!is.na(population)) # nas in population will cause errors 
 
 #### Dataset for modelling ####
 
