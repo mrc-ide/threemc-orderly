@@ -21,6 +21,8 @@ init_hyperparameters <- readr::read_csv(file.path(dir_path, "high_var_hyperpars.
 test_hyperparameters <- init_hyperparameters %>%
   select(-iso3) %>% 
   summarise(across(everything(), median, na.rm = TRUE)) %>%
+  # temp: increase magnitude of parameters
+  mutate(across(everything(), ~ ifelse(. < 0, . - 3, . + 3))) %>% 
   # convert to vector
   tidyr::pivot_longer(everything()) %>%
   tibble::deframe()
@@ -59,10 +61,6 @@ survey_circumcision <- read_circ_data(
   paste0(dir_path, "survey_circumcision.csv.gz"),
   filters
 )
-
-if (all(is.na(survey_circumcision$circ_who)) && all(is.na(survey_circumcision$circ_where))) {
-  stop("No type distinction for this country, MMC hyperparameter investigation non-applicable")
-}
 
 populations <- read_circ_data(
   paste0(dir_path, "population_singleage_aggr.csv.gz"),
@@ -144,8 +142,8 @@ survey_circ_preprocess <- prepare_survey_data(
   norm_kisk_weights   = TRUE
 )
 
-if (all(is.na(survey_circumcision$type))) {
-  stop("No type distinction for this country, OOS validation non-applicable")
+if (all(is.na(survey_circ_preprocess$type))) {
+  stop("No type distinction for this country, MMC hyperparameter investigation non-applicable")
 }
 
 if (nrow(survey_circ_preprocess) == 0) {
