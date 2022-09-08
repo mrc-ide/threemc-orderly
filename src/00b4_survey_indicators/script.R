@@ -1,7 +1,7 @@
 
 #' Note: requires branch mrc-ide/naomi.utils@sexbehav-vars-jeff
 #'
-stopifnot(packageVersion("naomi.utils") >= "0.1.11")
+stopifnot(packageVersion("naomi.utils") >= "0.1.2")
 
 areas <- read_sf("depends/areas.geojson")
 areas <- st_drop_geometry(areas)

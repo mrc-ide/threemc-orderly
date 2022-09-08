@@ -93,14 +93,15 @@ dhs_clusters <- load_cluster_data(dhs_paths)
 
 # countries with phia surveys
 iso3_phia <- c(
-  "civ", "cmr", "lso", "mwi", "nam", "rwa",
-  "swz", "tza", "uga", "zmb", "zwe"
+  "civ", "cmr", "lso", "ken", "mwi", "nam", 
+  "rwa", "swz", "tza", "uga", "zmb", "zwe"
 )
 # years of phia surveys for each country
 phia_years <- c(
   "civ" = 2017,
   "cmr" = 2017,
   "lso" = 2017,
+  "ken" = 2018,
   "mwi" = 2016,
   "nam" = 2017,
   "rwa" = 2018,
