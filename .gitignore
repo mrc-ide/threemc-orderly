@@ -35,4 +35,5 @@ orderly_envir.yml
 rsconnect
 threemc-orderly.Rproj
 # ignore files in misc directory
-# misc
+misc
+!misc/pepfar_presentation_plots.R
