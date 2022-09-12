@@ -73,7 +73,7 @@ survey_circumcision <- survey_circumcision %>%
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 
 cens_year <- max(survey_years)
-start_year <- max(min(survey_years), start_year) # have lower bound on start
+start_year <- min(c(survey_years, start_year)) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
@@ -106,8 +106,8 @@ survey_circumcision[[rm_question]] <- NA
 
 #### Shell dataset to estimate empirical rate ####
 
-# take start year for skeleton dataset from surveys 
-start_year <- min(as.numeric(substr(survey_circ_preprocess$survey_id, 4, 7)))
+ 
+
 
 out <- create_shell_dataset(
   survey_circumcision = survey_circ_preprocess,

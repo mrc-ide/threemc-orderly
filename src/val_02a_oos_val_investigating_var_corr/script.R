@@ -128,7 +128,7 @@ readr::write_csv(survey_info, paste0(save_loc, "used_survey_info.csv"))
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 
 cens_year <- max(survey_years)
-start_year <- max(min(survey_years), start_year) # have lower bound on start
+start_year <- min(c(survey_years, start_year)) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
@@ -161,7 +161,7 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
 
 #### Shell dataset to estimate empirical rate ####
 
-start_year <- min(as.numeric(substr(survey_circ_preprocess$survey_id, 4, 7)))
+
 
 out <- create_shell_dataset(
   survey_circumcision = survey_circ_preprocess,
