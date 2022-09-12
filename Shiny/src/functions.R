@@ -2570,11 +2570,11 @@ plt_coverage_year_national <- function(
         nudge_x = 1,
         colour = "grey30",
         # size = 6,
-        size = 6,
+        size = 5,
         # size = 17,
         # nudge_y = 7,
         # nudge_y = 2,
-        nudge_y = -1,
+        nudge_y = -2.5,
         show.legend = FALSE
       ) +
       # annotate plots with coverage at last year
@@ -2596,14 +2596,14 @@ plt_coverage_year_national <- function(
         fontface = "bold",
         # vjust = 0,
         # vjust = 1,
-        nudge_x = -1,
+        nudge_x = -2,
         colour = "grey30",
         # size = 6,
         # size = 17,
-        size = 6,
+        size = 5,
         # nudge_y = 7,
         # nudge_y = 2,
-        nudge_y = -1,
+        nudge_y = -2.5,
         show.legend = FALSE
       ) +
       # Setting for the axes
@@ -2769,7 +2769,9 @@ plt_empirical_model_rates <- function(
       geom_point(
         colour = dot_col,
         size = 2
-      )
+      ) + 
+      geom_line(colour = dot_col, group = dot_col)
+    
     # if desired, add model estimates with associated error bounds
     if (!is.null(df_results)) {
       p <- p +

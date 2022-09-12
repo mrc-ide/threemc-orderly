@@ -78,7 +78,7 @@ archives <- orderly::orderly_list_archive()
 #   pull(id)
 
 dir_name <- orderly::orderly_search(
-  query = "latest(parameter:is_paper == is_paper", 
+  query = "latest(parameter:is_paper == is_paper)", 
   name  = "03_shiny_consolidation",
   parameters = list(is_paper = TRUE)
 )
@@ -90,12 +90,12 @@ results_agegroup <- readr::read_csv(file.path(
 ))
 
 # also pull for single ages (large!)
-# results_age <- readr::read_csv(file.path(
-#   orderly_root, 
-#   "archive/03_shiny_consolidation",
-#   dir_name,
-#   "/artefacts/results_age.csv.gz"
-# ))
+results_age <- readr::read_csv(file.path(
+  orderly_root,
+  "archive/03_shiny_consolidation",
+  dir_name,
+  "/artefacts/results_age.csv.gz"
+))
 
 results_agegroup_n_circ <- readr::read_csv(file.path(
   orderly_root, 
@@ -748,7 +748,6 @@ p2 <- plt_coverage_map(
   spec_main_title    = main_title
 )
 
-# make facets vertical rather than horizontal!
 p2a <- p2$Total + 
   ggtitle("") + # remove title
   # ggtitle("Male Circumcision Coverage, 2010-2021") +
@@ -828,6 +827,7 @@ p2c
 # Create area plot of (type-split) coverage for each country
 
 p3 <- plt_coverage_year_national(
+  # results_agegroup = results_agegroup %>% filter(iso3 != "GMB"),
   results_agegroup = results_agegroup,
   areas            = areas,
   last_surveys     = last_surveys,
@@ -853,7 +853,10 @@ ssa_grid <- geofacet::africa_countries_grid1 %>%
       TRUE                                       ~ name
     )
   ) %>%
-  filter(name %in% c(ssa_countries, "Eq. Guinea", "Cent. Af. Rep."))
+  filter(name %in% c(ssa_countries, "Eq. Guinea", "Cent. Af. Rep.")) %>% 
+  # filter(name != "Senegal") %>% 
+  # mutate(name = ifelse(name == "The Gambia", "Senegal", name)) %>% 
+  identity()
 
 # remove missing rows and columns (only looking at SSA, not all of Africa)
 min_row <- min(ssa_grid$row)
@@ -959,10 +962,12 @@ p4 <- plt_data %>%
   geom_point(
     data = filter(plt_data, area_level == 0),
     shape = 21, 
-    size = 4, 
+    # size = 4, 
+    size = 6,
     fill = "white", 
     col = "black", 
-    alpha = 0.9
+    # alpha = 0.9
+    alpha = 1
   ) +
   # add horizontal line at 90% circumcision
   geom_hline(
@@ -1073,6 +1078,186 @@ plt_circ_age_ridge(
   ggtitle("Mean Age at Circumcision, Split by Type") + 
   theme(plot.title = element_text(size = 22, face = "bold"))
 
+#### Figure 5: Table ####
+
+# national level age-group results for target countries for 10-29 year olds
+results_target <- results_agegroup %>%
+  filter(
+    area_id %in% target_iso3,
+    age_group == "10-29",
+    year == "2020",
+    grepl("coverage", type)
+  ) %>%
+  select("Country" = area_name, type, mean, upper, lower) %>%
+  mutate(
+    type = case_when(
+      type == "MC coverage"  ~ "MC Coverage",
+      type == "MMC coverage" ~ "MMC Coverage",
+      type == "TMC coverage" ~ "TMC Coverage"
+    ),
+    Country = case_when(
+      Country == "Gambella"      ~ "Gambella Province (Ethiopia)",
+      grepl("Tanzania", Country) ~ "Tanzania",
+      TRUE                       ~ Country
+    )
+  ) 
+
+results_upper <- results_target %>% 
+  select(Country, type, mean = upper) %>% 
+  mutate(
+    type = case_when(
+      grepl("MMC", type) ~ "upper_mmc",
+      grepl("TMC", type) ~ "upper_tmc",
+      TRUE               ~ "upper_mc"
+    )
+  )
+
+results_lower <- results_target %>% 
+  select(Country, type, mean = lower) %>% 
+  mutate(
+    type = case_when(
+      grepl("MMC", type) ~ "lower_mmc",
+      grepl("TMC", type) ~ "lower_tmc",
+      TRUE               ~ "lower_mc"
+    )
+  )
+
+results_target <- results_target %>% 
+  select(-c(lower, upper)) %>% 
+  bind_rows(results_upper, results_lower) %>%
+   # mutate(mean = round(mean, 2)) %>% 
+  tidyr::pivot_wider(names_from = "type", values_from = mean)
+
+# add rows for missing countries
+if (length(missing_iso3) != 0) {
+  results_target <- bind_rows(
+    results_target,
+    data.frame(
+      "Country" = countrycode::countrycode(
+        missing_iso3, origin = "iso3c", destination = "country.name"
+      )
+    )
+  )
+}
+
+# function to convert val between 0 & 1 to red-green-blue scale from map plots
+red_green_blue_pal <-  function(x) {
+  if (is.na(x)) {
+    "#808080" # grey
+  } else { 
+    rgb(colorRamp(c(
+      # "#5e4fa2", "#3288bd", 
+      "#3288bd", "#66c2a5", "#abdda4", "#e6f598", "#ffffbf", 
+      "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142"
+    ))(x), maxColorValue = 255)
+  }
+}
+
+# function to give cells colour
+cell_style <- function(value) {
+  color <- red_green_blue_pal(value)
+  # list(background = color, font = "arial", fontWeight = "bold")
+  list(background = color, fontWeight = "bold")
+}
+
+# function to format cells 
+cell_format <- function(value, index, df, type) {
+  # browser()
+  if (!is.na(value)) {
+    # format values to force two s.f. and to percentage
+    val <- format(round(100 * value, 1), nsmall = 1)
+    # add leading 0 to val if required
+    # if (value < 0.1) val <- paste0(0, val)
+    
+    # format lower and upper CIs
+    lower_val <- df[index, paste0("lower_", type)]
+    lower <- format(round(100 * lower_val, 1), nsmall = 1)
+    # if (lower_val < 0.1) lower <- paste0(0, lower)
+    
+    upper_val <- df[index, paste0("upper_", type)]
+    upper <- format(round(100 * upper_val, 1), nsmall = 1)
+    # if (upper_val < 0.1) upper <- paste0(0, upper)
+    
+    # return formatted cell
+    glue("{val}% ({lower}-{upper}%)") 
+  } else glue("")
+}
+
+# reactable table 
+p5 <- reactable(
+  # remove CI columns
+  data = select(results_target, -c(contains("upper"), contains("lower"))),
+  defaultPageSize = 14, # show all 14 countries 
+  # define & format columns
+  columns = list(
+    Country = colDef(
+      align = "left" # ,
+      # maxWidth = 50
+    ),
+    `MC Coverage` = colDef(
+      name = "Male Circumcision Coverage",
+      align = "center", # align to the right
+      cell = function(value, index) {
+        cell_format(value, index, results_target, type = "mc")
+      },
+      style = function(value) cell_style(value) # ,
+      # maxWidth = 50
+    ),
+    `MMC Coverage` = colDef(
+      name = "Medical Male Circumcision Coverage",
+      align = "center", 
+      cell = function(value, index) {
+        cell_format(value, index, results_target, type = "mmc")
+      },
+      style = function(value) cell_style(value) # ,
+       # maxWidth = 50
+    ),
+    `TMC Coverage` = colDef(
+      name = "Traditional Male Circumcision Coverage",
+      align = "center", 
+      cell = function(value, index) {
+        cell_format(value, index, results_target, type = "tmc")
+      },
+      style = function(value) cell_style(value) # ,
+      # maxWidth = 50
+    )
+  ),
+  defaultSorted = "MC Coverage", 
+  defaultSortOrder = "desc",
+  style = list(fontFamily = "Arial"),
+  bordered = TRUE,
+  defaultColDef = colDef(sortNALast = TRUE), 
+  width = 800,
+  showSortIcon = FALSE
+)
+p5 <- p5 %>% 
+  # reactablefmtr::add_title(
+  #   # "UNAIDS Priority Country Circumcision Coverage, 2020, age 10-29 years",  
+  #   "UNAIDS VMMC Priority Countries \n
+  #   Circumcision coverage in 2020 among men 10-29 years",
+  #   align = "left", 
+  #   font_size = 20, 
+  # )
+  htmlwidgets::prependContent(
+    htmltools::tags$h1(
+      "UNAIDS VMMC Priority Countries",
+      style = "
+      font-family: Arial; 
+      margin-bottom: -20px
+      "
+    ),
+    htmltools::tags$h2(
+      "Circumcision Coverage, 2020",
+      style = "
+      font-family: Arial; 
+      margin-bottom: -1px
+      "
+    )
+)
+p5
+
+# save with dimensions 1500 x 1200? (smaller than this anyway!)
+
 #### DMPPT2 Comparison Plots ####
 
 #### Coverage vs Year ####
@@ -1114,6 +1299,28 @@ p_moz <- plt_dmppt2_compare_year(
     legend.position = "none"
   ) 
 p_moz
+
+p_mwi <- plt_dmppt2_compare_year(
+  circ_data   = df_results %>% filter(iso3 == "MWI"),
+  dmppt2_data = dmppt2_data,
+  survey_data = survey_data_2,
+  # age_per = "15-49",
+  age_per = spec_age_group,
+  years = first(spec_years):last(spec_years),
+  area_levels = 0,
+  xlab = "Year",
+  ylab = "Circumcision Coverage",
+  # title = main_title,
+  title = "Black line denotes DMPPT2 coverage, Blue dots denote survey coverage, ",
+  n_plots = 100
+)[[1]] + 
+  theme(
+    plot.title = element_text(size = 15),
+    axis.text.x = element_text(size = 15, angle = 45, vjust = 0.5, face = "bold"),
+    strip.text.x = element_text(size = 12, face = "bold"),
+    legend.position = "none"
+  ) 
+p_mwi
 
 p_ken <- plt_dmppt2_compare_year(
   circ_data   = df_results %>% filter(iso3 == "KEN"),
