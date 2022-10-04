@@ -150,6 +150,11 @@ dat_tmb <- threemc_prepare_model_data(
 #   X_fixed_mmc_paed <- X_age_mmc_paed <- X_space_mmc_paed <- data.frame(0)
 # }
 
+# dummy paediatric matrices
+if (is.null(paed_age_cutoff)) {
+  X_fixed_mmc_paed <- X_age_mmc_paed <- X_space_mmc_paed <- data.frame(0)
+}
+
 # Initial values
 parameters <- with(
   dat_tmb,
