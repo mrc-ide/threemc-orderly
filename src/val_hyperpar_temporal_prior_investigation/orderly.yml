@@ -1,0 +1,95 @@
+script: script.R
+
+artefacts:
+  - data: 
+      description:
+      - to be filled in
+      filenames:
+      - artefacts/hyperparameters.csv
+  - data: 
+      description:
+      - to be filled in
+      filenames:
+      - artefacts/fit_stats.csv
+  - data: 
+      description:
+      - to be filled in
+      filenames:
+      - artefacts/ar1_year_plots.pdf
+  - data: 
+      description:
+      - to be filled in
+      filenames:
+      - artefacts/ar1_agegroups_plots.pdf
+  - data: 
+      description:
+      - to be filled in
+      filenames:
+      - artefacts/rw1_year_plots.pdf
+  - data: 
+      description:
+      - to be filled in
+      filenames:
+      - artefacts/rw1_agegroups_plots.pdf
+  - data: 
+      description:
+      - to be filled in
+      filenames:
+      - artefacts/rw2_year_plots.pdf
+  - data: 
+      description:
+      - to be filled in
+      filenames:
+      - artefacts/rw2_agegroups_plots.pdf
+      
+  
+displayname: |
+  - to be filled in
+  
+parameters:
+  cntry:
+    default: ~
+
+packages:
+  - threemc
+  - sf
+  - data.table
+  - dplyr
+  - Matrix
+  - TMB
+  - rlang
+  - ggplot2
+  - readr
+  
+sources:
+  - source.R
+
+global_resources:
+  depends/all_surveys.csv: all_surveys.csv
+
+depends:
+  # areas file
+  - 00a2_areas_join:
+      id: latest
+      use:
+        depends/areas.geojson: artefacts/areas.geojson
+  # surveys
+  - 00b3_survey_join:
+      id: latest
+      use: 
+        depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
+  # suvrey estimates
+  - 00b4_survey_indicators:
+      id: latest
+      use: 
+        depends/survey-circumcision-coverage.csv.gz: artefacts/survey-circumcision-coverage.csv.gz
+  # populations
+  - 00c4_pops_aggregate:
+      id: latest
+      use: 
+        depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
+  # highest variance hyperparameters
+  - val_highest_var_hyperpars:
+      id: latest
+      use:
+        depends/high_var_hyperpars.csv.gz: artefacts/high_var_hyperpars.csv.gz
