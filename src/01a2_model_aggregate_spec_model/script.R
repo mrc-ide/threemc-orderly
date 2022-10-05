@@ -155,6 +155,11 @@ if (is.null(paed_age_cutoff)) {
   X_fixed_mmc_paed <- X_age_mmc_paed <- X_space_mmc_paed <- data.frame(0)
 }
 
+# dummy time TMC matrices
+if (inc_time_tmc == FALSE) {
+  X_time_tmc <- data.frame(0)
+}
+
 # Initial values
 parameters <- with(
   dat_tmb,
@@ -226,7 +231,11 @@ if ("Q_time" %in% names(dat_tmb)) {
 # remove time tmc terms, if not fitting model with non-constant tmc over time
 if (inc_time_tmc == FALSE) {
   parameters <- parameters[
-    !grepl("time", names(parameters)) & !grepl("tmc", names(parameters))
+    !(
+      grepl("time", names(parameters)) & 
+        grepl("tmc", names(parameters)) & 
+        !grepl("u_fixed", names(parameters)) # keep fixed parameters for TMC!
+    )
   ]
 }
 
