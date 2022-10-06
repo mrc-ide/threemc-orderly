@@ -311,6 +311,20 @@ if (is.null(fit$sample)) {
 fit_no_prog <- fit
 rm(fit); gc()
 
+if (any(results$year < 2000)) {
+  missing_years <- start_year:(min(populations$year) - 1)
+  missing_rows <- tidyr::crossing(
+    select(populations, -c(year, population)),
+    "year"       = missing_years,
+    "population" = NA
+  )
+  populations <- bind_rows(populations, missing_rows) %>%
+    arrange(iso3, area_id, area_level, age, year) %>%
+    group_by(iso3, area_id, area_level, age) %>%
+    tidyr::fill(population, .direction = "downup") %>%
+    ungroup()
+}
+
 # want to aggregate for both discrete ages and "binned" age groups
 # age_vars <- list("inputs" = c("age", "age_group"), "names" = c("Age", "AgeGroup"))
 age_vars <- list("inputs" = c("age_group"), "names" = c("AgeGroup"))
