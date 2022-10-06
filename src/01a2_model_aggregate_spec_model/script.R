@@ -311,7 +311,7 @@ if (is.null(fit$sample)) {
 fit_no_prog <- fit
 rm(fit); gc()
 
-if (any(results$year < 2000)) {
+if (any(out_spec$year < 2000)) {
   missing_years <- start_year:(min(populations$year) - 1)
   missing_rows <- tidyr::crossing(
     select(populations, -c(year, population)),
@@ -329,6 +329,7 @@ if (any(results$year < 2000)) {
 # age_vars <- list("inputs" = c("age", "age_group"), "names" = c("Age", "AgeGroup"))
 age_vars <- list("inputs" = c("age_group"), "names" = c("AgeGroup"))
 # want to aggregate for various types
+# types <- c("prevalence")
 types <- c("probability", "incidence", "prevalence")
 
 # run aggregations for each combination of age_vars and types
@@ -344,7 +345,7 @@ lapply(seq_along(age_vars$inputs), function(i) {
       type        = types[j],
       area_lev    = area_lev,
       N           = N,
-      prev_year = 2008 # year to compare with for prevalence
+      prev_year   = NULL # year to compare with for prevalence
     )
     readr::write_csv(
       x = spec_results,
