@@ -29,6 +29,7 @@ forecast_year <- 2021
 paed_age_cutoff <- 10
 area_lev <- 0 # run at national level
 CI_range <- 0.95
+increment <- 2
 
 # five-year age groups
 spec_age_groups <- five_year_age_groups <- c(
@@ -632,7 +633,7 @@ threemc_optimise_model <- function(
       message(cond)
       return(NA)
     })
-    if (inherits(fixed_mod, "logical") && is.na(prop_mod)) break
+    if (inherits(prop_mod, "logical") && is.na(prop_mod)) break
     
     # update table of parameters
     parameters_df <- rbind(
@@ -687,7 +688,7 @@ ar_fits <- threemc_optimise_model(
   spec_age_groups,
   CI_range,
   optimal_hyperpars,
-  increment = 2,
+  increment = 1,
   add_title = "AR 1 prior, "
 )
 
@@ -733,7 +734,7 @@ rw_1_fits <- threemc_optimise_model(
   CI_range,
   # need to remove logitrho hyperparameters when using RW temporal prior
   optimal_hyperpars[names(optimal_hyperpars) %in% names(parameters)],
-  increment = 2,
+  increment = increment,
   add_title = "RW 1 prior, "
 )
 
@@ -763,7 +764,7 @@ rw_2_fits <- threemc_optimise_model(
   spec_age_groups,
   CI_range,
   optimal_hyperpars[names(optimal_hyperpars) %in% names(parameters)],
-  increment = 2,
+  increment = increment,
   add_title = "RW 2 prior, "
 )
 
