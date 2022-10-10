@@ -29,7 +29,7 @@ forecast_year <- 2021
 paed_age_cutoff <- 10
 area_lev <- 0 # run at national level
 CI_range <- 0.95
-increment <- 2
+# increment <- 1
 
 # five-year age groups
 spec_age_groups <- five_year_age_groups <- c(
@@ -418,6 +418,11 @@ fit_proposal_model <- function(proposal_parameters, maps) {
               "ppc" = ppc_fixed))
 }
 
+# TEMP: save all parameters
+pars_list_to_df <- function(parameters, names) {
+  t(unstack(stack(parameters[names])))
+}
+
 #### Main Function for Comparison ####
 
 # function to perform increments to model estimates until "best" model is found
@@ -485,6 +490,29 @@ threemc_optimise_model <- function(
     compare_stats = TRUE
   )
   
+  # tabulate fits
+  fit_tab <- data.frame()
+  
+  # function to update fit table
+  update_fit_tab <- function(fit_tab, ppc, mod_label) {
+    fit_tab_update <- tribble(
+      ~model,     ~ci, ~elpd, ~crps,
+      mod_label, NA,   NA,   NA
+    )
+    fit_tab_update$ci <- ppc$summary_stats$oos_observations_within_PPD_CI
+    fit_tab_update$elpd <- ppc$summary_stats$elpd$estimates[1, 1]
+    fit_tab_update$crps <- sum(ppc$summary_stats$crps)
+    return(bind_rows(fit_tab, fit_tab_update))
+  }
+  fit_tab <- update_fit_tab(fit_tab, ppc, "original")
+  
+  # hold MMC time variance hyperparameters fixed!!
+  maps <- lapply(rep(NA, length(optimal_hyperpars)), factor)
+  names(maps) <- names(optimal_hyperpars)
+  
+  # table of parameters for each model 
+  parameters_df <- pars_list_to_df(fit$par, names(maps))
+  
   
   #### Fit additional model with fixed params and calculate PPD ####
   
@@ -493,13 +521,26 @@ threemc_optimise_model <- function(
     parameters, optimal_hyperpars, fit, increment = increment
   )
   
-  # hold MMC time variance hyperparameters fixed!!
-  maps <- lapply(rep(NA, length(optimal_hyperpars)), factor)
-  names(maps) <- names(optimal_hyperpars)
-  
   # fit model with fixed hyperpars
   set.seed(123)
-  fixed_mod <- fit_proposal_model(proposal_parameters, maps)
+  fixed_mod <- tryCatch({
+    fit_proposal_model(proposal_parameters, maps)
+  }, error = function(cond) {
+    message("Proposal model failed to fit")
+    message("Original error message:")
+    message(cond)
+    return(NA)
+  })
+  
+  # exit early if first model is the only one which is valid
+  if (inherits(fixed_mod, "logical") && is.na(fixed_mod)) {
+    return(list(
+      "optimal_parameters" = parameters,
+      "parameters_df"      = dplyr::as_tibble(parameters_df), 
+      "mod"                = current_model,
+      "fit_tab"            = fit_tab
+    ))
+  }
   
   
   #### Compare Models ####
@@ -535,6 +576,7 @@ threemc_optimise_model <- function(
       all_surveys = filter(all_survey_df, !survey_year %in% removed_years),
       spec_agegroup = spec_age_groups,
       spec_type = "MMC coverage",
+      facet_formula = formula(age_group ~ area_name), 
       xlab = "Year",
       ylab = "Circumcision Coverage",
       title = title
@@ -569,21 +611,6 @@ threemc_optimise_model <- function(
   # Compare with PPCs
   choice <-  threemc_ppc_compare(ppc, fixed_mod$ppc)
   
-  # tabulate fits
-  fit_tab <- data.frame()
-  
-  # function to update fit table
-  update_fit_tab <- function(fit_tab, ppc, mod_label) {
-    fit_tab_update <- tribble(
-      ~model,     ~ci, ~elpd, ~crps,
-      mod_label, NA,   NA,   NA
-    )
-    fit_tab_update$ci <- ppc$summary_stats$oos_observations_within_PPD_CI
-    fit_tab_update$elpd <- ppc$summary_stats$elpd$estimates[1, 1]
-    fit_tab_update$crps <- sum(ppc$summary_stats$crps)
-    return(bind_rows(fit_tab, fit_tab_update))
-  }
-  fit_tab <- update_fit_tab(fit_tab, ppc, "original")
   fit_tab <- update_fit_tab(fit_tab, fixed_mod$ppc, "proposal")
   
   
@@ -591,25 +618,21 @@ threemc_optimise_model <- function(
   
   # if original model was preferred, try reducing increment on parameters
   increment_orig <- increment
-  # if (choice$optimal_model == "original") {
-    # TEMP: always take proposal model for now
-  #   increment <- increment / 2
-  #   current_model <- list("fit" = fit, "out" = out_spec, "ppc" = ppc)
-  #   current_params <- parameters
-  # } else {
+  if (choice$optimal_model == "original") {
+    increment <- increment / 2
+    current_model <- list("fit" = fit, "out" = out_spec, "ppc" = ppc)
+    current_params <- parameters
+  } else {
     current_model <- fixed_mod
     current_params <- proposal_parameters
-  # }
+  }
   
   count <- 2
   
-  # TEMP: save all parameters
-  pars_list_to_df <- function(parameters, names) {
-    t(unstack(stack(parameters[names])))
-  }
   # parameters from original and fixed model
   parameters_df <- rbind(
-    pars_list_to_df(fit$par, names(maps)),
+    parameters_df,
+    # pars_list_to_df(fit$par, names(maps)),
     pars_list_to_df(proposal_parameters, names(maps))
   )
   
@@ -656,12 +679,12 @@ threemc_optimise_model <- function(
     )
     
     # TEMP: Accept all proposals
-    # if (choice$optimal_model == "original") {
-    #   increment <- increment / 2
-    # } else {
+    if (choice$optimal_model == "original") {
+      increment <- increment / 2
+    } else {
     current_model <- prop_mod
     current_params <- proposal_pars
-    # }
+    }
     count <- count + 1
     gc()
   }
@@ -675,6 +698,7 @@ threemc_optimise_model <- function(
     "fit_tab" = fit_tab
   ))
 }
+
 
 #### Run for model with AR 1 temporal prior ####
 
@@ -691,6 +715,7 @@ ar_fits <- threemc_optimise_model(
   increment = 1,
   add_title = "AR 1 prior, "
 )
+
 
 #### Run for RW 1 models ####
 
@@ -723,20 +748,25 @@ if (!is.null(dat_tmb$Q_time)) {
 
 parameters <- set_params(mod, dat_tmb)
 
-rw_1_fits <- threemc_optimise_model(
-  out,
-  dat_tmb,
-  mod,
-  parameters,
-  survey_estimates,
-  removed_years,
-  spec_age_groups,
-  CI_range,
-  # need to remove logitrho hyperparameters when using RW temporal prior
-  optimal_hyperpars[names(optimal_hyperpars) %in% names(parameters)],
-  increment = increment,
-  add_title = "RW 1 prior, "
-)
+rw_1_fits <- tryCatch({
+  threemc_optimise_model(
+    out,
+    dat_tmb,
+    mod,
+    parameters,
+    survey_estimates,
+    removed_years,
+    spec_age_groups,
+    CI_range,
+    # need to remove logitrho hyperparameters when using RW temporal prior
+    optimal_hyperpars[names(optimal_hyperpars) %in% names(parameters)],
+    increment = increment,
+    add_title = "RW 1 prior, "
+  )
+}, error = function(cond) {
+  message("RW 1 model failed to fit")
+  return(NA)
+})
 
 
 #### RW 2 ####
@@ -754,81 +784,95 @@ dat_tmb <- threemc_prepare_model_data(
 
 parameters <- set_params(mod, dat_tmb)
 
-rw_2_fits <- threemc_optimise_model(
-  out,
-  dat_tmb,
-  mod,
-  parameters,
-  survey_estimates,
-  removed_years,
-  spec_age_groups,
-  CI_range,
-  optimal_hyperpars[names(optimal_hyperpars) %in% names(parameters)],
-  increment = increment,
-  add_title = "RW 2 prior, "
-)
+rw_2_fits <- tryCatch({
+  threemc_optimise_model(
+    out,
+    dat_tmb,
+    mod,
+    parameters,
+    survey_estimates,
+    removed_years,
+    spec_age_groups,
+    CI_range,
+    # need to remove logitrho hyperparameters when using RW temporal prior
+    optimal_hyperpars[names(optimal_hyperpars) %in% names(parameters)],
+    increment = increment,
+    add_title = "RW 2 prior, "
+  )
+}, error = function(cond) {
+  message("RW 2 model failed to fit")
+  return(NA)
+})
+
 
 #### Save Output ####
 
+# save ppcs from each run
+update_tbl <- function(tbl, fit, fit_object, spec_prior) {
+  if (!inherits(fit, "logical")) {
+    return(bind_rows(
+      tbl, mutate(fit[[fit_object]], prior = spec_prior)
+    ))
+  } else {
+    return(tbl)
+  }
+}
+
 # save parameters from each run
-parameters_df <- bind_rows(
-  mutate(ar_fits$parameters_df,   prior = "AR 1"),
-  mutate(rw_1_fits$parameters_df, prior = "RW 1"),
-  mutate(rw_2_fits$parameters_df, prior = "RW 2"),
+parameters_df_final <- data.frame()
+parameters_df_final <- update_tbl(
+  parameters_df_final, ar_fits, "parameters_df", "AR 1"
+)
+parameters_df_final <- update_tbl(
+  parameters_df_final, rw_1_fits, "parameters_df", "RW 1"
+)
+parameters_df_final <- update_tbl(
+  parameters_df_final, rw_2_fits, "parameters_df", "RW 2"
 )
 
 readr::write_csv(
-  parameters_df,
+  mutate(parameters_df_final, iso3 = cntry), # label with country
   file = paste0(save_loc, "hyperparameters.csv")
 )
 
-# save ppcs from each run
-fit_tab <- bind_rows(
-  mutate(ar_fits$fit_tab,   prior = "AR 1"),
-  mutate(rw_1_fits$fit_tab, prior = "RW 1"),
-  mutate(rw_2_fits$fit_tab, prior = "RW 2"),
+# save fit statistics for each model
+fit_tab <- data.frame()
+fit_tab <- update_tbl(
+  fit_tab, ar_fits, "fit_tab", "AR 1"
+)
+fit_tab <- update_tbl(
+  fit_tab, rw_1_fits, "fit_tab", "RW 1"
+)
+fit_tab <- update_tbl(
+  fit_tab, rw_2_fits, "fit_tab", "RW 2"
 )
 
 readr::write_csv(
-  fit_tab,
+  mutate(fit_tab, iso3 = cntry),
   file = paste0(save_loc, "fit_stats.csv")
 )
 
 # save plots
-
-# save_plots <- function(plots, name) {
-#     pdf(name)
-#     plots
-#     dev.off()
-# }
-#
-# save_plots(ar_fits$plots$year_plots, paste0(cntry, "_ar1_year_plots.pdf"))
-# save_plots(ar_fits$plots$age_group_plots, paste0(cntry, "_ar1_agegroup_plots.pdf"))
-# save_plots(rw_1_fits$plots$year_plots, paste0(cntry, "_rw1_year_plots.pdf"))
-# save_plots(rw_1_fits$plots$age_group_plots, paste0(cntry, "_rw1_agegroup_plots.pdf"))
-# save_plots(rw_2_fits$plots$year_plots, paste0(cntry, "_rw2_year_plots.pdf"))
-# save_plots(rw_2_fits$plots$age_group_plots, paste0(cntry, "_rw2_agegroup_plots.pdf"))
-
 pdf(paste0(save_loc, "ar1_year_plots.pdf"))
-ar_fits$plots$year_plots
+if (inherits(ar_fits, "logical")) NULL else ar_fits$plots$year_plots
 dev.off()
 
 pdf(paste0(save_loc, "ar1_agegroups_plots.pdf"))
-ar_fits$plots$age_group_plots
+if (inherits(ar_fits, "logical")) NULL else ar_fits$plots$age_group_plots
 dev.off()
 
 pdf(paste0(save_loc, "rw1_year_plots.pdf"))
-rw_1_fits$plots$year_plots
+if (inherits(rw_1_fits, "logical")) NULL else rw_1_fits$plots$year_plots
 dev.off()
 
 pdf(paste0(save_loc, "rw1_agegroups_plots.pdf"))
-rw_1_fits$plots$age_group_plots
+if (inherits(rw_1_fits, "logical")) NULL else rw_1_fits$plots$age_group_plots
 dev.off()
 
 pdf(paste0(save_loc, "rw2_year_plots.pdf"))
-rw_2_fits$plots$year_plots
+if (inherits(rw_2_fits, "logical")) NULL else rw_2_fits$plots$year_plots
 dev.off()
 
 pdf(paste0(save_loc, "rw2_agegroups_plots.pdf"))
-rw_2_fits$plots$age_group_plots
+if (inherits(rw_2_fits, "logical")) NULL else rw_2_fits$plots$age_group_plots
 dev.off()
