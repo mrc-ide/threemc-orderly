@@ -1,4 +1,4 @@
-#### Part 1 of Analysis (Modelling) with functionalised behaviour ####
+#### Model with user-specified model ####
 
 #################
 #### Initial ####
@@ -66,7 +66,8 @@ if (inc_time_tmc == TRUE) {
 #   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
 # }
 # 
-area_lev <- 1
+# area_lev <- 1
+area_lev <- 0
 
 #### Preparing circumcision data ####
 
@@ -311,8 +312,10 @@ if (is.null(fit$sample)) {
 fit_no_prog <- fit
 rm(fit); gc()
 
-if (any(out_spec$year < 2000)) {
-  missing_years <- start_year:(min(populations$year) - 1)
+# Fill in any NAs in populations for modelled years with last known value
+min_pop_year <- min(populations$year)
+if (any(out_spec$year < min_pop_year)) {
+  missing_years <- start_year:(min_pop_year - 1)
   missing_rows <- tidyr::crossing(
     select(populations, -c(year, population)),
     "year"       = missing_years,

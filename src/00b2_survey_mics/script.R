@@ -379,7 +379,6 @@ mics_final <- mics_final %>%
         recode("Bolama/Bijagós" = "Bolama/Bijagos",
                "Bafatá" = "Bafata",
                "Gabú" = "Gabu",
-               "SAB" = "Bissau",
                "Bolama/BijagÃ³s" = "Bolama/Bijagos",
                "BafatÃ¡" = "Bafata",
                "GabÃº" = "Gabu",          
