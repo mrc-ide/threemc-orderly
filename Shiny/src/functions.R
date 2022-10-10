@@ -2820,7 +2820,8 @@ threemc_val_plt <- function(
     spec_area_level = unique(df_results_oos$area_level),
     x_var = "year",
     take_log = FALSE,
-    facet = TRUE,
+    facet = "grid",
+    facet_formula = formula(~ area_name), 
     xlab, ylab, title,
     str_save = NULL, save_width = 16, save_height = 12,
     n_plots = 12
@@ -2862,7 +2863,7 @@ threemc_val_plt <- function(
         year %in% spec_years,
         area_level %in% spec_area_level,
         age_group %in% spec_agegroup,
-        type == type_filter
+        type %in% type_filter
       )
     # if ("model" %in% names(.data))
     #     .data <- .data[.data$model == model_type, ]
@@ -2913,6 +2914,18 @@ threemc_val_plt <- function(
     }
   }
 
+  # Ordering age groups
+  if (x_var == "age_group") {
+    df_results_oos$age_group <- as.numeric(factor(
+      df_results_oos$age_group, levels = spec_agegroup
+    ))
+    if (!is.null(df_results_survey)) {
+      df_results_survey$age_group <- as.numeric(factor(
+        df_results_survey$age_group, levels = spec_agegroup
+      ))
+    }
+  } 
+  
   # split results by area level, and number of plots desired
   df_results_oos <- split_area_level(df_results_oos, n_plots = n_plots)
   if (!is.null(df_results_survey)) {
@@ -2994,6 +3007,12 @@ threemc_val_plt <- function(
           scale_alpha_manual(
             values = c("Surveyed" = 0.8, "Projected" = 0.3)
           )
+      } else if (colour_var == "age_group") {
+        p <- p + 
+          scale_x_continuous(
+            breaks = 1:length(spec_age_group), # (length(age_per) + 1),
+            labels = spec_age_group# c(age_per, final_label),
+        )
       }
       p <- p +
         guides(
@@ -3018,7 +3037,7 @@ threemc_val_plt <- function(
               )
       }
 
-      if (grepl(paste("coverage", "probability", sep = "|") , spec_type) && take_log == FALSE) {
+      if (all(grepl(paste("coverage", "probability", sep = "|") , spec_type)) && take_log == FALSE) {
         p <- p +
         scale_y_continuous(
           breaks = seq(0, 1, by = 0.25),
@@ -3028,22 +3047,17 @@ threemc_val_plt <- function(
       }
       p <- p +
         theme_bw() +
-        theme(legend.position = "bottom")
+        theme(
+          axis.text.x = element_text(angle = 45, vjust = 0.5),
+          legend.position = "bottom"
+        )
 
-      if (facet == TRUE) {
-          if (x_var == "year") {
-            p <- p +
-              # Faceting by area
-              # facet_wrap(~ area_name)
-              # facet by area and age group
-                  # facet_grid(age_group ~ area_name)
-                  facet_grid(area_name ~ age_group)
-          } else if (x_var == "age_group") {
-              p <- p +
-                  # Facet by area and year
-                  # facet_grid(year ~ area_name)
-                  facet_grid(area_name ~ year)
-          }
+      if (!is.null(facet) && facet != FALSE) {
+        if (facet == "wrap") {
+          p <- p + facet_wrap(facet_formula)
+        } else if (facet == "grid") {
+          p <- p + facet_grid(facet_formula)
+        }
       }
 
       return(p)
