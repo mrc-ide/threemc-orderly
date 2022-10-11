@@ -51,6 +51,8 @@ parameters:
     default: ~
   increment: 
     default: 1
+  is_paper: 
+    default: TRUE
 
 packages:
   - threemc
@@ -77,12 +79,12 @@ depends:
         depends/areas.geojson: artefacts/areas.geojson
   # surveys
   - 00b3_survey_join:
-      id: latest
+      id: latest(parameter:is_paper == is_paper)
       use: 
         depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
   # suvrey estimates
   - 00b4_survey_indicators:
-      id: latest
+      id: latest(parameter:is_paper == is_paper)
       use: 
         depends/survey-circumcision-coverage.csv.gz: artefacts/survey-circumcision-coverage.csv.gz
   # populations
