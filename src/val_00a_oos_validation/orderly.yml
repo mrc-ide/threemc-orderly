@@ -50,6 +50,8 @@ parameters:
     default: ~
   N:
     default: 100
+  area_lev: 
+    default: NULL
 
 packages:
   - threemc
