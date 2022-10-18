@@ -166,7 +166,7 @@ extract_survey_vars <- function(df, survey_id_c, variable_recode, dataset_type, 
   # id_vars <- unique(id_vars)
   df <- df %>%
     select(
-      all_of(id_vars)[id_vars %in% names(df)],
+      any_of(id_vars),
       any_of(opt_var)
     )
 }

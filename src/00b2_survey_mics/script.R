@@ -11,8 +11,10 @@ sharepoint <- spud::sharepoint$new(Sys.getenv("SHAREPOINT_URL"))
 
 # function to load data from specific dir on sharepoint
 load_sharepoint_data <- function(
-                                 path, pattern = NULL, group = "HIVInferenceGroup-WP/"
-                                 ) {
+    path, 
+    pattern = NULL, 
+    group = "HIVInferenceGroup-WP/"
+) {
 
   # List files in folder
   folder <- sharepoint$folder(group, URLencode(path))
@@ -318,7 +320,7 @@ mics_final %>%
   filter(is.na(area_name))
 
 mics_final <- mics_final %>%
-  filter(! (mnweight == 0 & is.na(area_name) & survey_id == "TCD2019MICS"))
+  filter(!(mnweight == 0 & is.na(area_name) & survey_id == "TCD2019MICS"))
 
 check_not_all_na(area_name, 0.0)
 
