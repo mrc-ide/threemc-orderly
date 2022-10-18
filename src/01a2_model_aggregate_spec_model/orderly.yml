@@ -37,6 +37,8 @@ parameters:
     default: TRUE
   N: 
     default: 100
+  area_lev:
+    default: 0
 
 packages:
   - threemc

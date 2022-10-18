@@ -53,21 +53,21 @@ if (inc_time_tmc == TRUE) {
 } else start_year <- 2002
 
 # pull recommended area hierarchy for target country
-# area_lev <- threemc::datapack_psnu_area_level %>%
-#   filter(iso3 == cntry) %>%
-#   pull(psnu_area_level)
-# 
-# # don't model at the country level
-# if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL
-# 
-# # if area_level is missing, assume most common area lev in surveys
-# if (length(area_lev) == 0) {
-#   area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
-#   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
-# }
-# 
-# area_lev <- 1
-area_lev <- 0
+if (!is.null(area_lev) && !is.numeric(area_lev)) {
+  area_lev <- threemc::datapack_psnu_area_level %>%
+    filter(iso3 == cntry) %>%
+    pull(psnu_area_level)
+  
+  # don't model at the country level
+  if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL
+  
+  # if area_level is missing, assume most common area lev in surveys
+  if (length(area_lev) == 0) {
+    area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
+    area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
+  }
+}
+
 
 #### Preparing circumcision data ####
 
