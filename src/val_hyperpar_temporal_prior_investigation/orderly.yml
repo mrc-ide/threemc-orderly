@@ -3,48 +3,54 @@ script: script.R
 artefacts:
   - data: 
       description:
-      - to be filled in
+      - Hyperparameters for each proposal model and temporal prior. 
       filenames:
       - artefacts/hyperparameters.csv
   - data: 
       description:
-      - to be filled in
+      - Fit stats used to choose best proposal model and temporal prior.
       filenames:
       - artefacts/fit_stats.csv
   - data: 
       description:
-      - to be filled in
+      - shell dataset with model estimates for each proposal model and prior.
+      filenames:
+      - artefacts/out_final.csv.gz
+  - data: 
+      description:
+      - Plot of current & proposal model MMC vs year for AR 1 temporal prior.
       filenames:
       - artefacts/ar1_year_plots.pdf
   - data: 
       description:
-      - to be filled in
+      - Plot of current & proposal model MMC vs agegroup for AR 1 temporal prior.
       filenames:
       - artefacts/ar1_agegroups_plots.pdf
   - data: 
       description:
-      - to be filled in
+      - Plot of current & proposal model MMC vs year for RW 1 temporal prior.
       filenames:
       - artefacts/rw1_year_plots.pdf
   - data: 
       description:
-      - to be filled in
+      - Plot of current & proposal model MMC vs agegroup for RW 1 temporal prior.
       filenames:
       - artefacts/rw1_agegroups_plots.pdf
   - data: 
       description:
-      - to be filled in
+      - Plot of current & proposal model MMC vs year for RW 2 temporal prior.
       filenames:
       - artefacts/rw2_year_plots.pdf
   - data: 
       description:
-      - to be filled in
+      - Plot of current & proposal model MMC vs agegroup for RW 2 temporal prior.
       filenames:
       - artefacts/rw2_agegroups_plots.pdf
       
   
 displayname: |
-  - to be filled in
+  - Fit model with incremented MMC variance/covariance hyerparameters, to 
+  determine optimal values for each country. 
   
 parameters:
   cntry:

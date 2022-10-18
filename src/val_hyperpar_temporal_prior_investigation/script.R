@@ -339,40 +339,41 @@ threemc_ppc_compare <- function(ppc_orig, ppc_proposal) {
   ci_orig <- ppc_orig$summary_stats$oos_observations_within_PPD_CI
   ci_prop <- ppc_proposal$summary_stats$oos_observations_within_PPD_CI
   
-  if (ci_orig >= ci_prop) {
+  # if (ci_orig >= ci_prop) {
+  if (ci_orig > ci_prop) { # accept proposals that improve crps, even if not ci
     message(orig_message)
     return(orig_return)
-  } else {
-    # message(prop_message)
-    # return(prop_return)
-    
-    # check based on CRPS (aggregate over all, lower the better)
-    crps_diff <- sum(ppc_orig$summary_stats$crps) -
-      sum(ppc_proposal$summary_stats$crps)
-    if (crps_diff < 0) {
-      message(orig_message)
-      return(orig_return)
-    } else if (crps_diff == 0) {
-      message(prop_message)
-      return(prop_return)
-    }
-    
-    # check based on elpd
-    if (loo_tbl[rownames(loo_tbl) == "model2", "elpd_diff"] < 0) {
-      message(orig_message)
-      return(orig_return)
-    } else if (loo_tbl[rownames(loo_tbl) == "model1", "elpd_diff"] < 0) {
-      message(prop_message)
-      return(prop_return)
-    }
-    
-    # finally, if all other methods have been exhausted
-    message(paste(
-      "Could not make a decision!",
-      "Going with original model based on parsimony"
-    ))
+  } 
+  
+  # check based on CRPS (aggregate over all, lower the better)
+  crps_diff <- sum(ppc_orig$summary_stats$crps) -
+    sum(ppc_proposal$summary_stats$crps)
+  if (crps_diff < 0) {
+    message(orig_message)
     return(orig_return)
+    # } else if (crps_diff == 0) {
+  } else if (crps_diff > 0) {
+    message(prop_message)
+    return(prop_return)
   }
+  
+  # check based on elpd
+  # if (loo_tbl[rownames(loo_tbl) == "model2", "elpd_diff"] < 0) {
+  if (loo_tbl["model2", "elpd_diff"] < 0) {
+    message(orig_message)
+    return(orig_return)
+  # } else if (loo_tbl[rownames(loo_tbl) == "model1", "elpd_diff"] < 0) {
+  } else if (loo_tbl["model1", "elpd_diff"] < 0) {
+    message(prop_message)
+    return(prop_return)
+  }
+  
+  # finally, if all other methods have been exhausted
+  message(paste(
+    "Could not make a decision!",
+    "Original model chosen based on parsimony"
+  ))
+  return(orig_return)
 }
 
 # fit model with fixed hyperpars
@@ -496,12 +497,17 @@ threemc_optimise_model <- function(
   # function to update fit table
   update_fit_tab <- function(fit_tab, ppc, mod_label) {
     fit_tab_update <- tribble(
-      ~model,     ~ci, ~elpd, ~crps,
-      mod_label, NA,   NA,   NA
-    )
-    fit_tab_update$ci <- ppc$summary_stats$oos_observations_within_PPD_CI
-    fit_tab_update$elpd <- ppc$summary_stats$elpd$estimates[1, 1]
-    fit_tab_update$crps <- sum(ppc$summary_stats$crps)
+      ~model,     ~ci, ~elpd, ~crps, ~mae, ~mse, ~rmse,
+      mod_label, NA,   NA,   NA,     NA,   NA,   NA
+    ) %>% 
+      mutate(
+        ci   = ppc$summary_stats$oos_observations_within_PPD_CI,
+        elpd = ppc$summary_stats$elpd$estimates["elpd", "Estimate"],
+        crps = sum(ppc$summary_stats$crps),
+        mae  = ppc$summary_stats$mae,
+        mse  = ppc$summary_stats$mse,
+        rmse = ppc$summary_stats$rmse
+      )
     return(bind_rows(fit_tab, fit_tab_update))
   }
   fit_tab <- update_fit_tab(fit_tab, ppc, "original")
@@ -512,6 +518,9 @@ threemc_optimise_model <- function(
   
   # table of parameters for each model 
   parameters_df <- pars_list_to_df(fit$par, names(maps))
+  
+  # also save results from model
+  out_final <- mutate(out_spec, proposal = "Original")
   
   
   #### Fit additional model with fixed params and calculate PPD ####
@@ -538,7 +547,8 @@ threemc_optimise_model <- function(
       "optimal_parameters" = parameters,
       "parameters_df"      = dplyr::as_tibble(parameters_df), 
       "mod"                = current_model,
-      "fit_tab"            = fit_tab
+      "fit_tab"            = fit_tab,
+      "out_final"          = out_final
     ))
   }
   
@@ -613,6 +623,11 @@ threemc_optimise_model <- function(
   
   fit_tab <- update_fit_tab(fit_tab, fixed_mod$ppc, "proposal")
   
+  out_final <- bind_rows(
+    out_final, 
+    mutate(fixed_mod$out, proposal = "Proposal")
+  )
+  
   
   #### Continue to Increment & Choose Model ####
   
@@ -632,13 +647,13 @@ threemc_optimise_model <- function(
   # parameters from original and fixed model
   parameters_df <- rbind(
     parameters_df,
-    # pars_list_to_df(fit$par, names(maps)),
     pars_list_to_df(proposal_parameters, names(maps))
   )
   
   # give parameter increment two chances to improve fit
   # while (increment >= increment_orig / 2) {
-  while (count <= 5) {
+  # while (count <= 5) {
+  while (increment >= 0.0625) {
     proposal_pars <- increment_hyperpars(
       current_params,
       optimal_hyperpars,
@@ -646,8 +661,6 @@ threemc_optimise_model <- function(
       increment = increment
     )
     
-    # TODO: Add tryCatch here
-    # prop_mod <- fit_proposal_model(proposal_pars)
     prop_mod <- tryCatch({
       fit_proposal_model(proposal_pars, maps)
     }, error = function(cond) {
@@ -678,6 +691,11 @@ threemc_optimise_model <- function(
       paste0("proposal ", count, " (increment: ", increment, ")")
     )
     
+    out_final <- bind_rows(
+      out_final, 
+      mutate(prop_mod$out, proposal = paste0("Proposal ", count))
+    )
+    
     # TEMP: Accept all proposals
     if (choice$optimal_model == "original") {
       increment <- increment / 2
@@ -692,10 +710,11 @@ threemc_optimise_model <- function(
   # fit model with fixed hyperpars
   return(list(
     "optimal_parameters" = current_params,
-    "parameters_df" = dplyr::as_tibble(parameters_df), # temp output
+    "parameters_df"      = dplyr::as_tibble(parameters_df), # temp output
     # "mod" = current_model,
-    "plots" = plots,
-    "fit_tab" = fit_tab
+    "plots"              = plots,
+    "fit_tab"            = fit_tab,
+    "out_final"          = out_final
   ))
 }
 
@@ -851,6 +870,23 @@ readr::write_csv(
   mutate(fit_tab, iso3 = cntry),
   file = paste0(save_loc, "fit_stats.csv")
 )
+
+# save modelling outputs for each unique row in shell dataset,
+# for each proposal model and temporal prior
+out_final <- data.frame()
+out_final <- update_tbl(
+  out_final, ar_fits, "out_final", "AR 1"
+)
+out_final <- update_tbl(
+  out_final, rw_1_fits, "out_final", "RW 1"
+)
+out_final <- update_tbl(
+  out_final, rw_2_fits, "out_final", "RW 2"
+)
+
+readr::write_csv(
+  out_final, 
+  file = paste0(save_loc, "out_final.csv.gz"))
 
 # save plots
 pdf(paste0(save_loc, "ar1_year_plots.pdf"))
