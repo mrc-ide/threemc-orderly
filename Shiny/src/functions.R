@@ -2704,6 +2704,7 @@ plt_empirical_model_rates <- function(
         colour = dot_col,
         size = 2
       )
+
     # if desired, add model estimates with associated error bounds
     if (!is.null(df_results)) {
       p <- p +
@@ -2821,7 +2822,7 @@ threemc_val_plt <- function(
     x_var = "year",
     take_log = FALSE,
     facet = "grid",
-    facet_formula = formula(~ area_name), 
+    facet_formula = formula(~ area_name),
     xlab, ylab, title,
     str_save = NULL, save_width = 16, save_height = 12,
     n_plots = 12
@@ -2878,6 +2879,7 @@ threemc_val_plt <- function(
       filter(area_name %in% df_results_oos$area_name)
   }
 
+  # reset df_results_survey to NULL if it has no rows
   if (!is.null(df_results_survey) && nrow(df_results_survey) == 0) {
       df_results_survey <- NULL
   } # else if ("type" %in% names(df_results_survey) && !"indicator" %in% names(df_results_survey)) {
@@ -2897,7 +2899,8 @@ threemc_val_plt <- function(
   # add alpha/shape column for aggregations and surveys
   if (!is.null(all_surveys) && x_var == "year") {
     all_surveys_orig <- all_surveys %>%
-      filter(iso3 %in% df_results_oos$area_id) %>%
+      filter(area_id %in% df_results_oos$area_id) %>%
+      # filter(iso3 %in% df_results_oos$area_id) %>%
       filter(survey_year == max(survey_year)) %>%
       slice(1)
 
@@ -2924,8 +2927,8 @@ threemc_val_plt <- function(
         df_results_survey$age_group, levels = spec_agegroup
       ))
     }
-  } 
-  
+  }
+
   # split results by area level, and number of plots desired
   df_results_oos <- split_area_level(df_results_oos, n_plots = n_plots)
   if (!is.null(df_results_survey)) {
@@ -2979,10 +2982,11 @@ threemc_val_plt <- function(
           aes(ymin = lower, ymax = upper, fill = as.factor(.data[[colour_var]]), alpha = light)
         ) +
         # Modelled rate
-        geom_line(aes(y = mean, col = as.factor(.data[[colour_var]])), size = 1)
-      # scale_alpha_manual(
-      #   values = c("Surveyed" = 0.8, "Projected" = 0.3)
-      # )
+        geom_line(
+          aes(y = mean, col = as.factor(.data[[colour_var]])),
+          size = 1
+        )
+
       if (!is.null(df_results_survey)) {
         p <- p +
           # survey points (want clear points for surveys not included)
@@ -3002,18 +3006,15 @@ threemc_val_plt <- function(
             show.legend = FALSE
           )  # +
         # guides(alpha = "none")
-      } else if (colour_var == "year") {
+      }
+
+      # if (x_var == "year") {
         p <- p +
           scale_alpha_manual(
             values = c("Surveyed" = 0.8, "Projected" = 0.3)
           )
-      } else if (colour_var == "age_group") {
-        p <- p + 
-          scale_x_continuous(
-            breaks = 1:length(spec_age_group), # (length(age_per) + 1),
-            labels = spec_age_group# c(age_per, final_label),
-        )
-      }
+      # } else if (x_var == "age_group") {
+
       p <- p +
         guides(
           alpha = guide_legend(override.aes = list(
@@ -3029,6 +3030,19 @@ threemc_val_plt <- function(
           alpha = "Period"
         ) +
         ggtitle(paste0(title, add_title))
+
+      # remove alpha legend
+      if (nrow(filter(plt_data1, light == "Projected")) == 0) {
+        p <- p + guides(alpha = "none")
+      }
+
+      if (x_var == "age_group") {
+        p <- p +
+          scale_x_continuous(
+            breaks = 1:length(spec_agegroup), # (length(age_per) + 1),
+            labels = spec_agegroup # c(age_per, final_label),
+        )
+      }
 
       if (x_var == "year") {
           p <- p +
