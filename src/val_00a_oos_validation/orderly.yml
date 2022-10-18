@@ -51,7 +51,7 @@ parameters:
   N:
     default: 100
   area_lev: 
-    default: NULL
+    default: "compute"
 
 packages:
   - threemc

@@ -42,7 +42,7 @@ populations <- read_circ_data(
   filters
 )
 
-if (is.null(area_lev)) {
+if (is.null(area_lev) || !is.numeric(area_lev)) {
   # pull recommended area hierarchy for target country
   area_lev <- threemc::datapack_psnu_area_level %>%
     filter(iso3 == cntry) %>%
