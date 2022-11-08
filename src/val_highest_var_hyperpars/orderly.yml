@@ -3,6 +3,11 @@ script: script.R
 artefacts:
   - data:
       description: 
+      - Variance/covariance hyperparameters for all countries.
+      filenames:
+      - artefacts/var_corr_hyperpars.csv.gz
+  - data:
+      description: 
       - Hyperparameters for countries with the largest relative error bound increase in projection period.
       filenames:
       - artefacts/high_var_hyperpars.csv.gz
@@ -83,10 +88,10 @@ depends:
       id: latest(parameter:cntry == "ETH")
       use:
         depends/ETH_TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds
-  # - 01_modelling:
-  #     id: latest(parameter:cntry == "GAB")
-  #     use:
-  #       depends/GAB_TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds
+  - 01_modelling:
+      id: latest(parameter:cntry == "GAB")
+      use:
+        depends/GAB_TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds
   - 01_modelling:      
       id: latest(parameter:cntry == "GHA")
       use: 
@@ -233,10 +238,10 @@ depends:
       id: latest(parameter:cntry == "ETH")
       use:
         depends/Results_ETH_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
-  # - 02_aggregations:
-  #     id: latest(parameter:cntry == "GAB")
-  #     use:
-  #       depends/Results_GAB_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
+  - 02_aggregations:
+      id: latest(parameter:cntry == "GAB")
+      use:
+        depends/Results_GAB_AgeGroup_Prevalence.csv.gz: artefacts/Results_AgeGroup_Prevalence.csv.gz
   - 02_aggregations:      
       id: latest(parameter:cntry == "GHA")
       use: 

@@ -20,8 +20,8 @@ cntries <- sort(c(
   "AGO", "BDI", "BEN", "BFA", "CIV", "CMR", "COD", "COG", 
   "ETH", "GHA", "GIN", "GMB", "KEN", "LBR", "LSO", "MLI", 
   "MOZ", "MWI", "NAM", "NER", "NGA", "RWA", "SEN", "SLE", 
-  "SWZ", "TCD", "TGO", "TZA", "UGA", "ZAF", "ZMB", "ZWE"
-  # "BWA", "CAF", "GAB", "GNB", "GNQ" # countries not (yet) modelled
+  "SWZ", "TCD", "TGO", "TZA", "UGA", "ZAF", "ZMB", "ZWE", "GAB"
+  # "BWA", "CAF", "GNB", "GNQ" # countries not (yet) modelled
 ))
 
 
@@ -97,7 +97,7 @@ projection_years_df <- tidyr::crossing(
 
 fit_df <- bind_rows(fits)
 
-largest_var_cntries <- fit_df %>% 
+largest_var_cntries_df <- fit_df %>% 
   # take MMC coverage change at national level and specified age group
   filter(
     type ==  "MMC coverage", 
@@ -114,7 +114,9 @@ largest_var_cntries <- fit_df %>%
   mutate(sd_change = (sd - lag(sd)) / sd) %>% 
   summarise(sd_change = max(sd_change, na.rm = TRUE), .groups = "drop") %>% 
   filter(!is.infinite(sd_change)) %>% 
-  arrange(desc(sd_change)) %>% 
+  arrange(desc(sd_change))
+
+largest_var_cntries <- largest_var_cntries_df %>% 
   slice(1:5) %>% 
   pull(iso3)
 
@@ -122,6 +124,12 @@ largest_var_cntries <- fit_df %>%
 
 target_hyperpars <- hyperparameters_df_wide %>% 
   filter(iso3 %in% largest_var_cntries)
+
+readr::write_csv(
+  left_join(hyperparameters_df_wide, largest_var_cntries_df) %>% 
+    arrange(desc(sd_change)),
+  file.path(save_loc, "var_corr_hyperpars.csv.gz")
+)
 
 readr::write_csv(
   target_hyperpars, 
