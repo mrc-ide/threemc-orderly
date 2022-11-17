@@ -18,6 +18,11 @@ CI_range <- c(0.5, 0.8, 0.95) # Confidence intervals to find for PPD
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
 
+if (!rw_order %in% c(1, 2)) {
+  message("rw_order not 1 or 2, assuming AR 1 modew")
+  rw_order <- NULL
+}
+
 # save loc
 save_dir <- "artefacts/"
 threemc::create_dirs_r(save_dir) # ensure save_dir exists; create if not
@@ -128,7 +133,8 @@ dat_tmb <- threemc_prepare_model_data(
   aggregated        = TRUE,
   weight            = "population",
   k_dt              = k_dt,
-  paed_age_cutoff   = paed_age_cutoff
+  paed_age_cutoff   = paed_age_cutoff,
+  rw_order          = rw_order
 )
 
 #### Initialise Parameters and define mapped hyperparameters ####
