@@ -49,12 +49,8 @@ packages:
   - sf
   - data.table
   - dplyr
-  - Matrix
-  - TMB
-  - rlang
   - ggplot2
   - readr
-  - purrr
   
 sources:
   - source.R
