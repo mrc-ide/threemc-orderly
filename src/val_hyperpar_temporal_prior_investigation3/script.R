@@ -19,8 +19,17 @@ CI_range <- c(0.5, 0.8, 0.95) # Confidence intervals to find for PPD
 sf::sf_use_s2(FALSE)
 
 if (!rw_order %in% c(1, 2)) {
-  message("rw_order not 1 or 2, assuming AR 1 modew")
+  message("rw_order not 1 or 2, assuming AR 1 model")
   rw_order <- NULL
+}
+
+inc_time_tmc <- TRUE 
+vmmc_countries <- c(
+  "LSO", "MOZ", "NAM", "RWA", "SWZ", "TZA", 
+  "UGA", "ZWE", "ZMB", "KEN", "ETH"
+)
+if (cntry %in% vmmc_countries[!vmmc_countries %in% c("ETH", "KEN")]) {
+  inc_time_tmc <- FALSE 
 }
 
 # save loc
@@ -40,19 +49,19 @@ survey_circumcision <- read_circ_data(
 populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
 
 # pull recommended area hierarchy for target country
-# area_lev <- threemc::datapack_psnu_area_level %>%
-#   filter(iso3 == cntry) %>%
-#   pull(psnu_area_level)
-# 
-# # don't model at the country level
-# if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL 
-# 
-# # if area_level is missing, assume most common area lev in surveys
-# if (length(area_lev) == 0) {
-#   area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
-#   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
-# }
-area_lev <- 0 # run at national level
+area_lev <- threemc::datapack_psnu_area_level %>%
+  filter(iso3 == cntry) %>%
+  pull(psnu_area_level)
+
+# don't model at the country level
+if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL 
+
+# if area_level is missing, assume most common area lev in surveys
+if (length(area_lev) == 0) {
+  area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
+  area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
+}
+# area_lev <- 0 # run at national level
 
 # remove most recent survey 
 # if most recent surveys are one year apart, remove both
@@ -73,9 +82,11 @@ survey_circumcision_test <- survey_circumcision %>%
 survey_circumcision <- survey_circumcision %>% 
   filter(!survey_year %in% removed_years)
 
-# re-calculate start as earliest year - 50 (only where TMC needs to vary)
+# re-calculate start as earliest year - 60 (only where TMC needs to vary)
 survey_years <- unique(survey_circumcision$survey_year)
 start_year <- min(c(survey_years - 2, 2002)) # have lower bound on start
+if (inc_time_tmc == TRUE) start_year <- min(survey_years) - 60
+
 
 #### Preparing circumcision data ####
 
@@ -134,7 +145,8 @@ dat_tmb <- threemc_prepare_model_data(
   weight            = "population",
   k_dt              = k_dt,
   paed_age_cutoff   = paed_age_cutoff,
-  rw_order          = rw_order
+  rw_order          = rw_order, 
+  inc_time_tmc      = inc_time_tmc
 )
 
 #### Initialise Parameters and define mapped hyperparameters ####
@@ -178,7 +190,8 @@ fit_proposal_model <- function(proposal_parameters, maps) {
     select(
       area_id, area_name, area_level, year, age, circ_age, population,
       contains("cum_inc"), contains("rate")
-    )
+    ) %>% 
+    filter(year >= 2000)
   
   # plots to diagnose any issues with fits
   common_plot_aspects <- function(p) {
@@ -262,7 +275,7 @@ data.table::fwrite(
 )
 
 # save fit as .rds file
-saveRDS(proposal_mod$fit, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
+saveRDS(fit_min, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
 
 # save ppc df 
 data.table::fwrite(
