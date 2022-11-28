@@ -1,0 +1,76 @@
+script: script.R
+
+displayname: |
+  - Fill in!
+
+artefacts:
+  - data:
+      description: naomi fit object for fixed hyperparameters
+      filenames:
+      - artefacts/TMBObjects_DistrictAgeTime_ByType.rds
+  - data:
+      description: Modelling results for area level of interest, including quantiles
+      filenames:
+      - artefacts/Results_DistrictAgeTime_ByType.csv.gz
+  - data:
+      description: To be filled in 
+      filenames:
+      - artefacts/pointwise_ppc_df.csv.gz
+  - data:
+      description: To be filled in 
+      filenames:
+      - artefacts/ppc_summary.rds
+  - staticgraph:
+      description: Plot of circumcision coverage for all areas modelled.
+      filenames:
+      - artefacts/Circ_Coverage.pdf
+  - staticgraph:
+      description: Plot of circumcision rates for all areas modelled.
+      filenames:
+      - artefacts/Circ_Rates.pdf
+      
+parameters:
+  cntry:
+    default: ~
+  is_paper: 
+    default: TRUE
+  area_lev: 
+    default: NA
+
+packages:
+  - threemc
+  - sf
+  - data.table
+  - dplyr
+  - ggplot2
+  - readr
+  
+sources:
+  - source.R
+
+# global_resources:
+#   depends/all_surveys.csv: all_surveys.csv
+
+depends:
+  # areas file
+  - 00a2_areas_join:
+      id: latest
+      use:
+        depends/areas.geojson: artefacts/areas.geojson
+  # surveys
+  - 00b3_survey_join:
+      id: latest(parameter:is_paper == is_paper)
+      use: 
+        depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
+  # populations
+  - 00c4_pops_aggregate:
+      id: latest
+      use: 
+        depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
+  # modelling results 
+  - 01_modelling: 
+      id: latest(parameter:cntry == cntry && parameter:is_paper == is_paper)
+      use: 
+        depends/TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds
+        depends/Results_DistrictAgeTime_ByType.csv.gz: artefacts/Results_DistrictAgeTime_ByType.csv.gz
+        
