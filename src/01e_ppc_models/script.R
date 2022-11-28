@@ -73,7 +73,7 @@ out_spec <- readr::read_csv("depends/Results_DistrictAgeTime_ByType.csv.gz")
 
 # add populations to out
 out_spec <- out_spec %>% 
-  filter(area_level == area_lev) %>% 
+  # filter(area_level == area_lev) %>% 
   left_join(select(populations, area_id, year, age, population)) 
 
 # resample from fit
@@ -123,21 +123,23 @@ names(ppc_list) <- types
 #### Save results ####
 
 # Save results
-data.table::fwrite(
-  proposal_mod$out, file = paste0(save_dir, "Results_DistrictAgeTime_ByType.csv.gz")
-)
-
-# save fit as .rds file
-saveRDS(proposal_mod$fit, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
+# data.table::fwrite(
+#   proposal_mod$out, file = paste0(save_dir, "Results_DistrictAgeTime_ByType.csv.gz")
+# )
+# 
+# # save fit as .rds file
+# saveRDS(proposal_mod$fit, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
 
 # save ppc df 
 data.table::fwrite(
-  proposal_mod$ppc$ppc_df, file = file.path(save_dir, "pointwise_ppc_df.csv.gz")
+  # proposal_mod$ppc$ppc_df, 
+  rbindlist(lapply(ppc_list, `[[`, "ppc_df")),
+  file = file.path(save_dir, "pointwise_ppc_df.csv.gz")
 )
 
 # save summarised ppc as .rds file
-saveRDS(proposal_mod$ppc$summary_stats, file.path(save_dir, "ppc_summary.rds"))
-
-# save plots 
-ggsave(file.path(save_dir, "Circ_Coverage.pdf"), proposal_mod$plots[[1]])
-ggsave(file.path(save_dir, "Circ_Rates.pdf"), proposal_mod$plots[[2]])
+saveRDS(
+  # proposal_mod$ppc$summary_stats, 
+  lapply(ppc_list, `[[`, "summary_stats"),
+  file.path(save_dir, "ppc_summary.rds")
+)

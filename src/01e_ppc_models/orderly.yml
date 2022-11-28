@@ -5,14 +5,6 @@ displayname: |
 
 artefacts:
   - data:
-      description: naomi fit object for fixed hyperparameters
-      filenames:
-      - artefacts/TMBObjects_DistrictAgeTime_ByType.rds
-  - data:
-      description: Modelling results for area level of interest, including quantiles
-      filenames:
-      - artefacts/Results_DistrictAgeTime_ByType.csv.gz
-  - data:
       description: To be filled in 
       filenames:
       - artefacts/pointwise_ppc_df.csv.gz
@@ -20,14 +12,6 @@ artefacts:
       description: To be filled in 
       filenames:
       - artefacts/ppc_summary.rds
-  - staticgraph:
-      description: Plot of circumcision coverage for all areas modelled.
-      filenames:
-      - artefacts/Circ_Coverage.pdf
-  - staticgraph:
-      description: Plot of circumcision rates for all areas modelled.
-      filenames:
-      - artefacts/Circ_Rates.pdf
       
 parameters:
   cntry:
