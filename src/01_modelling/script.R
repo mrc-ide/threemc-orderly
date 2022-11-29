@@ -12,7 +12,10 @@ start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
-paed_age_cutoff <- 10
+# paed_age_cutoff <- 10
+paed_age_cutoff <- NULL
+rw_order <- NULL 
+inc_time_tmc <- TRUE
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
@@ -125,82 +128,23 @@ dat_tmb <- threemc_prepare_model_data(
   aggregated        = TRUE,
   weight            = "population",
   k_dt              = k_dt,
-  paed_age_cutoff   = paed_age_cutoff
+  paed_age_cutoff   = paed_age_cutoff,
+  rw_order          = rw_order,
+  inc_time_tmc      = inc_time_tmc
 )
 
 #### Modelling circumcision probabilities ####
 
-# specify TMB model, depending on whether type distinction is available
-if (is_type == TRUE) {
-  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
-} else {
-  mod <- "Surv_SpaceAgeTime"
-  # empty df for paed design matrices so parameter assignment doesn't fail
-  X_fixed_mmc_paed <- X_age_mmc_paed <- X_space_mmc_paed <- data.frame(0)
-}
-
-# Initial values
-parameters <- with(
+parameters <- threemc_initial_pars(
   dat_tmb,
-  list(
-    # intercept
-    "u_fixed_mmc"            = rep(-5, ncol(X_fixed_mmc)),
-    "u_fixed_mmc_paed"       = rep(-5, ncol(X_fixed_mmc_paed)),
-    "u_fixed_tmc"            = rep(-5, ncol(X_fixed_tmc)),
-    # age random effect
-    "u_age_mmc"              = rep(0, ncol(X_age_mmc)),
-    "u_age_mmc_paed"         = rep(0, ncol(X_age_mmc_paed)),
-    "u_age_tmc"              = rep(0, ncol(X_age_tmc)),
-    # time random effect for (non-paed) MMC
-    "u_time_mmc"             = rep(0, ncol(X_time_mmc)),
-    # Space random effect (district)
-    "u_space_mmc"            = rep(0, ncol(X_space_mmc)),
-    "u_space_mmc_paed"       = rep(0, ncol(X_space_mmc_paed)),
-    "u_space_tmc"            = rep(0, ncol(X_space_tmc)),
-    # Interactions for MMC
-    "u_agetime_mmc"          = matrix(0, ncol(X_age_mmc), ncol(X_time_mmc)),
-    "u_agespace_mmc"         = matrix(0, ncol(X_age_mmc), ncol(X_space_mmc)),
-    "u_spacetime_mmc"        = matrix(0, ncol(X_time_mmc), ncol(X_space_mmc)),
-    "u_agespace_mmc_paed"    = matrix(0, ncol(X_age_mmc_paed), ncol(X_space_mmc_paed)),
-    # Interactions for TMC
-    "u_agespace_tmc"         = matrix(0, ncol(X_age_tmc), ncol(X_space_tmc)),
-    # Autocorrelation parameters for priors
-    # Variance
-    "logsigma_age_mmc"            = 0,
-    "logsigma_age_mmc_paed"       = 0,
-    "logsigma_time_mmc"           = 0,
-    "logsigma_space_mmc"          = 0,
-    "logsigma_space_mmc_paed"     = 0,
-    "logsigma_agetime_mmc"        = 0,
-    "logsigma_agespace_mmc"       = 0,
-    "logsigma_agespace_mmc_paed"  = 0,
-    "logsigma_spacetime_mmc"      = 0,
-    "logsigma_age_tmc"            = 0,
-    "logsigma_space_tmc"          = 0,
-    "logsigma_agespace_tmc"       = 0,
-    # Mean
-    "logitrho_mmc_time1"          = 2,
-    "logitrho_mmc_time2"          = 2,
-    "logitrho_mmc_time3"          = 2,
-    "logitrho_mmc_age1"           = 2,
-    "logitrho_mmc_paed_age1"      = 2,
-    "logitrho_mmc_age2"           = 2,
-    "logitrho_mmc_paed_age2"      = 2,
-    "logitrho_mmc_age3"           = 2,
-    "logitrho_tmc_age1"           = 2,
-    "logitrho_tmc_age2"           = 2
-  )
+  rw_order        = rw_order,
+  paed_age_cutoff = paed_age_cutoff,
+  inc_time_tmc    = inc_time_tmc
 )
-
-if (is_type == FALSE) {
-  # remove paed-related parameters
-  parameters <- parameters[!grepl("paed", names(parameters))]
-}
 
 # fit model with TMB
 fit <- threemc_fit_model(
   dat_tmb    = dat_tmb,
-  mod        = mod,
   parameters = parameters,
   randoms    = c(
     "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
