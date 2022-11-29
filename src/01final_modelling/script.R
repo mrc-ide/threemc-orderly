@@ -60,7 +60,8 @@ start_year <- min(c(survey_years, start_year)) # have lower bound on start
 
 # set start year back a generation if fitting with traditional circumcision
 if (inc_time_tmc == TRUE) {
-  start_year <- start_year - 60
+  # start_year <- start_year - 60
+  start_year <- start_year - cens_age
 }
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
@@ -89,9 +90,6 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
 
 
 #### Shell dataset to estimate empirical rate ####
-
-# take start year for skeleton dataset from surveys 
-start_year <- min(as.numeric(substr(survey_circ_preprocess$survey_id, 4, 7)))
 
 # Skeleton dataset
 out <- create_shell_dataset(
