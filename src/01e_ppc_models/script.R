@@ -106,7 +106,8 @@ if (!"sample" %in% names(fit)) {
 # )
 types <- c("MMC", "TMC", "MC")
 ppc_list <- lapply(types, function(x) {
-  threemc_ppc(
+  gc()
+  return(threemc_ppc(
     fit,
     out_spec,
     survey_circumcision_test,
@@ -116,8 +117,9 @@ ppc_list <- lapply(types, function(x) {
     age_groups = five_year_age_groups,
     CI_range = CI_range,
     N = N
-  )
+  ))
 })
+gc()
 names(ppc_list) <- types
 
 #### Save results ####
