@@ -12,9 +12,11 @@ start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
-# remove paediatric age cutoff and rw_order, if non-numeric
-if (!is.numeric(paed_age_cutoff)) paed_age_cutoff <- NULL
-if (!is.numeric(rw_order)) rw_order <- NULL
+# remove paediatric age cutoff and rw_order, if non-numeric (or Inf/0)
+if (!is.numeric(paed_age_cutoff) || is.infinite(paed_age_cutoff)) {
+  paed_age_cutoff <- NULL
+}
+if (!is.numeric(rw_order) || rw_order == 0) rw_order <- NULL
 # inc_time_tmc <- TRUE
 
 # Revert to using planar rather than spherical geometry in `sf`
