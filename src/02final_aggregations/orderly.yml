@@ -66,12 +66,11 @@ packages:
   
 depends:
   # modelling results from last task
-  - 01final_modelling: 
+  01final_modelling: 
       id: latest(parameter:cntry == cntry && parameter:is_paper == is_paper && parameter:rw_order == rw_order && parameter:inc_time_tmc == inc_time_tmc && parameter:paed_age_cutoff == paed_age_cutoff)
       use: 
         depends/Results_DistrictAgeTime_ByType.csv.gz: artefacts/Results_DistrictAgeTime_ByType.csv.gz
         depends/TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds
-        
   # shapefiles
   00a2_areas_join:
       id: latest
