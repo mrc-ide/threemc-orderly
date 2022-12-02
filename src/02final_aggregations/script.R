@@ -37,7 +37,7 @@ mod_selector <- function(
   ) {
   mod <- "Surv_SpaceAgeTime"
   if (!is.null(inc_type) && !is.na(inc_type) && inc_type == TRUE) {
-    mod <- paste0(mod, "_ByType_withUknownType")
+    mod <- paste0(mod, "_ByType_withUnknownType")
   }
   paed_cond <- !is.null(paed_age_cutoff) && 
     !is.na(paed_age_cutoff) && 
