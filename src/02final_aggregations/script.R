@@ -29,12 +29,41 @@ results$model <- "No program data"
 # "small" model fit object 
 fit <- readRDS("depends/TMBObjects_DistrictAgeTime_ByType.rds")
 
-# specify model, depending on whether there is an mmc/tmc split in results
-if (all(results$obs_mmc == 0 & results$obs_tmc == 0)) {
+mod_selector <- function(
+    inc_type,  
+    rw_order        = NULL, 
+    paed_age_cutoff = NULL, 
+    inc_time_tmc    = NULL
+  ) {
   mod <- "Surv_SpaceAgeTime"
-} else {
-  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
+  if (!is.null(inc_type) && !is.na(inc_type) && inc_type == TRUE) {
+    mod <- paste0(mod, "_ByType_withUknownType")
+  }
+  paed_cond <- !is.null(paed_age_cutoff) && 
+    !is.na(paed_age_cutoff) && 
+    !is.infinite(paed_age_cutoff) && 
+    inc_type == TRUE 
+  if (paed_cond) {
+    mod <- paste0(mod, "_Const_Paed_MMC")
+  }
+  if (!is.null(rw_order) && !is.na(rw_order) && rw_order %in% c(1, 2)) {
+    mod <- paste0(mod, "_RW")
+    if (inc_type == FALSE) return(mod)
+  }
+  if (!is.null(inc_time_tmc) && !is.na(inc_time_tmc) && inc_time_tmc == TRUE) {
+    mod <- paste0(mod, 2)
+  }
+  return(mod)
 }
+
+if (all(results$obs_mmc == 0 & results$obs_tmc == 0)) {
+  inc_type = FALSE
+} else {
+  inc_type = TRUE
+}
+
+mod <- mod_selector(inc_type, rw_order, paed_age_cutoff, inc_time_tmc)
+print(mod)
 
 # re-sample from model
 if (is.null(fit$sample)) {
