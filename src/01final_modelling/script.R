@@ -156,7 +156,9 @@ out_spec <- out_spec %>%
     contains("surv"),
     contains("cum_inc_mmc"), contains("cum_inc_tmc"), contains("cum_inc"),
     contains("inc_mmc"), contains("inc_tmc"), contains("inc")
-  )
+  ) %>%
+  # remove years before 2000, to keep save object small
+  filter(year >= 2000)
 
 # minimise fit object for saving
 fit <- minimise_fit_obj(fit, dat_tmb, parameters)
