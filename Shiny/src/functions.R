@@ -92,7 +92,7 @@ order_area_name <- function(.data, areas = NULL) {
 
   if (!"area_sort_order" %in% names(.data) & !is.null(areas)) {
     # remove sf class, if required
-    if (inherits(areas, "sf")) areas <- st_drop_geometry(areas)
+    if (inherits(areas, "sf")) areas <- sf::st_drop_geometry(areas)
 
     # pull relevant areas columns
     areas <- areas %>%
@@ -100,8 +100,9 @@ order_area_name <- function(.data, areas = NULL) {
 
     # join area_sort_order into data
     .data <- .data %>%
-      select(-matches("area_name")) %>%
-      left_join(areas, by = c("area_id", "area_name"))
+      # dplyr::select(-matches("area_name")) %>%
+      # dplyr::left_join(areas, by = c("area_id", "area_name"))
+      dplyr::left_join(areas)
   }
   # get age column present in data
   age_column <- c("age", "age_group")
@@ -1407,7 +1408,7 @@ plt_MC_modelfit_spec_age <- function(
             show.legend = FALSE
         ) +
         # Labels
-        labs(x = xlab, y = "Circumcision prevalence", colour = "", fill = "") +
+        labs(x = xlab, y = "Circumcision Coverage", colour = "", fill = "") +
         ggtitle(paste0(title, add_title)) +
         # Faceting by area
         facet_wrap(~ area_name) +
@@ -1421,13 +1422,27 @@ plt_MC_modelfit_spec_age <- function(
                            limits = c(0, 1),
                            label = scales::label_percent(accuracy = 1)) +
         theme_bw() +
-        guides(colour = guide_legend(nrow = 2)) +
-        theme(axis.text = element_text(size = 14),
-              strip.text = element_text(size = 12),
-              axis.title = element_text(size = 18),
-              legend.text = element_text(size = 18),
-              axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10),
-              legend.position = "bottom")
+        guides(colour = guide_legend(nrow = 1), fill = "none") +
+        # theme(axis.text = element_text(size = 14),
+        #       strip.text = element_text(size = 12),
+        #       axis.title = element_text(size = 18),
+        #       legend.text = element_text(size = 14),
+        #       axis.text.x = element_text(angle = -90, vjust = 0.5, size = 10),
+        #       legend.position = "bottom")
+        theme(
+          axis.text = element_text(size = 16),
+          strip.text = element_text(size = 18, face = "bold"),
+          plot.title = element_text(size = 24, hjust = 0.5, face = "bold"),
+          axis.text.x = element_text(angle = -45, hjust = 0.5, size = 16),
+          axis.title.x = element_text(size = 18, face = "bold"),
+          axis.text.y = element_text(size = 16),
+          axis.title.y = element_text(size = 18, face = "bold"),
+          legend.position = "bottom", 
+          legend.title = element_text(size = 18, face = "bold"),
+          legend.text = element_text(size = 20, face = "bold"),
+          strip.background = element_rect(fill = NA, colour = "white"), 
+          panel.background = element_rect(fill = NA, color = "black") 
+        )
     })
   })
 
@@ -1567,42 +1582,23 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
     if (facet_year == "colour") {
       colour_var <- "year"
     } else {
-      colour_var <- "parent_area_id"
+      # colour_var <- "parent_area_id"
+      colour_var <- "parent_area_name"
     }
     
-    if ("parent_area_id" %in% names(plt_data1)) {
-      plt_data1 <- plt_data1 %>%
-        mutate(
-          # parent_area_name = ifelse(
-          #   is.na(parent_area_name),
-          #   "NA",
-          #   parent_area_name
-          # ),
-          parent_area_id = ifelse(
-              is.na(parent_area_id),
-              "NA",
-              parent_area_id
-          )
-        )
-    }
-    if ("parent_area_id" %in% names(plt_data2)) {
-      plt_data2 <- plt_data2 %>%
-          mutate(
-              # parent_area_name = ifelse(
-              #     is.na(parent_area_name),
-              #     "NA",
-              #     parent_area_name
-              # ),
-              parent_area_id = ifelse(
-                  is.na(parent_area_id),
-                  "NA",
-                  parent_area_id
-              )
-          )  
-    }
-
     
-
+    fill_col_nas <- function(.data, col) {
+      if (col %in% names(.data)) {
+        .data[is.na(.data[[col]]), col] <- "NA"
+      }
+      return(.data)
+    }
+    
+    plt_data1 <- fill_col_nas(plt_data1, "parent_area_name")
+    plt_data1 <- fill_col_nas(plt_data1, "parent_area_id")
+    plt_data2 <- fill_col_nas(plt_data2, "parent_area_name")
+    plt_data2 <- fill_col_nas(plt_data2, "parent_area_id")
+    
     p <- ggplot(plt_data1, aes(x = age_group)) +
       # geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(year)),
       geom_ribbon(
@@ -1626,7 +1622,7 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
         show.legend = FALSE
       ) +
       # Labels
-      labs(x =  xlab, y = ylab, colour = "", fill = "") +
+      labs(x =  xlab, y = ylab, colour = "Parent Area", fill = "") +
       ggtitle(paste0(title, add_title)) +
       scale_x_continuous(
         breaks = 1:(length(age_per) + 1),
@@ -1636,12 +1632,19 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
                          limits = c(0, 1),
                          labels = scales::label_percent()) +
       theme_bw() +
-      theme(axis.text = element_text(size = 14),
-            strip.text = element_text(size = 12),
-            axis.title = element_text(size = 18),
-            legend.text = element_text(size = 18),
-            axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10),
-            legend.position = "bottom")
+      theme(
+        axis.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        axis.title = element_text(size = 18),
+        plot.title = element_text(size = 18, hjust = 0.5),
+        legend.text = element_text(size = 14),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10),
+        axis.text.y = element_text(size = 12),
+        legend.position = "bottom", 
+        strip.background = element_rect(fill = NA, colour = "white"), 
+        panel.background = element_rect(fill = NA, color = "black") 
+      ) + 
+      guides(fill = "none")
 
     if (facet_year == "facet") {
       # p <- p + facet_wrap(
@@ -2611,7 +2614,7 @@ plt_coverage_year_national <- function(
         strip.background = element_blank(),
         axis.title = element_text(size = 16),
         panel.grid = element_blank(),
-        plot.title = element_text(size = 22, hjust = 0.0),
+        plot.title = element_text(size = 22, hjust = 0.5),
         legend.text = element_text(size = 12),
         axis.text.x = element_text(size = 12, angle = 45, hjust = 1, vjust = 1),
         legend.position = "bottom",
