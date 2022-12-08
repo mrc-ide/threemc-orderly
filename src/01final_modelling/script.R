@@ -85,8 +85,8 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
         is.na(survey_circ_preprocess$circ_where))) {
   print("No type distinction made in valid surveys for this country")
   is_type <- FALSE 
-  # stop if paed_age_cutoff or inc_time_tmc is specified
-  stopifnot(!is.infinite(paed_age_cutoff) || !is.null(paed_age_cutoff))
+  # stop if paed_age_cutoff or inc_time_tmc are specified
+  stopifnot(is.null(paed_age_cutoff))
   stopifnot(inc_time_tmc == FALSE)
   start_year <- min(c(survey_years, start_year)) # have lower bound on start
 } else is_type <- TRUE
