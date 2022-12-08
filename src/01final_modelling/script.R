@@ -158,6 +158,7 @@ out_spec <- out_spec %>%
     contains("inc_mmc"), contains("inc_tmc"), contains("inc")
   ) %>%
   # remove years before 2000, to keep save object small
+  mutate(n = row_number()) %>% 
   filter(year >= 2000)
 
 # minimise fit object for saving
