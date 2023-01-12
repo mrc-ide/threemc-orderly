@@ -22,8 +22,12 @@ parameters:
     default: TRUE
   rw_order:
     default: 0
+  rw_order_tmc_ar:
+    default: TRUE
   inc_time_tmc: 
     default: TRUE
+  k_dt_time: 
+    default: 5
   paed_age_cutoff: 
     default: Inf
   
@@ -60,7 +64,7 @@ depends:
         depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
   # modelling results 
   - 01final_modelling: 
-      id: latest(parameter:cntry == cntry && parameter:is_paper == is_paper && parameter:rw_order == rw_order && parameter:inc_time_tmc == inc_time_tmc && parameter:paed_age_cutoff == paed_age_cutoff)
+      id: latest(parameter:cntry == cntry && parameter:is_paper == is_paper && parameter:rw_order == rw_order && parameter:inc_time_tmc == inc_time_tmc && parameter:paed_age_cutoff == paed_age_cutoff && parameter:rw_order_tmc_ar == rw_order_tmc_ar && parameter:k_dt_time == k_dt_time)
       use: 
         depends/TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds
         depends/Results_DistrictAgeTime_ByType.csv.gz: artefacts/Results_DistrictAgeTime_ByType.csv.gz

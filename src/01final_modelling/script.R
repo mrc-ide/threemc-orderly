@@ -6,8 +6,8 @@
 
 ### Metadata to run the models
 
-# !! Change this to use dataset stored in threemc
-k_dt <- 5 # Age knot spacing
+k_dt_age <- 5 # Age knot spacing
+if (!is.numeric(k_dt_time)) k_dt_time <- NULL # Time knot spacing
 start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
@@ -149,7 +149,8 @@ dat_tmb <- threemc_prepare_model_data(
   area_lev          = area_lev,
   aggregated        = TRUE,
   weight            = "population",
-  k_dt              = k_dt,
+  k_dt_age          = k_dt_age,
+  k_dt_time         = k_dt_time,
   paed_age_cutoff   = paed_age_cutoff,
   rw_order          = rw_order,
   inc_time_tmc      = inc_time_tmc
@@ -162,7 +163,7 @@ parameters <- threemc_initial_pars(
   rw_order        = rw_order,
   rw_order_tmc_ar = rw_order_tmc_ar, 
   paed_age_cutoff = paed_age_cutoff,
-  inc_time_tmc    = inc_time_tmc
+  inc_time_tmc    = inc_time_tmc, 
 )
 
 # fit model with TMB

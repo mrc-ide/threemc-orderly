@@ -31,6 +31,8 @@ parameters:
     default: TRUE
   inc_time_tmc: 
     default: TRUE
+  k_dt_time: 
+    default: 5
   paed_age_cutoff: 
     default: Inf
 

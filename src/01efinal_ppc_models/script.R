@@ -3,7 +3,8 @@
 ### Metadata to run the models
 
 # !! Change this to use dataset stored in threemc
-k_dt <- 5 # Age knot spacing
+k_dt_age <- 5 # Age knot spacing
+if (!is.numeric(k_dt_time)) k_dt_time <- NULL # time knot spacing
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
@@ -81,7 +82,7 @@ if (!"sample" %in% names(fit)) {
   set.seed(123)
   fit <- threemc_fit_model(
     fit     = fit,
-    randoms    = c(
+    randoms = c(
       "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
       "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
       "u_spacetime_mmc",
