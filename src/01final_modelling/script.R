@@ -16,6 +16,7 @@ forecast_year <- 2021
 if (!is.numeric(paed_age_cutoff) || is.infinite(paed_age_cutoff)) {
   paed_age_cutoff <- NULL
 }
+print(paste("paed_age_cutoff is", paed_age_cutoff))
 if (!is.numeric(rw_order) || rw_order == 0) rw_order <- NULL
 # inc_time_tmc <- TRUE
 
@@ -42,6 +43,8 @@ area_lev <- threemc::datapack_psnu_area_level %>%
   filter(iso3 == cntry) %>%
   pull(psnu_area_level)
 
+area_lev <- 0
+
 # don't model at the country level
 if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL 
 
@@ -60,8 +63,8 @@ start_year <- min(c(survey_years, start_year)) # have lower bound on start
 
 # set start year back a generation if fitting with traditional circumcision
 if (inc_time_tmc == TRUE) {
-  # start_year <- start_year - 60
-  start_year <- start_year - cens_age
+  # start_year <- start_year - cens_age
+  start_year <- start_year - 50
 }
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
@@ -109,6 +112,35 @@ out <- create_shell_dataset(
   circ                = "indweight_st"
 )
 
+# for countries with no age & type information, use max start_year
+if (is_type == FALSE && all(out[, c("obs_mc", "obs_mmc", "obs_tmc")] == 0)) {
+  start_year <- min(survey_years)
+  message("No age-type info present, start_year reset to ", start_year)
+  survey_circ_preprocess <- prepare_survey_data(
+    areas               = areas,
+    survey_circumcision = survey_circumcision,
+    area_lev            = area_lev,
+    start_year          = start_year,
+    cens_year           = cens_year,
+    cens_age            = cens_age,
+    rm_missing_type     = rm_missing_type,
+    norm_kisk_weights   = TRUE
+  )
+  out <- create_shell_dataset(
+    survey_circumcision = survey_circ_preprocess,
+    populations         = populations,
+    areas               = areas,
+    area_lev            = area_lev,
+    start_year          = start_year,
+    end_year            = forecast_year,
+    time1               = "time1",
+    time2               = "time2",
+    strat               = "space",
+    age                 = "age",
+    circ                = "indweight_st"
+  )
+}
+
 #### Dataset for modelling ####
 
 dat_tmb <- threemc_prepare_model_data(
@@ -128,6 +160,7 @@ dat_tmb <- threemc_prepare_model_data(
 parameters <- threemc_initial_pars(
   dat_tmb,
   rw_order        = rw_order,
+  rw_order_tmc_ar = rw_order_tmc_ar, 
   paed_age_cutoff = paed_age_cutoff,
   inc_time_tmc    = inc_time_tmc
 )
