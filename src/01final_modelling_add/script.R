@@ -7,18 +7,18 @@
 ### Metadata to run the models
 
 k_dt_age <- 5 # Age knot spacing
-k_dt_time <- NULL # Disable time knot spacing
+if (!is.numeric(k_dt_time)) k_dt_time <- NULL # Time knot spacing
 start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
+# remove paediatric age cutoff and rw_order, if non-numeric (or Inf/0)
 if (!is.numeric(paed_age_cutoff) || is.infinite(paed_age_cutoff)) {
   paed_age_cutoff <- NULL
 }
 print(paste("paed_age_cutoff is", paed_age_cutoff))
 if (!is.numeric(rw_order) || rw_order == 0) rw_order <- NULL
-# don't use AR 1 temporal prior for RW model
-rw_order_tmc_ar <- FALSE
+# inc_time_tmc <- TRUE
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)

@@ -18,7 +18,7 @@ artefacts:
       filenames:
       - artefacts/Circ_Rates.pdf
   
-displayname: threemc model fit
+displayname: threemc model fit, with additional parameters to aid model fit. 
 
 parameters:
   cntry:
@@ -27,12 +27,12 @@ parameters:
     default: TRUE
   rw_order:
     default: 0
-  # rw_order_tmc_ar:
-  #   default: TRUE
+  rw_order_tmc_ar:
+    default: TRUE
   inc_time_tmc: 
     default: TRUE
-  # k_dt_time: 
-  #   default: 5
+  k_dt_time: 
+    default: 5
   paed_age_cutoff: 
     default: Inf
 
