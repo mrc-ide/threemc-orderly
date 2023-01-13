@@ -43,7 +43,8 @@ area_lev <- threemc::datapack_psnu_area_level %>%
   filter(iso3 == cntry) %>%
   pull(psnu_area_level)
 
-area_lev <- 0
+# run at the national level
+# area_lev <- 0
 
 # don't model at the country level
 if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL 
