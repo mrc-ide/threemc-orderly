@@ -4,7 +4,8 @@
 
 # !! Change this to use dataset stored in threemc
 k_dt_age <- 5 # Age knot spacing
-if (!is.numeric(k_dt_time)) k_dt_time <- NULL # time knot spacing
+# if (!is.numeric(k_dt_time)) k_dt_time <- NULL # time knot spacing
+k_dt_time <- NULL
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
@@ -88,7 +89,8 @@ if (!"sample" %in% names(fit)) {
       "u_spacetime_mmc",
       "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
     ),
-    N       = N
+    N       = N, 
+    inner.control = list(maxit = 5000)
   )
 }
 
