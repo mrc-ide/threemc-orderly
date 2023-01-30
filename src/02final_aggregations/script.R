@@ -28,48 +28,48 @@ results <- read_circ_data("depends/Results_DistrictAgeTime_ByType.csv.gz")
 results$model <- "No program data"
 # "small" model fit object 
 fit <- readRDS("depends/TMBObjects_DistrictAgeTime_ByType.rds")
-
-mod_selector <- function(
-    inc_type,  
-    rw_order        = NULL, 
-    paed_age_cutoff = NULL, 
-    inc_time_tmc    = NULL
-  ) {
-  mod <- "Surv_SpaceAgeTime"
-  if (!is.null(inc_type) && !is.na(inc_type) && inc_type == TRUE) {
-    mod <- paste0(mod, "_ByType_withUnknownType")
-  }
-  paed_cond <- !is.null(paed_age_cutoff) && 
-    !is.na(paed_age_cutoff) && 
-    !is.infinite(paed_age_cutoff) && 
-    inc_type == TRUE 
-  if (paed_cond) {
-    mod <- paste0(mod, "_Const_Paed_MMC")
-  }
-  if (!is.null(rw_order) && !is.na(rw_order) && rw_order %in% c(1, 2)) {
-    mod <- paste0(mod, "_RW")
-    if (inc_type == FALSE) return(mod)
-  }
-  if (!is.null(inc_time_tmc) && !is.na(inc_time_tmc) && inc_time_tmc == TRUE) {
-    mod <- paste0(mod, 2)
-  }
-  return(mod)
-}
-
-if (all(results$obs_mmc == 0 & results$obs_tmc == 0)) {
-  inc_type = FALSE
-} else {
-  inc_type = TRUE
-}
-
-mod <- mod_selector(inc_type, rw_order, paed_age_cutoff, inc_time_tmc)
-print(mod)
+# 
+# mod_selector <- function(
+#     inc_type,  
+#     rw_order        = NULL, 
+#     paed_age_cutoff = NULL, 
+#     inc_time_tmc    = NULL
+#   ) {
+#   mod <- "Surv_SpaceAgeTime"
+#   if (!is.null(inc_type) && !is.na(inc_type) && inc_type == TRUE) {
+#     mod <- paste0(mod, "_ByType_withUnknownType")
+#   }
+#   paed_cond <- !is.null(paed_age_cutoff) && 
+#     !is.na(paed_age_cutoff) && 
+#     !is.infinite(paed_age_cutoff) && 
+#     inc_type == TRUE 
+#   if (paed_cond) {
+#     mod <- paste0(mod, "_Const_Paed_MMC")
+#   }
+#   if (!is.null(rw_order) && !is.na(rw_order) && rw_order %in% c(1, 2)) {
+#     mod <- paste0(mod, "_RW")
+#     if (inc_type == FALSE) return(mod)
+#   }
+#   if (!is.null(inc_time_tmc) && !is.na(inc_time_tmc) && inc_time_tmc == TRUE) {
+#     mod <- paste0(mod, 2)
+#   }
+#   return(mod)
+# }
+# 
+# if (all(results$obs_mmc == 0 & results$obs_tmc == 0)) {
+#   inc_type = FALSE
+# } else {
+#   inc_type = TRUE
+# }
+# 
+# mod <- mod_selector(inc_type, rw_order, paed_age_cutoff, inc_time_tmc)
+# print(mod)
 
 # re-sample from model
 if (is.null(fit$sample)) {
     fit <- threemc_fit_model(
         fit     = fit,
-        mod     = mod,
+        # mod     = mod,
         randoms = c(
           "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
           "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
