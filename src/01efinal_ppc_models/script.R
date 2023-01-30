@@ -108,6 +108,11 @@ if (!"sample" %in% names(fit)) {
 #   N = N
 # )
 types <- c("MMC", "TMC", "MC")
+if (!any(grepl("mmc", tolower(names(fit$par))))) {
+  types <- "MC"
+}
+print(paste0("types: ", paste(types, collapse = ", ")))
+
 ppc_list <- lapply(types, function(x) {
   gc()
   return(threemc_ppc(
