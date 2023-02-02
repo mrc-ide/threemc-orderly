@@ -168,6 +168,7 @@ parameters <- threemc_initial_pars(
 )
 
 # fit model with TMB
+memuse::Sys.meminfo()
 fit <- threemc_fit_model(
   dat_tmb       = dat_tmb,
   parameters    = parameters,

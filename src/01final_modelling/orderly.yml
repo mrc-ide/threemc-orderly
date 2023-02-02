@@ -45,6 +45,7 @@ packages:
   - TMB
   - rlang
   - ggplot2
+  - memuse
   
 # global_resources:
 #   depends/areas.geojson: areas.geojson

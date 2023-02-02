@@ -81,6 +81,7 @@ out_spec <- out_spec %>%
 # resample from fit
 if (!"sample" %in% names(fit)) {
   set.seed(123)
+  memuse::Sys.meminfo()
   fit <- threemc_fit_model(
     fit           = fit,
     randoms       = c(

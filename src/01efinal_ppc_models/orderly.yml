@@ -39,6 +39,7 @@ packages:
   - dplyr
   - ggplot2
   - readr
+  - memuse
   
 sources:
   - source.R
