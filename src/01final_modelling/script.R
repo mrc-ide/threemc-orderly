@@ -169,14 +169,15 @@ parameters <- threemc_initial_pars(
 
 # fit model with TMB
 fit <- threemc_fit_model(
-  dat_tmb    = dat_tmb,
-  parameters = parameters,
-  randoms    = c(
+  dat_tmb       = dat_tmb,
+  parameters    = parameters,
+  randoms       = c(
     "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
     "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
     "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
   ),
-  N = N
+  N             = N, 
+  inner.control = list(maxit = 250)
 )
 
 # subset to specific area level and calculate quantiles for rates and hazard

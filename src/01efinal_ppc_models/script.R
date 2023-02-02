@@ -82,15 +82,15 @@ out_spec <- out_spec %>%
 if (!"sample" %in% names(fit)) {
   set.seed(123)
   fit <- threemc_fit_model(
-    fit     = fit,
-    randoms = c(
+    fit           = fit,
+    randoms       = c(
       "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
       "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
       "u_spacetime_mmc",
       "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
     ),
-    N       = N, 
-    inner.control = list(maxit = 5000)
+    N             = N, 
+    inner.control = list(maxit = 250)
   )
 }
 
