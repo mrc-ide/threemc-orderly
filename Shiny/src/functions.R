@@ -1466,6 +1466,13 @@ plt_MC_modelfit_spec_age <- function(
         plt_data1$area_level_label[1],
         sep = ", "
       )
+      
+      if (province_split == TRUE && plt_data1$parent_area_name != "NA") {
+        add_title <- paste0(
+          add_title, 
+          ", Parent Area: ",
+          plt_data1$parent_area_name[1])
+      }
 
       ggplot(plt_data1, aes(x = year)) +
       # ggplot(df_results[[i]], aes(x = year)) +
@@ -1643,7 +1650,6 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
       tmp2 <- dplyr::group_split(tmp2, area_level) %>%
           purrr::map(~ dplyr::group_split(.x, parent_area_id))
   } else {
-
     # split by area level and number of desired plots (and year, if desired)
     tmp1 <- split_area_level(tmp1, year = year_split, n_plots = n_plots)
     tmp2 <- split_area_level(tmp2, year = year_split, n_plots = n_plots)
@@ -1656,12 +1662,15 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
       plt_data1$iso3[1],
       plt_data1$area_level[1],
       plt_data1$area_level_label[1],
-      # plt_data1$year[1],
       sep = ", "
     )
-    # if (!"year" %in% col_fill_vars) {
-    #   add_title <- paste(add_title, plt_data1$year, sep = ", ")
-    # }
+  
+    if (province_split == TRUE && plt_data1$parent_area_name[1] != "NA") {
+      add_title <- paste0(
+        add_title, 
+        ", Parent Area: ",
+        plt_data1$parent_area_name[1])
+    }
 
     if (facet_year == "colour") {
       colour_var <- "year"
@@ -3012,7 +3021,8 @@ threemc_val_plt <- function(
 
     # make sure areas are the same for both
     df_results_survey <- df_results_survey %>%
-      filter(area_name %in% df_results_oos$area_name)
+      # filter(area_name %in% df_results_oos$area_name)
+      filter(area_id %in% df_results_oos$area_id)
   }
 
   # reset df_results_survey to NULL if it has no rows
@@ -3099,7 +3109,7 @@ threemc_val_plt <- function(
       if (is.null(colour_var) && "indicator" %in% names(plt_data1)) {
         colour_var <- "indicator"
       } else if (is.null(colour_var)) {
-          colour_var <- "parent_area_id"
+        colour_var <- "parent_area_id"
       }
 
       # p <- ggplot(plt_data1, aes(x = .data[[x_var]])) +
@@ -3129,16 +3139,18 @@ threemc_val_plt <- function(
           # survey points (want clear points for surveys not included)
           geom_pointrange(
             data = filter(plt_data2, light == "Surveyed"),
-            aes(y = mean, ymin = lower, ymax = upper, colour = as.factor(.data[[colour_var]])),
-            # colour = "black",
+            # aes(y = mean, ymin = lower, ymax = upper, colour = as.factor(.data[[colour_var]])),
+            aes(y = mean, ymin = lower, ymax = upper),
+            colour = "black",
             # size = 0.3,
             show.legend = FALSE
           ) +
           geom_pointrange(
             data = filter(plt_data2, light == "Projected"),
-            aes(y = mean, ymin = lower, ymax = upper, colour = as.factor(.data[[colour_var]])),
+            # aes(y = mean, ymin = lower, ymax = upper, colour = as.factor(.data[[colour_var]])),
+            aes(y = mean, ymin = lower, ymax = upper),
             shape = 1,
-            # colour = "black",
+            colour = "black",
             # size = 0.3,
             show.legend = FALSE
           )  # +
