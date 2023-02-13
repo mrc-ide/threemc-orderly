@@ -3,11 +3,11 @@
 ### Metadata to run the models
 
 # !! Change this to use dataset stored in threemc
-k_dt <- 5 # Age knot spacing
+k_dt_age <- 5 # Age knot spacing
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
-paed_age_cutoff <- 10
+# paed_age_cutoff <- 10
 # five-year age groups to perform posterior predictive checks for
 five_year_age_groups <- c(
   "0-4",   "5-9",   "10-14", "15-19", "20-24", "25-29",
@@ -23,14 +23,14 @@ if (!rw_order %in% c(1, 2)) {
   rw_order <- NULL
 }
 
-inc_time_tmc <- TRUE 
-vmmc_countries <- c(
-  "LSO", "MOZ", "NAM", "RWA", "SWZ", "TZA", 
-  "UGA", "ZWE", "ZMB", "KEN", "ETH"
-)
-if (cntry %in% vmmc_countries[!vmmc_countries %in% c("ETH", "KEN")]) {
-  inc_time_tmc <- FALSE 
-}
+# inc_time_tmc <- TRUE 
+# vmmc_countries <- c(
+#   "LSO", "MOZ", "NAM", "RWA", "SWZ", "TZA", 
+#   "UGA", "ZWE", "ZMB", "KEN", "ETH"
+# )
+# if (cntry %in% vmmc_countries[!vmmc_countries %in% c("ETH", "KEN")]) {
+#   inc_time_tmc <- FALSE 
+# }
 
 # save loc
 save_dir <- "artefacts/"
@@ -143,7 +143,7 @@ dat_tmb <- threemc_prepare_model_data(
   area_lev          = area_lev,
   aggregated        = TRUE,
   weight            = "population",
-  k_dt              = k_dt,
+  k_dt_age          = k_dt_age,
   paed_age_cutoff   = paed_age_cutoff,
   rw_order          = rw_order, 
   inc_time_tmc      = inc_time_tmc
@@ -153,11 +153,16 @@ dat_tmb <- threemc_prepare_model_data(
 
 # initial (AR 1) hyperparameters
 parameters <- threemc_initial_pars(
-  dat_tmb, rw_order = rw_order, paed_age_cutoff = paed_age_cutoff
+  dat_tmb, 
+  rw_order        = rw_order, 
+  paed_age_cutoff = paed_age_cutoff, 
+  inc_time_tmc    = inc_time_tmc
 )
 
 # replace parameters with fixed vals
-replacement_par_names <- paste0("logsigma_", c("time", "agetime", "spacetime"), "_mmc")
+replacement_par_names <- paste0(
+  "logsigma_", c("time", "agetime", "spacetime"), "_mmc"
+)
 replacement_pars <- mget(replacement_par_names)
 parameters[replacement_par_names] <- replacement_pars
 

@@ -35,6 +35,10 @@ parameters:
     default: ~
   is_paper: 
     default: TRUE
+  paed_age_cutoff: 
+    default: 10
+  inc_time_tmc: 
+    default: TRUE
   rw_order:
     default: ~
   logsigma_time_mmc: 
