@@ -7,12 +7,13 @@
 ### Metadata to run the models
 
 # !! Change this to use dataset stored in threemc
-k_dt <- 5 # Age knot spacing
-start_year <-  2002
+k_dt_age <- 5 # Age knot spacing
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
+rw_order <- NULL # AR 1
 paed_age_cutoff <- 10
+inc_time_tmc <- FALSE
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
@@ -29,7 +30,11 @@ filters <- c("iso3" = cntry, sex = "male")
 areas <- read_circ_data("depends/areas.geojson", filters) %>% 
   dplyr::mutate(space = 1:dplyr::n()) # add space column to areas
 areas <- st_make_valid(areas) 
-survey_circumcision <- read_circ_data("depends/survey_circumcision.csv.gz", filters)
+survey_circumcision <- read_circ_data(
+  "depends/survey_circumcision.csv.gz", 
+  filters
+  ) %>% 
+  mutate(survey_year = as.numeric(substr(survey_id, 4, 7)))
 populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
 
 # pull recommended area hierarchy for target country
@@ -46,12 +51,33 @@ if (length(area_lev) == 0) {
   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
 }
 
-#### Preparing circumcision data ####
-# pull latest and first censoring year from survey_id
-survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
+# area_lev <- 0 # run at national level
 
+# re-calculate start as earliest year - 50 (only where TMC needs to vary)
+survey_years <- unique(survey_circumcision$survey_year)
+start_year <- min(c(survey_years - 2, 2002)) # have lower bound on start
+
+# Fill in any NAs in populations with
+min_pop_year <- min(populations$year)
+if (start_year < min_pop_year) {
+  missing_years <- start_year:(min_pop_year - 1)
+  missing_rows <- tidyr::crossing(
+    select(populations, -c(year, population)),
+    "year"       = missing_years,
+    "population" = NA
+  )
+  populations <- bind_rows(populations, missing_rows) %>%
+    arrange(iso3, area_id, area_level, age, year) %>%
+    group_by(iso3, area_id, area_level, age) %>%
+    tidyr::fill(population, .direction = "downup") %>%
+    ungroup()
+}
+
+
+#### Preparing circumcision data ####
+
+# pull latest censoring year from survey_id
 cens_year <- max(survey_years)
-start_year <- min(c(survey_years - 2, start_year)) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
@@ -100,8 +126,6 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
 # we are primarily modelling on.
 
  
-
-
 out <- create_shell_dataset(
   survey_circumcision = survey_circ_preprocess,
   populations         = populations,
@@ -114,8 +138,8 @@ out <- create_shell_dataset(
   strat               = "space",
   age                 = "age",
   circ                = "indweight_st"
-) %>% 
-  filter(!is.na(population)) # nas in population will cause errors 
+) # %>% 
+  # filter(!is.na(population)) # nas in population will cause errors 
 
 #### Dataset for modelling ####
 
@@ -125,83 +149,23 @@ dat_tmb <- threemc_prepare_model_data(
   area_lev          = area_lev,
   aggregated        = TRUE,
   weight            = "population",
-  k_dt              = k_dt,
+  k_dt_age          = k_dt_age,
   paed_age_cutoff   = paed_age_cutoff
 )
 
 #### Modelling circumcision probabilities ####
 
-# specify TMB model, depending on whether type distinction is available
-if (is_type == TRUE) {
-  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
-} else {
-  mod <- "Surv_SpaceAgeTime"
-  # empty df for paed design matrices so parameter assignment doesn't fail
-  X_fixed_mmc_paed <- X_age_mmc_paed <- X_space_mmc_paed <- data.frame(0)
-}
-
-# Initial values
-parameters <- with(
-  dat_tmb,
-  list(
-    # intercept
-    "u_fixed_mmc"            = rep(-5, ncol(X_fixed_mmc)),
-    "u_fixed_mmc_paed"       = rep(-5, ncol(X_fixed_mmc_paed)),
-    "u_fixed_tmc"            = rep(-5, ncol(X_fixed_tmc)),
-    # age random effect
-    "u_age_mmc"              = rep(0, ncol(X_age_mmc)),
-    "u_age_mmc_paed"         = rep(0, ncol(X_age_mmc_paed)),
-    "u_age_tmc"              = rep(0, ncol(X_age_tmc)),
-    # time random effect for (non-paed) MMC
-    "u_time_mmc"             = rep(0, ncol(X_time_mmc)),
-    # Space random effect (district)
-    "u_space_mmc"            = rep(0, ncol(X_space_mmc)),
-    "u_space_mmc_paed"       = rep(0, ncol(X_space_mmc_paed)),
-    "u_space_tmc"            = rep(0, ncol(X_space_tmc)),
-    # Interactions for MMC
-    "u_agetime_mmc"          = matrix(0, ncol(X_age_mmc), ncol(X_time_mmc)),
-    "u_agespace_mmc"         = matrix(0, ncol(X_age_mmc), ncol(X_space_mmc)),
-    "u_spacetime_mmc"        = matrix(0, ncol(X_time_mmc), ncol(X_space_mmc)),
-    "u_agespace_mmc_paed"    = matrix(0, ncol(X_age_mmc_paed), ncol(X_space_mmc_paed)),
-    # Interactions for TMC
-    "u_agespace_tmc"         = matrix(0, ncol(X_age_tmc), ncol(X_space_tmc)),
-    # Autocorrelation parameters for priors
-    # Variance
-    "logsigma_age_mmc"            = 0,
-    "logsigma_age_mmc_paed"       = 0,
-    "logsigma_time_mmc"           = 0,
-    "logsigma_space_mmc"          = 0,
-    "logsigma_space_mmc_paed"     = 0,
-    "logsigma_agetime_mmc"        = 0,
-    "logsigma_agespace_mmc"       = 0,
-    "logsigma_agespace_mmc_paed"  = 0,
-    "logsigma_spacetime_mmc"      = 0,
-    "logsigma_age_tmc"            = 0,
-    "logsigma_space_tmc"          = 0,
-    "logsigma_agespace_tmc"       = 0,
-    # Mean
-    "logitrho_mmc_time1"          = 2,
-    "logitrho_mmc_time2"          = 2,
-    "logitrho_mmc_time3"          = 2,
-    "logitrho_mmc_age1"           = 2,
-    "logitrho_mmc_paed_age1"      = 2,
-    "logitrho_mmc_age2"           = 2,
-    "logitrho_mmc_paed_age2"      = 2,
-    "logitrho_mmc_age3"           = 2,
-    "logitrho_tmc_age1"           = 2,
-    "logitrho_tmc_age2"           = 2
-  )
+# Initialise parameter values 
+parameters <- threemc_initial_pars(
+  dat_tmb, 
+  rw_order        = rw_order, 
+  paed_age_cutoff = paed_age_cutoff, 
+  inc_time_tmc    = inc_time_tmc 
 )
-
-if (is_type == FALSE) {
-  # remove paed-related parameters
-  parameters <- parameters[!grepl("paed", names(parameters))]
-}
 
 # fit model with TMB
 fit <- threemc_fit_model(
   dat_tmb    = dat_tmb,
-  mod        = mod,
   parameters = parameters,
   randoms    = c(
     "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
