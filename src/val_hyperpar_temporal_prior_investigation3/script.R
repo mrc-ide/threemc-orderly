@@ -196,6 +196,8 @@ fit_proposal_model <- function(proposal_parameters, maps) {
       area_id, area_name, area_level, year, age, circ_age, population,
       contains("cum_inc"), contains("rate")
     ) %>% 
+    # remove years before 2000, to keep save object small
+    mutate(n = row_number()) %>% 
     filter(year >= 2000)
   
   # plots to diagnose any issues with fits
