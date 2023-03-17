@@ -8,7 +8,7 @@ library(ggplot2)
 
 source("Shiny/src/functions.R")
 
-cntry <- "MWI"
+cntry <- "RWA"
 # cntry <- "MWI"
 
 age_groups <- c(
@@ -118,14 +118,15 @@ plt_empirical_model_rates(
   spec_area_levels = 0,
   spec_type = "MMC probability",
   spec_age_groups = age_groups, 
-  spec_years = survey_years[1]:2016,
+  # spec_years = survey_years[1]:2016,
+  spec_years = survey_years[1]:2019,
   xlab = "",
   ylab = "% Circumcised Per Year"
 )[[1]] + 
-  ggtitle("Malawi Empirical Rates vs Year, by Age Group") + 
+  ggtitle(paste0(cntry, " Empirical Rates vs Year, by Age Group")) + 
   facet_wrap(~ age_group, nrow = 2) + 
   scale_x_discrete(
-    breaks = seq(survey_years[1], 2016, by = 2)
+    breaks = seq(survey_years[1], 2019, by = 2)
   ) + 
   theme(
     axis.text.x = element_text(angle = 45, vjust = 0.5, size = 13, face = "bold"),
