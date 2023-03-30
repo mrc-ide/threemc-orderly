@@ -20,7 +20,6 @@ if (!is.numeric(paed_age_cutoff) || is.infinite(paed_age_cutoff)) {
   paed_age_cutoff <- NULL
 }
 print(paste("paed_age_cutoff is", paed_age_cutoff))
-if (!is.numeric(rw_order) || rw_order == 0) rw_order <- NULL
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
