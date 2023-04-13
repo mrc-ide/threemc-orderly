@@ -117,7 +117,7 @@ if (nrow(survey_circ_preprocess) == 0) {
 # include indicator to determine whether there is any type distinction for cntry
 if (all(is.na(survey_circ_preprocess$circ_who) &
         is.na(survey_circ_preprocess$circ_where))) {
-  print("No type distinction made in valid surveys for this country")
+  stop("No type distinction made in valid surveys for this country")
   is_type <- FALSE 
   paed_age_cutoff <- NULL
 } else is_type <- TRUE
