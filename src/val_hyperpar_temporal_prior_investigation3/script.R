@@ -170,6 +170,7 @@ replacement_par_names <- paste0(
   "logsigma_", c("time", "agetime", "spacetime"), "_mmc"
 )
 replacement_pars <- mget(replacement_par_names)
+replacement_pars <- lapply(replacement_pars, as.numeric)
 parameters[replacement_par_names] <- replacement_pars
 
 # list of NA factors with names == hyperparameters to fix
@@ -283,21 +284,22 @@ fit_min <- minimise_fit_obj(proposal_mod$fit, dat_tmb, parameters)
 #### Save results ####
 
 # Save results
-data.table::fwrite(
-  proposal_mod$out, file = paste0(save_dir, "Results_DistrictAgeTime_ByType.csv.gz")
-)
+# not required! Never used, so using valuable disk space
+# data.table::fwrite(
+#   proposal_mod$out, file = paste0(save_dir, "Results_DistrictAgeTime_ByType.csv.gz")
+# )
 
 # save fit as .rds file
-saveRDS(fit_min, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
+# saveRDS(fit_min, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
 
 # save ppc df 
-data.table::fwrite(
-  proposal_mod$ppc$ppc_df, file = file.path(save_dir, "pointwise_ppc_df.csv.gz")
-)
+# data.table::fwrite(
+#   proposal_mod$ppc$ppc_df, file = file.path(save_dir, "pointwise_ppc_df.csv.gz")
+# )
 
 # save summarised ppc as .rds file
 saveRDS(proposal_mod$ppc$summary_stats, file.path(save_dir, "ppc_summary.rds"))
 
 # save plots 
-ggsave(file.path(save_dir, "Circ_Coverage.pdf"), proposal_mod$plots[[1]])
-ggsave(file.path(save_dir, "Circ_Rates.pdf"), proposal_mod$plots[[2]])
+# ggsave(file.path(save_dir, "Circ_Coverage.pdf"), proposal_mod$plots[[1]])
+# ggsave(file.path(save_dir, "Circ_Rates.pdf"), proposal_mod$plots[[2]])
