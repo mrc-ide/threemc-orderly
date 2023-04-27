@@ -1,56 +1,48 @@
 script: script.R
 
-sources:
-  - source.R
-
 artefacts:
- - data:
+  - data:
       description: naomi fit object
       filenames:
       - artefacts/TMBObjects_DistrictAgeTime_ByType.rds
- - data:
+  - data:
       description: Modelling results for area level of interest, including quantiles
       filenames:
       - artefacts/Results_DistrictAgeTime_ByType.csv.gz
- - staticgraph:
-      description: Plot of circumcision coverage for all areas modelled.
-      filenames:
-      - artefacts/Circ_Coverage.pdf
- - staticgraph:
-      description: Plot of circumcision rates for all areas modelled.
-      filenames:
-      - artefacts/Circ_Rates.pdf
- - data:
+  - data:
       description: 
       - Aggregated Probabilities of Circumcision for Age Groups
       filenames: 
       - artefacts/Results_AgeGroup_Probability.csv.gz
- - data:
+  - data:
       description: 
       - Aggregated Circumcision Incidences for Age Groups
       filenames: 
       - artefacts/Results_AgeGroup_Incidence.csv.gz
- - data:
+  - data:
       description: 
       - Aggregated Circumcision Prevalences for Age Groups
       filenames: 
       - artefacts/Results_AgeGroup_Prevalence.csv.gz 
-      
-displayname: |
-  - Fit model and perform aggregations while removing the most recent survey 
-  from the data. The aim is to perform an out-of-sample validation, whereby we 
-  seek to ascertain whether our modelled uncertainty bounds contains the last 
-  survey recorded, which has been masked from our model fitting procedure. 
+  
+displayname: | 
+  threemc model fit and aggregated results for user-specifed model.
 
 parameters:
-  # can be either "circ_where" or "circ_who"
-  rm_question: 
+  cntry:
     default: ~
+  mod:
+    default: "Surv_SpaceAgeTime_ByType_withUnknownType"
+  is_paper:
+    default: TRUE
   N: 
     default: 100
+  area_lev:
+    default: 0
 
 packages:
   - threemc
+  - tidyr
   - sf
   - data.table
   - dplyr
@@ -59,12 +51,11 @@ packages:
   - rlang
   - ggplot2
   
-# move to pull from 00 orderly task series
 # global_resources:
 #   depends/areas.geojson: areas.geojson
 #   depends/survey_circumcision.csv.gz: survey_circumcision.csv.gz
 #   depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
-
+  
 depends:
   # areas file
   - 00a2_areas_join:
@@ -73,7 +64,7 @@ depends:
         depends/areas.geojson: artefacts/areas.geojson
   # surveys
   - 00b3_survey_join:
-      id: latest(parameter:is_paper == FALSE)
+      id: latest(parameter:is_paper == is_paper)
       use: 
         depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz
   # populations

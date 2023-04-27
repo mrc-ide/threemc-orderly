@@ -181,6 +181,10 @@ survey_merged <- add_missing_survey(
   survey_merged, "BWA2013BAIS", is_bwa2013bais, bwa2013bais_loc
 ) 
 
+# remove `circ_where` question for LSO2017PHIA
+survey_merged <- survey_merged %>% 
+  mutate(circ_where = ifelse(survey_id == "LSO2017PHIA", NA, circ_where))
+
 # save survey_circumcision
 readr::write_csv(
   survey_merged,

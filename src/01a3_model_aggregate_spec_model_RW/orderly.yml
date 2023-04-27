@@ -9,21 +9,14 @@ artefacts:
       description: Modelling results for area level of interest, including quantiles
       filenames:
       - artefacts/Results_DistrictAgeTime_ByType.csv.gz
-  - data:
-      description: 
-      - Aggregated Probabilities of Circumcision for Single Ages
-      filenames: 
-      - artefacts/Results_Age_Probability.csv.gz
-  - data:
-      description: 
-      - Aggregated Circumcision Incidences for Single Ages
-      filenames: 
-      - artefacts/Results_Age_Incidence.csv.gz
-  - data:
-      description: 
-      - Aggregated Circumcision Prevalences for Single Ages
-      filenames: 
-      - artefacts/Results_Age_Prevalence.csv.gz
+  - staticgraph:
+      description: Plot of circumcision coverage for all areas modelled.
+      filenames:
+      - artefacts/Circ_Coverage.pdf
+  - staticgraph:
+      description: Plot of circumcision rates for all areas modelled.
+      filenames:
+      - artefacts/Circ_Rates.pdf
   - data:
       description: 
       - Aggregated Probabilities of Circumcision for Age Groups
@@ -41,16 +34,25 @@ artefacts:
       - artefacts/Results_AgeGroup_Prevalence.csv.gz 
   
 displayname: | 
-  threemc model fit and aggregated results for user-specifed area level.
+  threemc model fit and aggregated results for user-specifed model.
 
 parameters:
-  add_cntry:
+  cntry:
+    default: ~
+  # mod:
+  #   default: "Surv_SpaceAgeTime_ByType_withUnknownType"
+  rw_order: 
     default: ~
   is_paper:
     default: TRUE
+  N: 
+    default: 100
+  area_lev:
+    default: "default"
 
 packages:
   - threemc
+  - tidyr
   - sf
   - data.table
   - dplyr
@@ -80,7 +82,3 @@ depends:
       id: latest
       use: 
         depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
-  - 01_modelling:
-      id: latest(parameter:cntry == add_cntry)
-      use: 
-        depends/TMBObjects_DistrictAgeTime_ByType.rds: artefacts/TMBObjects_DistrictAgeTime_ByType.rds  

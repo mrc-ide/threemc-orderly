@@ -21,6 +21,8 @@ init_hyperparameters <- readr::read_csv(file.path(dir_path, "high_var_hyperpars.
 test_hyperparameters <- init_hyperparameters %>%
   select(-iso3) %>% 
   summarise(across(everything(), median, na.rm = TRUE)) %>%
+  # temp: increase magnitude of parameters
+  mutate(across(everything(), ~ ifelse(. < 0, . - 3, . + 3))) %>% 
   # convert to vector
   tidyr::pivot_longer(everything()) %>%
   tibble::deframe()
@@ -59,10 +61,6 @@ survey_circumcision <- read_circ_data(
   paste0(dir_path, "survey_circumcision.csv.gz"),
   filters
 )
-
-if (all(is.na(survey_circumcision$circ_who)) && all(is.na(survey_circumcision$circ_where))) {
-  stop("No type distinction for this country, MMC hyperparameter investigation non-applicable")
-}
 
 populations <- read_circ_data(
   paste0(dir_path, "population_singleage_aggr.csv.gz"),
@@ -130,7 +128,7 @@ readr::write_csv(survey_info, paste0(save_loc, "used_survey_info.csv"))
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 
 cens_year <- max(survey_years)
-start_year <- max(min(survey_years), start_year) # have lower bound on start
+start_year <- min(c(survey_years - 2, start_year)) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
@@ -144,8 +142,8 @@ survey_circ_preprocess <- prepare_survey_data(
   norm_kisk_weights   = TRUE
 )
 
-if (all(is.na(survey_circumcision$type))) {
-  stop("No type distinction for this country, OOS validation non-applicable")
+if (all(is.na(survey_circ_preprocess$type))) {
+  stop("No type distinction for this country, MMC hyperparameter investigation non-applicable")
 }
 
 if (nrow(survey_circ_preprocess) == 0) {
@@ -163,7 +161,7 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
 
 #### Shell dataset to estimate empirical rate ####
 
-start_year <- min(as.numeric(substr(survey_circ_preprocess$survey_id, 4, 7)))
+
 
 out <- create_shell_dataset(
   survey_circumcision = survey_circ_preprocess,

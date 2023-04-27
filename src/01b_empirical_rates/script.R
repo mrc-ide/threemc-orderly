@@ -57,7 +57,7 @@ areas <- sf::read_sf(file.path(
 
 # pull latest and first censoring year from survey_id
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
-start_year <- max(min(survey_years), start_year) # have lower bound on start
+start_year <- min(c(survey_years - 2, start_year)) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circumcision_preprocessed <- prepare_survey_data(

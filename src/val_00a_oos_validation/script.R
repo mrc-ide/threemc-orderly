@@ -24,6 +24,7 @@ if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 forecast_year <- 2021
 paed_age_cutoff <- 10
 
+
 #### Reading in data ####
 
 # Revert to using planar rather than spherical geometry in `sf`
@@ -41,20 +42,22 @@ populations <- read_circ_data(
   filters
 )
 
-# pull recommended area hierarchy for target country
-area_lev <- threemc::datapack_psnu_area_level %>%
-  filter(iso3 == cntry) %>%
-  pull(psnu_area_level)
-
-# don't model at the country level
-if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL
-
-# if area_level is missing, assume most common area lev in surveys
-if (length(area_lev) == 0) {
-  area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
-  area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
+if (is.null(area_lev) || !is.numeric(area_lev)) {
+  # pull recommended area hierarchy for target country
+  area_lev <- threemc::datapack_psnu_area_level %>%
+    filter(iso3 == cntry) %>%
+    pull(psnu_area_level)
+  
+  # don't model at the country level
+  if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL
+  
+  # if area_level is missing, assume most common area lev in surveys
+  if (length(area_lev) == 0) {
+    area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
+    area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
+  }
 }
-
+  
 
 #### remove most recent survey #### 
 
@@ -102,7 +105,7 @@ readr::write_csv(survey_info, paste0(save_loc, "used_survey_info.csv"))
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 
 cens_year <- max(survey_years)
-start_year <- max(min(survey_years), start_year) # have lower bound on start
+start_year <- min(c(survey_years - 2, start_year)) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
@@ -132,8 +135,8 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
 
 #### Shell dataset to estimate empirical rate ####
 
-# take start year for skeleton dataset from surveys 
-start_year <- min(as.numeric(substr(survey_circ_preprocess$survey_id, 4, 7)))
+ 
+
 
 # create shell dataset from surveys
 out <- create_shell_dataset(
