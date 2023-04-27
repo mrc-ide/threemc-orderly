@@ -3,6 +3,8 @@
 library(tidyr)
 library(dplyr)
 library(ggplot2)
+library(plotly)
+library(ggtern)
 
 #### Parameter Values ####
 
@@ -225,6 +227,11 @@ fit_stats_join %>%
 
 #### Exploration ####
 
+fit_stats_join <- bind_rows(
+  readr::read_csv("logsigma_hyperpars.csv"), 
+  readr::read_csv("~/OneDrive/logsigma_hyperpars_extended.csv")) %>% 
+  select(-...1)
+
 # correlation between parameter values, CIs and fit stats
 cors <- fit_stats_join %>% 
   group_by(rw_order) %>% 
@@ -258,9 +265,7 @@ cors %>% filter(!grepl("rmse", name)) %>%
   bind_rows()
 # each time it's the 50th% percentile CI which changes the most, therefore plot with this!
 
-
 # Notes: 
-#  
 
 # boxplots for each rw_order and par value
 fit_stats_join %>% 
@@ -278,6 +283,7 @@ fit_stats_join %>%
     y = CI.0.5, 
     group = parameter_value,
     fill = as.factor(parameter_value)
+    # fill = dark2
   )) + 
   geom_boxplot() + 
   facet_grid(name ~ rw_order) + 
@@ -289,7 +295,148 @@ fit_stats_join %>%
     strip.text = element_text(size = 12)
   )
 
+# violin plot showing similar information
+fit_stats_join %>% 
+  arrange(across(contains("logsigma"))) %>% 
+  mutate(
+    rw_order = case_when(
+      rw_order == 0 ~ "AR 1", 
+      rw_order == 1 ~ "RW 1", 
+      TRUE          ~ "RW 2"
+    )
+  ) %>% 
+  pivot_longer(contains("logsigma"), values_to = "parameter_value") %>% 
+  ggplot(aes(
+    x = parameter_value,
+    y = CI.0.5, 
+    group = parameter_value,
+    fill = as.factor(parameter_value)
+    # fill = dark2
+  )) + 
+  geom_violin() + 
+  facet_grid(name ~ rw_order) + 
+  theme_bw() + 
+  labs(x = "Parameter Value", y = "50% CI", fill = "Parameter Value") + 
+  theme(
+    strip.background = element_rect(fill = NA, colour = "white"), 
+    panel.background = element_rect(fill = NA, color = "black"), 
+    strip.text = element_text(size = 12)
+  )
+
+# bubble plot, averaging across countries
+fit_stats_join_mean <- fit_stats_join %>% 
+  select(-cntry) %>% 
+  group_by(logsigma_time_mmc, logsigma_agetime_mmc, logsigma_spacetime_mmc, rw_order) %>% 
+  summarise(across(everything(), mean))
+
+fit_stats_join_mean_ar_1 <- fit_stats_join_mean %>% 
+  filter(rw_order == 0)
+
+plot_ly(
+  data = fit_stats_join_mean_ar_1, 
+  type = "scatter3d",
+  x     = ~logsigma_time_mmc, 
+  y     = ~logsigma_agetime_mmc, 
+  z     = ~logsigma_spacetime_mmc, 
+  size  = ~CI.0.5, 
+  color = ~CI.0.5,
+  marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(5, 30) # sizes seem reasonable
+)
+
+# repeat for RW1, RW2
+
+# ternary (contour?) plot
+ggtern(
+  data = fit_stats_join_mean_ar_1, 
+  aes(x = logsigma_time_mmc,
+      y = logsigma_agetime_mmc, 
+      z = logsigma_spacetime_mmc)
+) +
+  # geom_point() + 
+  theme_showarrows() + 
+  geom_density_tern()
+
+ggtern(
+  data = fit_stats_join_mean_ar_1, 
+  aes(x = logsigma_time_mmc,
+      y = logsigma_agetime_mmc, 
+      z = logsigma_spacetime_mmc)
+) + 
+  stat_density_tern(aes(fill = CI.0.5, alpha = CI.0.5, group = CI.0.5), geom = "polygon") + 
+  theme_showarrows() + 
+  geom_point() + 
+  # geom_density_tern(aes(colour = CI.0.5)) +
+  scale_colour_gradient2(low = "blue", mid = "green", high = "red") + 
+  scale_fill_gradient2(low = "blue", mid = "green", high = "red") + 
+  guides(alpha = "none")
+  
+  ggtern(data = fit_stats_join_mean_ar_1, 
+         aes(x = logsigma_time_mmc,
+             y = logsigma_agetime_mmc, 
+             z = logsigma_spacetime_mmc, 
+             group = CI.0.5)) + 
+  stat_density_tern(geom = "polygon", n = 400,
+                    aes(fill  = CI.0.5, alpha = CI.0.5)) +
+  geom_point() +
+  scale_fill_gradient2(low = "blue", mid = "green", high = "red", name = "", breaks = 1:5, 
+                      labels = c("low", "", "", "", "high"))  +
+  scale_L_continuous(breaks = 0:5 / 5, labels = 0:5/ 5) +
+  scale_R_continuous(breaks = 0:5 / 5, labels = 0:5/ 5) +
+  scale_T_continuous(breaks = 0:5 / 5, labels = 0:5/ 5) +
+  labs(title = "Example Density/Contour Plot") +
+  guides(fill = guide_colorbar(order = 1), alpha = guide_none()) +
+  theme_rgbg() +
+  # theme_noarrows() +
+  theme(legend.justification = c(0, 1), 
+        legend.position      = c(0, 1))
+  
+  # scale_T_continuous(limits = c(min(fit_stats_join_mean_ar_1$logsigma_spacetime_mmc),
+  #                               max(fit_stats_join_mean_ar_1$logsigma_spacetime_mmc))) + 
+  # scale_T_continuous(limits = c(0, 0.6)) + 
+  # scale_L_continuous(limits = c(0.4, 1)) + 
+  # scale_R_continuous(limits = c(-0.4, 0))
+  NULL
+  
+
+
+
+# fit_stats_join %>% 
+#   arrange(across(contains("logsigma"))) %>% 
+#   mutate(
+#     rw_order = case_when(
+#       rw_order == 0 ~ "AR 1", 
+#       rw_order == 1 ~ "RW 1", 
+#       TRUE          ~ "RW 2"
+#     ), 
+#     line_lab = paste0(
+#       "logsigma time MMC = ", logsigma_time_mmc, ", ",
+#       "logsigma agetime MMC = ", logsigma_agetime_mmc # , ", ",
+#       # "logsigma spacetime MMC = ", logsigma_spacetime_mmc
+#     )
+#   ) %>% 
+#   pivot_longer(contains("logsigma"), values_to = "parameter_value") %>% 
+#   ggplot(aes(
+#     x = parameter_value,
+#     y = CI.0.5, 
+#     group = parameter_value,
+#     # fill = as.factor(parameter_value),
+#     colour = line_lab
+#   )) + 
+#   geom_line() + 
+#   facet_grid(name ~ rw_order) + 
+#   theme_bw() + 
+#   labs(x = "Parameter Value", y = "50% CI", fill = "Parameter Value") + 
+#   theme(
+#     legend.position = "none",
+#     strip.background = element_rect(fill = NA, colour = "white"), 
+#     panel.background = element_rect(fill = NA, color = "black"), 
+#     strip.text = element_text(size = 12)
+#   )
+
+
+
 # Also would be useful to have "interaction-style" plots
+# TODO: Average across different countries!
 plots_time <- fit_stats_join %>% 
   mutate(
     types = paste0(
@@ -303,11 +450,20 @@ plots_time <- fit_stats_join %>%
   ) %>% 
   # filter(logsigma_agetime_mmc == 0, logsigma_spacetime_mmc == -2) %>% 
   group_split(cntry) %>% 
-  purrr::map(~.x %>% 
-    ggplot(aes(x = logsigma_time_mmc, y = CI.0.5, colour = types, group = types)) + 
-    geom_line() + 
-    facet_wrap(. ~ rw_order) + 
-    guides(colour = "none")
+  purrr::map(
+    ~.x %>% 
+      ggplot(aes(x = logsigma_time_mmc, y = CI.0.5, colour = types, group = types)) + 
+      geom_line() + 
+      ggtitle(.x$cntry[1]) + 
+      facet_wrap(. ~ rw_order) + 
+      guides(colour = "none") + 
+      theme_bw() + 
+      theme(
+        legend.position = "none",
+        strip.background = element_rect(fill = NA, colour = "white"), 
+        panel.background = element_rect(fill = NA, color = "black"), 
+        strip.text = element_text(size = 12)
+      )
   )
 
 plots_agetime <- fit_stats_join %>% 
