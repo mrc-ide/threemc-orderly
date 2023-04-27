@@ -11,9 +11,11 @@ k_dt_age <- 5 # Age knot spacing
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
+
 rw_order <- NULL # AR 1
 paed_age_cutoff <- 10
 inc_time_tmc <- FALSE
+
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
@@ -151,6 +153,8 @@ dat_tmb <- threemc_prepare_model_data(
   weight            = "population",
   k_dt_age          = k_dt_age,
   paed_age_cutoff   = paed_age_cutoff
+  rw_order          = rw_order,
+  inc_time_tmc      = inc_time_tmc
 )
 
 #### Modelling circumcision probabilities ####
@@ -161,7 +165,7 @@ parameters <- threemc_initial_pars(
   rw_order        = rw_order, 
   paed_age_cutoff = paed_age_cutoff, 
   inc_time_tmc    = inc_time_tmc 
-)
+
 
 # fit model with TMB
 fit <- threemc_fit_model(
