@@ -9,6 +9,14 @@ artefacts:
       description: Modelling results for area level of interest, including quantiles
       filenames:
       - artefacts/Results_DistrictAgeTime_ByType.csv.gz
+  - staticgraph:
+      description: Plot of circumcision coverage for all areas modelled.
+      filenames:
+      - artefacts/Circ_Coverage.pdf
+  - staticgraph:
+      description: Plot of circumcision rates for all areas modelled.
+      filenames:
+      - artefacts/Circ_Rates.pdf
   - data:
       description: 
       - Aggregated Probabilities of Circumcision for Age Groups

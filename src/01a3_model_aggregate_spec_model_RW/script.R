@@ -201,23 +201,46 @@ out_spec <- out_spec %>%
 # minimise fit object for saving
 fit_save <- minimise_fit_obj(fit, dat_tmb, parameters)
 
-# plot coverage to check fit
-# ggplot(out_spec,
-#        aes(x = age,
-#            y = cum_incM,
-#            ymin = cum_incL,
-#            ymax = cum_incU,
-#            group = as.factor(year),
-#            colour = as.factor(year))) +
-#   geom_ribbon(fill = "lightgrey",
-#               colour = NA) +
-#   geom_line(size = 1) +
-#   scale_y_continuous(labels = scales::label_percent()) +
-#   labs(x = "Age",
-#        y = "Coverage",
-#        colour = "") +
-#   theme_bw() +
-#   facet_wrap(. ~ area_name)
+# plot coverage and rates to check fit
+# Coverage
+pdf(paste0(save_dir, "Circ_Coverage.pdf"), width = 10)
+ggplot(out_spec,
+       aes(x = age,
+           y = cum_incM,
+           ymin = cum_incL,
+           ymax = cum_incU,
+           group = as.factor(year),
+           colour = as.factor(year))) +
+  geom_ribbon(fill = "lightgrey",
+              colour = NA) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(x = "Age",
+       y = "Coverage",
+       colour = "") +
+  theme_bw() +
+  facet_wrap(. ~ area_name)
+dev.off()
+
+# Rates
+pdf(paste0(save_dir, "Circ_Rates.pdf"), width = 10)
+ggplot(out_spec,
+       aes(x = age,
+           y = rateM,
+           ymin = rateL,
+           ymax = rateU,
+           group = as.factor(year),
+           colour = as.factor(year))) +
+  geom_ribbon(fill = "lightgrey",
+              colour = NA) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(x = "Age",
+       y = "Rates",
+       colour = "") +
+  theme_bw() +
+  facet_wrap(. ~ area_name)
+dev.off()
 
 
 # Saving results
@@ -251,7 +274,6 @@ if (is.null(fit$sample)) {
     ),
     N       = 1000
   )
-  
 }
 
 fit_no_prog <- fit
