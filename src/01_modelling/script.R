@@ -7,15 +7,15 @@
 ### Metadata to run the models
 
 # !! Change this to use dataset stored in threemc
-k_dt <- 5 # Age knot spacing
-start_year <-  2002
+k_dt_age <- 5 # Age knot spacing
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
-# paed_age_cutoff <- 10
-paed_age_cutoff <- NULL
-rw_order <- NULL 
-inc_time_tmc <- TRUE
+
+rw_order <- NULL # AR 1
+paed_age_cutoff <- 10
+inc_time_tmc <- FALSE
+
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
@@ -32,7 +32,11 @@ filters <- c("iso3" = cntry, sex = "male")
 areas <- read_circ_data("depends/areas.geojson", filters) %>% 
   dplyr::mutate(space = 1:dplyr::n()) # add space column to areas
 areas <- st_make_valid(areas) 
-survey_circumcision <- read_circ_data("depends/survey_circumcision.csv.gz", filters)
+survey_circumcision <- read_circ_data(
+  "depends/survey_circumcision.csv.gz", 
+  filters
+  ) %>% 
+  mutate(survey_year = as.numeric(substr(survey_id, 4, 7)))
 populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
 
 # pull recommended area hierarchy for target country
@@ -49,12 +53,33 @@ if (length(area_lev) == 0) {
   area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
 }
 
-#### Preparing circumcision data ####
-# pull latest and first censoring year from survey_id
-survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
+# area_lev <- 0 # run at national level
 
+# re-calculate start as earliest year - 50 (only where TMC needs to vary)
+survey_years <- unique(survey_circumcision$survey_year)
+start_year <- min(c(survey_years - 2, 2002)) # have lower bound on start
+
+# Fill in any NAs in populations with
+min_pop_year <- min(populations$year)
+if (start_year < min_pop_year) {
+  missing_years <- start_year:(min_pop_year - 1)
+  missing_rows <- tidyr::crossing(
+    select(populations, -c(year, population)),
+    "year"       = missing_years,
+    "population" = NA
+  )
+  populations <- bind_rows(populations, missing_rows) %>%
+    arrange(iso3, area_id, area_level, age, year) %>%
+    group_by(iso3, area_id, area_level, age) %>%
+    tidyr::fill(population, .direction = "downup") %>%
+    ungroup()
+}
+
+
+#### Preparing circumcision data ####
+
+# pull latest censoring year from survey_id
 cens_year <- max(survey_years)
-start_year <- max(min(survey_years), start_year) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
@@ -102,9 +127,7 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
 # implications later where we have to specify the administrative boundaries
 # we are primarily modelling on.
 
-# take start year for skeleton dataset from surveys 
-start_year <- min(as.numeric(substr(survey_circ_preprocess$survey_id, 4, 7)))
-
+ 
 out <- create_shell_dataset(
   survey_circumcision = survey_circ_preprocess,
   populations         = populations,
@@ -117,7 +140,8 @@ out <- create_shell_dataset(
   strat               = "space",
   age                 = "age",
   circ                = "indweight_st"
-)
+) # %>% 
+  # filter(!is.na(population)) # nas in population will cause errors 
 
 #### Dataset for modelling ####
 
@@ -127,20 +151,21 @@ dat_tmb <- threemc_prepare_model_data(
   area_lev          = area_lev,
   aggregated        = TRUE,
   weight            = "population",
-  k_dt              = k_dt,
-  paed_age_cutoff   = paed_age_cutoff,
+  k_dt_age          = k_dt_age,
+  paed_age_cutoff   = paed_age_cutoff
   rw_order          = rw_order,
   inc_time_tmc      = inc_time_tmc
 )
 
 #### Modelling circumcision probabilities ####
 
+# Initialise parameter values 
 parameters <- threemc_initial_pars(
-  dat_tmb,
-  rw_order        = rw_order,
-  paed_age_cutoff = paed_age_cutoff,
-  inc_time_tmc    = inc_time_tmc
-)
+  dat_tmb, 
+  rw_order        = rw_order, 
+  paed_age_cutoff = paed_age_cutoff, 
+  inc_time_tmc    = inc_time_tmc 
+
 
 # fit model with TMB
 fit <- threemc_fit_model(

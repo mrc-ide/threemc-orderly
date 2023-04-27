@@ -23,6 +23,8 @@ init_hyperparameters <- readr::read_csv(file.path(dir_path, "high_var_hyperpars.
 test_hyperparameters <- init_hyperparameters %>%
   select(-iso3) %>% 
   summarise(across(everything(), median, na.rm = TRUE)) %>%
+  # temp: increase magnitude of parameters
+  # mutate(across(everything(), ~ ifelse(. < 0, . - 3, . + 3))) %>% 
   # convert to vector
   tidyr::pivot_longer(everything()) %>%
   tibble::deframe()
@@ -63,10 +65,6 @@ survey_circumcision <- read_circ_data(
   filters
 )
 
-if (all(is.na(survey_circumcision$circ_who)) && all(is.na(survey_circumcision$circ_where))) {
-  stop("No type distinction for this country, MMC hyperparameter investigation non-applicable")
-}
-
 populations <- read_circ_data(
   paste0(dir_path, "population_singleage_aggr.csv.gz"),
   filters
@@ -91,12 +89,11 @@ if (length(area_lev) == 0) {
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 
 cens_year <- max(survey_years)
-start_year <- max(min(survey_years), start_year) # have lower bound on start
+start_year <- min(c(survey_years - 2, start_year)) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
   areas               = areas,
-  # remove area_level column to avoid duplicating columns in prepare_survey_data
   survey_circumcision = survey_circumcision,
   area_lev            = area_lev,
   start_year          = start_year,
@@ -105,6 +102,10 @@ survey_circ_preprocess <- prepare_survey_data(
   rm_missing_type     = rm_missing_type,
   norm_kisk_weights   = TRUE
 )
+
+if (all(is.na(survey_circ_preprocess$type))) {
+  stop("No type distinction for this country, MMC hyperparameter investigation non-applicable")
+}
 
 if (nrow(survey_circ_preprocess) == 0) {
   message("no valid surveys at this level") # move inside function!
@@ -121,7 +122,7 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
 
 #### Shell dataset to estimate empirical rate ####
 
-start_year <- min(as.numeric(substr(survey_circ_preprocess$survey_id, 4, 7)))
+
 
 out <- create_shell_dataset(
   survey_circumcision = survey_circ_preprocess,

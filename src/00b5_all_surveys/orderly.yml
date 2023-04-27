@@ -1,0 +1,40 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: All surveys with valid circumcision data for each country.
+      filenames:
+      - artefacts/all_surveys.csv
+  - data:
+      description: The (possibly two) most recent survey(s) for each country.
+      filenames:
+      - artefacts/last_surveys.csv
+  
+displayname: |
+ - Finds all valid surveys for each country, and the most recent. If there is 
+ a survey just one year older than the latest survey, also include that in 
+ the most recent surveys for a country, which will be removed from surveys for 
+ OOS validation tasks. 
+
+parameters:
+  is_paper:
+    default: TRUE
+
+packages:
+  - threemc
+  - data.table
+  - dplyr
+  - sf
+  - readr
+  
+depends:
+  # areas file
+  - 00a2_areas_join:
+      id: latest
+      use:
+        depends/areas.geojson: artefacts/areas.geojson
+  # surveys
+  - 00b3_survey_join:
+      id: latest(parameter:is_paper == is_paper)
+      use: 
+        depends/survey_circumcision.csv.gz: artefacts/survey_circumcision.csv.gz

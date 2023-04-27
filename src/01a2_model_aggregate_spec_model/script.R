@@ -1,79 +1,79 @@
-#### Perform Modelling and Aggregation With Latest Survey Removed ####  
+#### Model with user-specified model ####
 
+#################
 #### Initial ####
+#################
 
-# test for correct "question" specification
-stopifnot(rm_question %in% c("circ_where", "circ_who"))
-
-# directory to pull dependencies from
-dir_path <- "depends/"
-# save location
-save_loc <- "artefacts/"
-# ensure save loc exists
-create_dirs_r(save_loc)
-
-# remove circumcisions with missing type?
-rm_missing_type <- FALSE
+stopifnot(mod %in% c(
+  "Surv_SpaceAgeTime_ByType_withUnknownType",
+  "Surv_SpaceAgeTime_ByType_withUnknownType2",
+  "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC2"
+))
 
 
-#### Metadata to run the models ####
+### Metadata to run the models
 
-# set country
-cntry <- "UGA"
-
+# !! Change this to use dataset stored in threemc
 k_dt <- 5 # Age knot spacing
 start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 forecast_year <- 2021
-paed_age_cutoff <- 10
-
-#### Reading in data ####
+paed_age_cutoff <- NULL
+if (mod == "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC2") {
+  paed_age_cutoff <- 10
+}
+rw_order <- NULL # use RW or AR temporal prior?
+inc_time_tmc <- FALSE # include time random effect for TMC
+if (grepl("2", mod)) inc_time_tmc <- TRUE
 
 # Revert to using planar rather than spherical geometry in `sf`
 sf::sf_use_s2(FALSE)
 
+# save loc
+save_dir <- "artefacts/"
+threemc::create_dirs_r(save_dir) # ensure save_dir exists; create if not
+
+# remove circumcisions with missing type?
+rm_missing_type <- FALSE
+
 # read in data, filter for specific country and male surveys only
 filters <- c("iso3" = cntry, sex = "male")
-areas <- read_circ_data(paste0(dir_path, "areas.geojson"), filters) %>%
+areas_orig <- areas <- read_circ_data("depends/areas.geojson", filters) 
+
+areas <- areas %>% 
   dplyr::mutate(space = 1:dplyr::n()) # add space column to areas
-survey_circumcision <- read_circ_data(
-  paste0(dir_path, "survey_circumcision.csv.gz"), filters
-)
-populations <- read_circ_data(
-  paste0(dir_path, "population_singleage_aggr.csv.gz"),
-  filters
-)
+areas <- st_make_valid(areas) 
+survey_circumcision <- read_circ_data("depends/survey_circumcision.csv.gz", filters)
+populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
+
+# calculate start as earliest survey year - 50 (only where TMC needs to vary)
+survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
+if (inc_time_tmc == TRUE) {
+  start_year <- first(survey_years) - 50
+} else start_year <- 2002
 
 # pull recommended area hierarchy for target country
-area_lev <- threemc::datapack_psnu_area_level %>%
-  filter(iso3 == cntry) %>%
-  pull(psnu_area_level)
-
-# don't model at the country level
-if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL
-
-# if area_level is missing, assume most common area lev in surveys
-if (length(area_lev) == 0) {
-  area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
-  area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
+if (!is.null(area_lev) && !is.numeric(area_lev)) {
+  area_lev <- threemc::datapack_psnu_area_level %>%
+    filter(iso3 == cntry) %>%
+    pull(psnu_area_level)
+  
+  # don't model at the country level
+  if (length(area_lev) > 0 && area_lev == 0) area_lev <- NULL
+  
+  # if area_level is missing, assume most common area lev in surveys
+  if (length(area_lev) == 0) {
+    area_lev <- table(as.numeric(substr(survey_circumcision$area_id, 5, 5)))
+    area_lev <- as.numeric(names(area_lev)[area_lev == max(area_lev)])
+  }
 }
 
-
-#### remove most recent survey #### 
-
-# If second last survey year is just one year previous, also remove it
-
-# add survey year column
-survey_circumcision <- survey_circumcision %>% 
-  mutate(survey_year = as.numeric(substr(survey_circumcision$survey_id, 4, 7)))
 
 #### Preparing circumcision data ####
 
 # pull latest and first censoring year from survey_id
-survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
-
 cens_year <- max(survey_years)
-start_year <- max(min(survey_years), start_year) # have lower bound on start
+start_year <- min(c(survey_years - 2, start_year)) # have lower bound on start
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
@@ -92,23 +92,16 @@ if (nrow(survey_circ_preprocess) == 0) {
 }
 
 # include indicator to determine whether there is any type distinction for cntry
+is_type <- TRUE
 if (all(is.na(survey_circ_preprocess$circ_who) &
         is.na(survey_circ_preprocess$circ_where))) {
-  print("No type distinction made in valid surveys for this country")
-  is_type <- FALSE 
-  paed_age_cutoff <- NULL
-} else is_type <- TRUE
-
-#### Remove Specified Question Col ####
-
-survey_circumcision[[rm_question]] <- NA
+  stop("No type distinction made in valid surveys for this country")
+} 
 
 
 #### Shell dataset to estimate empirical rate ####
 
-# take start year for skeleton dataset from surveys 
-start_year <- min(as.numeric(substr(survey_circ_preprocess$survey_id, 4, 7)))
-
+# create shell dataset from surveys
 out <- create_shell_dataset(
   survey_circumcision = survey_circ_preprocess,
   populations         = populations,
@@ -123,29 +116,49 @@ out <- create_shell_dataset(
   circ                = "indweight_st"
 )
 
+# Temp: fill in NAs in population with next known value
+# (not very correct but will do for now!!)
+if (!all(!is.na(out$population))) {
+  message("Filling in missing populations with earliest known value")
+  out <- out %>%
+    group_by(area_id, area_name, area_level, space, circ_age, age) %>%
+    tidyr::fill(population, .direction = "downup") %>%
+    ungroup()
+}
 
 #### Dataset for modelling ####
 
 dat_tmb <- threemc_prepare_model_data(
-    out             = out,
-    areas           = areas,
-    area_lev        = area_lev,
-    aggregated      = TRUE,
-    weight          = "population",
-    k_dt            = k_dt,
-    paed_age_cutoff = paed_age_cutoff
+  out               = out,
+  areas             = areas,
+  area_lev          = area_lev,
+  aggregated        = TRUE,
+  weight            = "population",
+  k_dt              = k_dt,
+  rw_order          = rw_order,
+  paed_age_cutoff   = paed_age_cutoff,
+  inc_time_tmc      = inc_time_tmc
 )
-
 
 #### Modelling circumcision probabilites ####
 
 # specify TMB model, depending on whether type distinction is available
-if (is_type == TRUE) {
-  mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
-} else {
-  mod <- "Surv_SpaceAgeTime"
-  # empty df for paed design matrices so parameter assignment doesn't fail
+# if (is_type == TRUE) {
+#   mod <- "Surv_SpaceAgeTime_ByType_withUnknownType_Const_Paed_MMC"
+# } else {
+#   mod <- "Surv_SpaceAgeTime"
+#   # empty df for paed design matrices so parameter assignment doesn't fail
+#   X_fixed_mmc_paed <- X_age_mmc_paed <- X_space_mmc_paed <- data.frame(0)
+# }
+
+# dummy paediatric matrices
+if (is.null(paed_age_cutoff)) {
   X_fixed_mmc_paed <- X_age_mmc_paed <- X_space_mmc_paed <- data.frame(0)
+}
+
+# dummy time TMC matrices
+if (inc_time_tmc == FALSE) {
+  X_time_tmc <- data.frame(0)
 }
 
 # Initial values
@@ -162,6 +175,8 @@ parameters <- with(
     "u_age_tmc"              = rep(0, ncol(X_age_tmc)),
     # time random effect for (non-paed) MMC
     "u_time_mmc"             = rep(0, ncol(X_time_mmc)),
+    # time random effect for TMC
+    "u_time_tmc"             = rep(0, ncol(X_time_tmc)),
     # Space random effect (district)
     "u_space_mmc"            = rep(0, ncol(X_space_mmc)),
     "u_space_mmc_paed"       = rep(0, ncol(X_space_mmc_paed)),
@@ -185,6 +200,7 @@ parameters <- with(
     "logsigma_agespace_mmc_paed"  = 0,
     "logsigma_spacetime_mmc"      = 0,
     "logsigma_age_tmc"            = 0,
+    "logsigma_time_tmc"           = 0,
     "logsigma_space_tmc"          = 0,
     "logsigma_agespace_tmc"       = 0,
     # Mean
@@ -196,26 +212,46 @@ parameters <- with(
     "logitrho_mmc_age2"           = 2,
     "logitrho_mmc_paed_age2"      = 2,
     "logitrho_mmc_age3"           = 2,
+    "logitrho_tmc_time1"          = 2,
     "logitrho_tmc_age1"           = 2,
     "logitrho_tmc_age2"           = 2
   )
 )
 
-if (is_type == FALSE) {
+# remove paed-related parameters if not desired
+if (is.null(paed_age_cutoff)) {
   # remove paed-related parameters
   parameters <- parameters[!grepl("paed", names(parameters))]
 }
 
+# remove mmc time correlation parameters, if fitting with RW precision matrix
+if ("Q_time" %in% names(dat_tmb)) {
+  parameters <- parameters[!grepl("logitrho_mmc_time", names(parameters))]
+}
+
+# remove time tmc terms, if not fitting model with non-constant tmc over time
+if (inc_time_tmc == FALSE) {
+  parameters <- parameters[
+    !(
+      grepl("time", names(parameters)) & 
+        grepl("tmc", names(parameters)) & 
+        !grepl("u_fixed", names(parameters)) # keep fixed parameters for TMC!
+    )
+  ]
+}
+
+# fit model with TMB
 fit <- threemc_fit_model(
-    dat_tmb    = dat_tmb,
-    mod        = mod,
-    parameters = parameters,
-    randoms    = c(
-      "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
-      "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-      "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
-    ),
-    N          = 1000
+  dat_tmb    = dat_tmb,
+  mod        = mod,
+  parameters = parameters,
+  randoms    = c(
+    "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+    "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+    "u_spacetime_mmc",
+    "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+  ),
+  N          = 1000
 )
 
 # subset to specific area level and calculate quantiles for rates and hazard
@@ -237,65 +273,25 @@ out_spec <- out_spec %>%
   )
 
 # minimise fit object for saving
-fit_min <- minimise_fit_obj(fit, dat_tmb, parameters)
+fit_save <- minimise_fit_obj(fit, dat_tmb, parameters)
 
-# Saving results (also make into function)
-readr::write_csv(
-  out_spec,
-  file = paste0(save_loc, "Results_DistrictAgeTime_ByType.csv.gz")
+# Saving results
+data.table::fwrite(
+  out_spec, file = paste0(save_dir, "Results_DistrictAgeTime_ByType.csv.gz")
 )
 
-# save minimised fit obj as .rds file
-saveRDS(
-  fit_min, 
-  paste0(save_loc, "TMBObjects_DistrictAgeTime_ByType.rds")
-)
-rm(fit_min); gc()
+# save fit as .rds file
+saveRDS(fit_save, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
+rm(fit_save); gc()
 
-# Plotting results (make this into a diagnostics plot kind of function)
-# Coverage
-# pdf(paste0(save_loc, "_Coverage.pdf"), width = 10)
-cov_plt <- ggplot(out_spec,
-       aes(x = age,
-           y = cum_incM,
-           ymin = cum_incL,
-           ymax = cum_incU,
-           group = as.factor(year),
-           colour = as.factor(year))) +
-  geom_ribbon(fill = "lightgrey",
-              colour = NA) +
-  geom_line(size = 1) +
-  scale_y_continuous(labels = scales::label_percent()) +
-  labs(x = "Age",
-       y = "Coverage",
-       colour = "") +
-  theme_bw() +
-  facet_wrap(. ~ area_name)
-# dev.off()
-ggsave(plot = cov_plt, filename = paste0(save_loc, "Circ_Coverage.pdf"), width = 10)
+#### Aggregations ####
 
-# Rates
-# pdf(paste0(save_loc, "_Rates.pdf"), width = 10)
-rate_plt <- ggplot(out_spec,
-       aes(x = age,
-           y = rateM,
-           ymin = rateL,
-           ymax = rateU,
-           group = as.factor(year),
-           colour = as.factor(year))) +
-  geom_ribbon(fill = "lightgrey",
-              colour = NA) +
-  geom_line(size = 1) +
-  scale_y_continuous(labels = scales::label_percent()) +
-  labs(x = "Age",
-       y = "Rates",
-       colour = "") +
-  theme_bw() +
-  facet_wrap(. ~ area_name)
-# dev.off()
-ggsave(plot = rate_plt, filename = paste0(save_loc, "Circ_Rates.pdf"), width = 10)
-
-#### Aggregation ####
+areas <- areas_orig %>% 
+  # Add a unique identifier within Admin code and merging to boundaries
+  sf::st_drop_geometry() %>%
+  group_by(area_level) %>%
+  mutate(space = row_number()) %>%
+  ungroup()
 
 # re-sample from model, if required (shouldn't be!)
 if (is.null(fit$sample)) {
@@ -305,26 +301,45 @@ if (is.null(fit$sample)) {
     randoms = c(
       "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
       "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-      "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+      "u_spacetime_mmc",
+      "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
     ),
     N       = 1000
   )
+  
 }
 
 fit_no_prog <- fit
 rm(fit); gc()
 
+# Fill in any NAs in populations for modelled years with last known value
+min_pop_year <- min(populations$year)
+if (any(out_spec$year < min_pop_year)) {
+  missing_years <- start_year:(min_pop_year - 1)
+  missing_rows <- tidyr::crossing(
+    select(populations, -c(year, population)),
+    "year"       = missing_years,
+    "population" = NA
+  )
+  populations <- bind_rows(populations, missing_rows) %>%
+    arrange(iso3, area_id, area_level, age, year) %>%
+    group_by(iso3, area_id, area_level, age) %>%
+    tidyr::fill(population, .direction = "downup") %>%
+    ungroup()
+}
+
 # want to aggregate for both discrete ages and "binned" age groups
 # age_vars <- list("inputs" = c("age", "age_group"), "names" = c("Age", "AgeGroup"))
 age_vars <- list("inputs" = c("age_group"), "names" = c("AgeGroup"))
 # want to aggregate for various types
+# types <- c("prevalence")
 types <- c("probability", "incidence", "prevalence")
 
 # run aggregations for each combination of age_vars and types
 # aggregations <- lapply(seq_along(age_vars$inputs), function(i) {
 lapply(seq_along(age_vars$inputs), function(i) {
   lapply(seq_along(types), function(j) {
-    spec_results <-  threemc_aggregate(
+    spec_results <- threemc_aggregate(
       .data       = out_spec,
       fit         = fit_no_prog,
       areas       = areas,
@@ -333,17 +348,16 @@ lapply(seq_along(age_vars$inputs), function(i) {
       type        = types[j],
       area_lev    = area_lev,
       N           = N,
-      prev_year   = 2008 # year to compare with for prevalence
+      prev_year   = NULL # year to compare with for prevalence
     )
     readr::write_csv(
-        x = spec_results,
-        file = paste0(
-            save_loc, "Results_",
-            age_vars$names[[i]], "_", stringr::str_to_title(types[j]),
-            ".csv.gz"
-        )
+      x = spec_results,
+      file = paste0(
+        save_dir, "Results_",
+        age_vars$names[[i]], "_", stringr::str_to_title(types[j]),
+        ".csv.gz"
+      )
     )
-
     rm(spec_results); gc()
   })
 })

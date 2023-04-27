@@ -36,3 +36,6 @@ rsconnect
 threemc-orderly.Rproj
 # ignore files in misc directory
 misc
+!misc/pepfar_presentation_plots.R
+!misc/empirical_rates_plt.R
+
