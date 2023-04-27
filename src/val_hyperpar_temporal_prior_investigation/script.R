@@ -21,7 +21,6 @@ rm_missing_type <- FALSE
 # cntry <- "MWI"
 
 k_dt <- 5 # Age knot spacing
-start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
@@ -93,15 +92,32 @@ if (last(survey_years) - second_last_year == 1) {
 
 # remove latest survey years
 survey_circumcision <- survey_circumcision %>%
-  mutate(year = as.numeric(substr(survey_id, 4, 7))) %>%
-  filter(!year %in% removed_years)
+  mutate(survey_year = as.numeric(substr(survey_id, 4, 7))) %>%
+  filter(!survey_year %in% removed_years)
 
-# pull latest and first censoring year from survey_id
-survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
+# pull latest censoring year from survey_id
+survey_years <- unique(survey_circumcision$survey_year)
+
+start_year <- min(c(survey_years - 2, 2002)) # have lower bound on start
+
+# Fill in any NAs in populations with last known value for each area_id & age
+min_pop_year <- min(populations$year)
+if (start_year < min_pop_year) {
+  missing_years <- start_year:(min_pop_year - 1)
+  missing_rows <- tidyr::crossing(
+    select(populations, -c(year, population)),
+    "year"       = missing_years,
+    "population" = NA
+  )
+  populations <- bind_rows(populations, missing_rows) %>%
+    arrange(iso3, area_id, area_level, age, year) %>%
+    group_by(iso3, area_id, area_level, age) %>%
+    tidyr::fill(population, .direction = "downup") %>%
+    ungroup()
+}
+
 
 cens_year <- max(survey_years)
-start_year <- min(c(survey_years - 2, start_year)) # have lower bound on start
-
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
   areas               = areas,
@@ -256,15 +272,17 @@ increment_hyperpars <- function(parameters, optimal_hyperpars, fit, increment = 
     if (is.na(current_par_val)) {
       current_par_val <- parameters[[names(optimal_hyperpars)[i]]]
     }
-    if (optimal_hyperpars[i] > 0) {
-      if (parameters[names(optimal_hyperpars)[i]] <= 0) {
+    if (optimal_hyperpars[[i]] > 0) {
+      # if (parameters[names(optimal_hyperpars)[i]] <= 0) {
+      if (current_par_val <= 0) {
         parameters[names(optimal_hyperpars)[i]] <- increment
       } else {
         parameters[names(optimal_hyperpars)[i]] <-
           current_par_val + increment
       }
     } else {
-      if (parameters[names(optimal_hyperpars)[i]] >= 0) {
+      # if (parameters[names(optimal_hyperpars)[i]] >= 0) {
+      if (current_par_val >= 0) {
         parameters[names(optimal_hyperpars)[i]] <- -increment
       } else {
         parameters[names(optimal_hyperpars)[i]] <-
@@ -274,6 +292,7 @@ increment_hyperpars <- function(parameters, optimal_hyperpars, fit, increment = 
   }
   return(parameters)
 }
+
 
 # function to aggregate age groups and pivot estimates longer
 out_wide_to_long <- function(.data, spec_age_groups) {
@@ -604,6 +623,7 @@ threemc_optimise_model <- function(
       all_surveys = filter(all_survey_df, !survey_year %in% removed_years),
       spec_agegroup = five_year_age_groups,
       spec_years = removed_years,
+      facet_formula = formula(year ~ area_name),
       x_var = "age_group",
       spec_type = "MMC coverage",
       xlab = "Five Year Age Group",
@@ -654,6 +674,11 @@ threemc_optimise_model <- function(
   # while (increment >= increment_orig / 2) {
   # while (count <= 5) {
   while (increment >= 0.0625) {
+    
+    # exit loop if 100% of survey estimates are within PI for PPD
+    if (current_model$ppc$summary_stats[[1]] == 1) break
+    
+    # increment current pars
     proposal_pars <- increment_hyperpars(
       current_params,
       optimal_hyperpars,
@@ -661,6 +686,7 @@ threemc_optimise_model <- function(
       increment = increment
     )
     
+    # fit "proposal" model  with these fixed hyperparameters
     prop_mod <- tryCatch({
       fit_proposal_model(proposal_pars, maps)
     }, error = function(cond) {
@@ -676,12 +702,11 @@ threemc_optimise_model <- function(
       parameters_df,
       pars_list_to_df(proposal_pars, names(maps))
     )
-    
     plots <- update_plots(
       current_model$out, prop_mod$out, plots, add_title = add_title
     )
     
-    # Compare with PPCs
+    # Compare with current model using PPCs
     choice <-  threemc_ppc_compare(current_model$ppc, prop_mod$ppc)
     
     # tabulate fits
@@ -691,12 +716,13 @@ threemc_optimise_model <- function(
       paste0("proposal ", count, " (increment: ", increment, ")")
     )
     
+    # add proposal predictions data to combined predictions output df
     out_final <- bind_rows(
       out_final, 
       mutate(prop_mod$out, proposal = paste0("Proposal ", count))
     )
     
-    # TEMP: Accept all proposals
+    # choose "better" model; if original is better, half your increment
     if (choice$optimal_model == "original") {
       increment <- increment / 2
     } else {
@@ -704,14 +730,13 @@ threemc_optimise_model <- function(
     current_params <- proposal_pars
     }
     count <- count + 1
-    gc()
+    gc() # free up memory from any rejected proposal models
   }
   
-  # fit model with fixed hyperpars
+  # return final model, etc
   return(list(
     "optimal_parameters" = current_params,
-    "parameters_df"      = dplyr::as_tibble(parameters_df), # temp output
-    # "mod" = current_model,
+    "parameters_df"      = dplyr::as_tibble(parameters_df), 
     "plots"              = plots,
     "fit_tab"            = fit_tab,
     "out_final"          = out_final
