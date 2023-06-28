@@ -99,6 +99,12 @@ if (!"sample" %in% names(fit)) {
   )
 }
 
+# add n column if not already present 
+if (!"n" %in% names(out_spec)) {
+  out_spec <- out_spec %>% 
+    mutate(n = row_number())
+}
+
 # finally, remove older prediction years
 out_spec <- out_spec %>% 
   filter(year >= start_year)
