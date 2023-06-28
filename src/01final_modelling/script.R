@@ -60,13 +60,16 @@ if (length(area_lev) == 0) {
 survey_years <- as.numeric(substr(unique(survey_circumcision$survey_id), 4, 7))
 
 cens_year <- max(survey_years)
-start_year <- min(c(survey_years, start_year)) # have lower bound on start
-
 # set start year back a generation if fitting with traditional circumcision
 if (inc_time_tmc == TRUE) {
+  start_year <- min(c(survey_years, start_year))
   # start_year <- start_year - cens_age
   start_year <- start_year - 50
-}
+  # start_year <- start_year - 70
+} else {
+  # have lower bound on start
+  start_year <- min(c(survey_years - 2, start_year)) 
+} 
 
 # Prepare circ data, and normalise survey weights and apply Kish coefficients.
 survey_circ_preprocess <- prepare_survey_data(
