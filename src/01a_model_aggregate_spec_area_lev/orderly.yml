@@ -39,19 +39,33 @@ artefacts:
       - Aggregated Circumcision Prevalences for Age Groups
       filenames: 
       - artefacts/Results_AgeGroup_Prevalence.csv.gz 
-  
+
 displayname: | 
   threemc model fit and aggregated results for user-specifed area level.
+
+ 
 
 parameters:
   cntry:
     default: ~
-  area_lev:
-    default: 0
   is_paper:
     default: TRUE
+  rw_order:
+    default: 0
+  # rw_order_tmc_ar:
+  #   default: TRUE
+  inc_time_tmc: 
+    default: TRUE
+  # k_dt_time: 
+  #   default: 5
+  paed_age_cutoff: 
+    default: Inf
+  area_lev:
+    default: 0
   N: 
     default: 100
+
+ 
 
 packages:
   - threemc
@@ -62,12 +76,12 @@ packages:
   - TMB
   - rlang
   - ggplot2
-  
+
 # global_resources:
 #   depends/areas.geojson: areas.geojson
 #   depends/survey_circumcision.csv.gz: survey_circumcision.csv.gz
 #   depends/population_singleage_aggr.csv.gz: population_singleage_aggr.csv.gz
-  
+
 depends:
   # areas file
   - 00a2_areas_join:
