@@ -8,7 +8,7 @@ k_dt_age <- 5 # Age knot spacing
 k_dt_time <- NULL
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
-forecast_year <- 2021
+start_year <- 2002 # (variable) lower bound on start date
 paed_age_cutoff <- 10
 # five-year age groups to perform posterior predictive checks for
 five_year_age_groups <- c(
@@ -55,6 +55,10 @@ if (!is.na(area_lev) && !is.numeric(area_lev)) {
 }
 print(paste("area_level used is", area_lev))
 
+survey_years <- unique(survey_circumcision$survey_year)
+# important start year is the same for mod w/ and w/o time TMC
+start_year <- min(c(survey_years - 2, start_year))
+
 # remove most recent survey 
 # if most recent surveys are one year apart, remove both
 # survey_years <- unique(survey_circumcision$survey_year)
@@ -94,6 +98,11 @@ if (!"sample" %in% names(fit)) {
     inner.control = list(maxit = 250)
   )
 }
+
+# finally, remove older prediction years
+out_spec <- out_spec %>% 
+  filter(year >= start_year)
+
 
 #### Perform Posterior Predictive Checks on original models ####
 
