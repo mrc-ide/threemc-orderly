@@ -38,7 +38,7 @@ survey_circumcision <- read_circ_data(
 populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
 
 # pull recommended area hierarchy for target country
-if (!is.na(area_lev) && !is.numeric(area_lev)) {
+if (is.na(area_lev) || !is.numeric(area_lev)) {
   area_lev <- threemc::datapack_psnu_area_level %>%
     filter(iso3 == cntry) %>%
     pull(psnu_area_level)
