@@ -16,8 +16,8 @@ artefacts:
 parameters:
   cntry:
     default: ~
-  area_lev: 
-    default: 1
+  # area_lev: 
+  #   default: 1
   is_paper:
     default: TRUE
   rw_order:
