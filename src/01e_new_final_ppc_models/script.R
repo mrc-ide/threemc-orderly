@@ -125,13 +125,13 @@ ppc <- threemc_ppc2(
 #### Save results ####
 
 # save ppc df 
-data.table::fwrite(
+readr::write_csv(
   ppc$ppc_df, 
   file = file.path(save_dir, "pointwise_ppc_df.csv.gz")
 )
 
 # save summarised PPCs
-saveRDS(
+readr::write_csv(
   ppc$ppc_summary_df,
   file.path(save_dir, "ppc_summary.csv")
 )
