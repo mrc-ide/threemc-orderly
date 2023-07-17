@@ -1,22 +1,14 @@
 script: script.R
 
 artefacts:
-  - data:
-      description: naomi fit object
-      filenames:
-      - artefacts/TMBObjects_DistrictAgeTime_ByType.rds
-  - data:
-      description: Modelling results for area level of interest, including quantiles
-      filenames:
-      - artefacts/Results_DistrictAgeTime_ByType.csv.gz
-  # - staticgraph:
-  #     description: Plot of circumcision coverage for all areas modelled.
+  # - data:
+  #     description: naomi fit object
   #     filenames:
-  #     - artefacts/Circ_Coverage.pdf
-  # - staticgraph:
-  #     description: Plot of circumcision rates for all areas modelled.
+  #     - artefacts/TMBObjects_DistrictAgeTime_ByType.rds
+  # - data:
+  #     description: Modelling results for area level of interest, including quantiles
   #     filenames:
-  #     - artefacts/Circ_Rates.pdf
+  #     - artefacts/Results_DistrictAgeTime_ByType.csv.gz
   - data:
       description: To be filled in 
       filenames:
@@ -24,7 +16,7 @@ artefacts:
   - data:
       description: To be filled in 
       filenames:
-      - artefacts/ppc_summary.rds
+      - artefacts/ppc_summary.csv
       
 displayname: threemc model fit and PPC
 

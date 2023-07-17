@@ -206,17 +206,17 @@ out_spec <- out_spec %>%
   filter(year >= 2000)
 
 # minimise fit object for saving
-fit_min <- minimise_fit_obj(fit, dat_tmb, parameters)
+# fit_min <- minimise_fit_obj(fit, dat_tmb, parameters)
 
 # Saving results
-data.table::fwrite(
-  out_spec, file = paste0(save_dir, "Results_DistrictAgeTime_ByType.csv.gz")
-)
+# data.table::fwrite(
+#   out_spec, file = paste0(save_dir, "Results_DistrictAgeTime_ByType.csv.gz")
+# )
 
 # save fit as .rds file
-saveRDS(fit_min, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
+# saveRDS(fit_min, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
 
-rm(fit_min); gc()
+# rm(fit_min); gc()
 
 # # Plotting results 
 # # Coverage
@@ -296,52 +296,26 @@ if (!"sample" %in% names(fit)) {
 
 #### Perform Posterior Predictive Checks on original models ####
 
-# ppc <- threemc_ppc(
-#   fit,
-#   out_spec,
-#   survey_circumcision_test,
-#   areas, 
-#   area_lev, 
-#   type = "MMC",
-#   age_groups = five_year_age_groups,
-#   CI_range = CI_range,
-#   N = N
-# )
-types <- c("MMC", "TMC", "MC")
-if (!any(grepl("mmc", tolower(names(fit$par))))) {
-  types <- "MC"
-}
-print(paste0("types: ", paste(types, collapse = ", ")))
-
-ppc_list <- lapply(types, function(x) {
-  gc()
-  return(threemc_ppc(
-    fit,
-    out_spec,
-    survey_circumcision_test,
-    areas, 
-    area_lev, 
-    type = x,
-    age_groups = five_year_age_groups,
-    CI_range = CI_range,
-    N = N
-  ))
-})
-gc()
-names(ppc_list) <- types
+ppc <- threemc_ppc2(
+  fit,
+  out_spec,
+  survey_circumcision_test,
+  areas, 
+  area_lev, 
+  age_groups = five_year_age_groups,
+  N = N
+)
 
 #### Save results ####
 
 # save ppc df 
-data.table::fwrite(
-  # proposal_mod$ppc$ppc_df, 
-  rbindlist(lapply(ppc_list, `[[`, "ppc_df")),
+readr::write_csv(
+  ppc$ppc_df, 
   file = file.path(save_dir, "pointwise_ppc_df.csv.gz")
 )
 
-# save summarised ppc as .rds file
-saveRDS(
-  # proposal_mod$ppc$summary_stats, 
-  lapply(ppc_list, `[[`, "summary_stats"),
-  file.path(save_dir, "ppc_summary.rds")
+# save summarised PPCs
+readr::write_csv(
+  ppc$ppc_summary_df,
+  file.path(save_dir, "ppc_summary.csv")
 )
