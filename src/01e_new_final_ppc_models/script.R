@@ -115,7 +115,8 @@ out_spec <- out_spec %>%
 ppc <- threemc_ppc2(
   fit,
   out_spec,
-  survey_circumcision_test,
+  # fix for MWI
+  filter(survey_circumcision_test, !is.na(area_id)),
   areas, 
   area_lev, 
   age_groups = five_year_age_groups,
