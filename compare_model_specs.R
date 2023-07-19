@@ -189,3 +189,4 @@ fit_stats_join_partial %>%
   # filter(grepl("rw_order = 0", spec))
   arrange(rw_order, region, desc(n)) %>% 
   group_split(type)
+
