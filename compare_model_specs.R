@@ -32,16 +32,13 @@ pars_df <- tidyr::crossing(
 )
 
 # uncomment to only look at models we are currently using
-pars_df <- pars_df %>%
-  filter(
-      rw_order == 0,
-      (cntry %in% no_type_iso3 & paed_age_cutoff == Inf & inc_time_tmc == FALSE) |
-      (cntry %in% vmmc_iso3 & paed_age_cutoff == 10 & inc_time_tmc == TRUE) |
-      (cntry %in% iso3 & paed_age_cutoff == Inf & inc_time_tmc == TRUE)
- )
-
-# pars_df <- pars_df %>% 
-#   filter(cntry == "ZAF")
+# pars_df <- pars_df %>%
+#   filter(
+#       rw_order == 0,
+#       (cntry %in% no_type_iso3 & paed_age_cutoff == Inf & inc_time_tmc == FALSE) |
+#       (cntry %in% vmmc_iso3 & paed_age_cutoff == 10 & inc_time_tmc == TRUE) |
+#       (cntry %in% iso3 & paed_age_cutoff == Inf & inc_time_tmc == TRUE)
+#  )
 
 
 #### Function to load orderly data ####
@@ -101,7 +98,7 @@ load_orderly_data <- function(
 }
 
 fit_stats <- load_orderly_data(
-  task = "01efinal_ppc_models", 
+  task = "01e_new_final_ppc_models", 
   parameters = pars_df,
   query = "latest(
       parameter:cntry                   == cntry && 
@@ -109,8 +106,7 @@ fit_stats <- load_orderly_data(
       parameter:paed_age_cutoff         == paed_age_cutoff &&
       parameter:inc_time_tmc            == inc_time_tmc
     )",
-  filenames = "ppc_summary.rds",
-  load_fun = readRDS
+  filenames = "ppc_summary.csv"
 )
 
 # for running remaining tasks
@@ -123,34 +119,11 @@ if (any(is.na(fit_stats$dirs))) {
 
 fit_stats1 <- fit_stats$output
 
-fit_stats_join <- bind_rows(lapply(fit_stats1, function(x) {
-  as.data.frame(t(unlist(x)))
+fit_stats1 <- bind_rows(lapply(seq_along(fit_stats1), function(i) {
+  if (nrow(fit_stats1[[i]]) > 0) {
+    bind_cols(pars_df[i, ], fit_stats1[[i]])
+  } else return(data.frame())
 }))
-names(fit_stats_join)[
-  grepl("oos_obs", names(fit_stats_join))
-] <- str_remove(
-  names(fit_stats_join)[grepl("oos_obs", names(fit_stats_join))], 
-  "oos_observations_within_PPD_"
-)
-names(fit_stats_join)[
-  grepl("elpd.estimates1", names(fit_stats_join))
-] <- str_remove(
-  names(fit_stats_join)[
-    grepl("elpd.estimates1", names(fit_stats_join))
-  ], 
- "1" 
-)
-# names(fit_stats_join)[grepl("replacement_pars", names(fit_stats_join))] <- stringr::str_remove(
-#   names(fit_stats_join)[grepl("replacement_pars", names(fit_stats_join))], "replacement_pars."
-# )
-
-fit_stats_join <- fit_stats_join %>% 
-  select(-c(matches("elpd.pointwise"), matches("elpd.estimates"))) %>% 
-  bind_cols(pars_df) %>% 
-  pivot_longer(MMC.CI.0.5:MC.rmse) %>% 
-  separate(col = name, into = c("type"), remove = FALSE, extra = "drop") %>% 
-  mutate(name = str_remove_all(name, "MMC.|TMC.|MC.")) %>% 
-  pivot_wider(names_from = name, values_from = value)
 
 # find missing 
 # pars_df %>% 
@@ -159,11 +132,43 @@ fit_stats_join <- fit_stats_join %>%
 #     by = c("cntry", "rw_order", "inc_time_tmc", "paed_age_cutoff")
 #   )
 
+fit_stats_join <- fit_stats1 %>% 
+  left_join(
+    threemc::esa_wca_regions, 
+    by = c("cntry" = "iso3")
+  ) %>% 
+  relocate(c(region, four_region), .after = "cntry")
+
+# For now: 
+# Only look at countries where all model specifications have successfully fit
+fit_stats_join <- fit_stats_join %>% 
+  mutate(spec = paste0(
+    "rw_order = ", 
+    rw_order, 
+    ", paed_age_cutoff = ", 
+    paed_age_cutoff, 
+    ", inc_time_tmc = ", 
+    inc_time_tmc
+  ))
+
+# countries with all model specs ran 
+iso3_full <- fit_stats_join %>% 
+  count(cntry) %>% 
+  arrange(n) %>% 
+  filter(n == max(n)) %>% 
+  pull(cntry)
+print(length(iso3_full))
+print(length(unique(fit_stats_join$cntry)))
+
+
+fit_stats_join_partial <- fit_stats_join %>% 
+  filter(cntry %in% iso3_full)
+
+####  ####
 
 # best model for each country based on RMSE
-fit_stats_join %>% 
+fit_stats_join_partial %>% 
   filter(rmse == min(rmse), .by = c(cntry, rw_order)) %>% 
-  # filter(rw_order == 0) %>% 
   mutate(spec = paste0(
     "rw_order = ", 
     rw_order, 
@@ -172,13 +177,15 @@ fit_stats_join %>%
     ", inc_time_tmc = ", 
     inc_time_tmc
   )) %>% 
-  summarise(n(), .by = spec) %>% 
-  filter(grepl("rw_order = 0", spec))
+  summarise(n = n(), .by = c(spec, rw_order, region)) %>% 
+  # filter(grepl("rw_order = 0", spec))
+  arrange(rw_order, region, desc(n)) %>% 
+  identity()
 
-# Models pretty similar for VMMC countries, so essentially a modelling choice 
-# Because TMC neads to vary for KEN, makes sense to give it a time TMC effect
-# paediatric MMC cutoff agrees with VMMC policy, and does not significantly 
-# effect fit (no survey data on coverage by age (current age, not circ age!)) 
-# for under 15s anyway to assess fit for paediatric individuals, since surveys 
-# do not ask under 15s
-# -> Model used: time TMC, paediatric MMC age cutoff
+# best model for each country based on posterior predictive coverage
+fit_stats_join_partial %>% 
+  filter(ppd_0.950 == max(ppd_0.950), .by = c(cntry, rw_order, type)) %>% 
+  summarise(n = n(), .by = c(spec, rw_order, type, region)) %>% 
+  # filter(grepl("rw_order = 0", spec))
+  arrange(rw_order, region, desc(n)) %>% 
+  group_split(type)
