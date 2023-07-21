@@ -105,9 +105,20 @@ if (!"n" %in% names(out_spec)) {
     mutate(n = row_number())
 }
 
+# add n column if not already present 
+if (!"n" %in% names(out_spec)) {
+  out_spec <- out_spec %>% 
+    mutate(n = row_number())
+}
 # finally, remove older prediction years
 out_spec <- out_spec %>% 
   filter(year >= start_year)
+
+# Take sample matrix rows that are kept in .data from original skeleton data
+if ("n" %in% names(out_spec)) {
+  fit$sample <- lapply(fit$sample, function(x) x[out_spec$n, ])
+  out_spec$n <- NULL
+} 
 
 
 #### Perform Posterior Predictive Checks on original models ####
