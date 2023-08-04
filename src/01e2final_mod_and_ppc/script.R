@@ -176,11 +176,18 @@ memuse::Sys.meminfo()
 fit <- threemc_fit_model(
   dat_tmb       = dat_tmb,
   parameters    = parameters,
-  randoms       = c(
+  # randoms       = c(
+  #   "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+  #   "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+  #   "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+  # ),
+  randoms = c(
     "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
     "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-    "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
-  ),
+    "u_spacetime_mmc",
+    "u_time_tmc", 
+    "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+  )
   N             = N, 
   inner.control = list(maxit = 250)
 )

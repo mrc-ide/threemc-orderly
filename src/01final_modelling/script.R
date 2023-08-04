@@ -10,6 +10,8 @@ k_dt_age <- 5 # Age knot spacing
 k_dt_time <- NULL # Disable time knot spacing
 start_year <-  2002
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
+# cens_age <- 59
+# cens_age <- 45
 N <- 1000
 forecast_year <- 2021
 if (!is.numeric(paed_age_cutoff) || is.infinite(paed_age_cutoff)) {
@@ -170,16 +172,22 @@ parameters <- threemc_initial_pars(
   inc_time_tmc    = inc_time_tmc, 
 )
 
+randoms <- c(
+  "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+  "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+  "u_spacetime_mmc",
+  "u_time_tmc", 
+  "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+)
+
+randoms <- randoms[randoms %in% names(parameters)]
+
 # fit model with TMB
 memuse::Sys.meminfo()
 fit <- threemc_fit_model(
   dat_tmb       = dat_tmb,
   parameters    = parameters,
-  randoms       = c(
-    "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
-    "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-    "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
-  ),
+  randoms       = randoms,
   N             = N, 
   inner.control = list(maxit = 250)
 )

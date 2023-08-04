@@ -188,10 +188,16 @@ fit_proposal_model <- function(proposal_parameters, maps) {
     dat_tmb    = dat_tmb,
     parameters = proposal_parameters,
     maps       = maps,
+    # randoms    = c(
+    #   "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+    #   "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+    #   "u_spacetime_mmc"
+    # ),
     randoms    = c(
       "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
       "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-      "u_spacetime_mmc"
+      "u_spacetime_mmc",
+      "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
     ),
     N          = N
   )
