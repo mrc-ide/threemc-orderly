@@ -4,6 +4,8 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(stringr)
+source("paper_poster_plots/paper/scripts/00_funs.R")
+
 
 #### Parameter Values ####
 
@@ -17,19 +19,26 @@ iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE",
           "ZMB", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV",
           "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE", "KEN", "ETH",
           "ZAF", "LBR", "GHA", "GMB", "NGA", "COD")
-# iso3 <- iso3[!iso3 %in% no_type_iso3]
-iso3 <- iso3[!iso3 %in% c(vmmc_iso3, no_type_iso3)]
+iso3 <- iso3[!iso3 %in% no_type_iso3]
+# iso3 <- iso3[!iso3 %in% c(vmmc_iso3, no_type_iso3)]
 
-# TODO: test with VMMC countries
+# test with VMMC countries
 # iso3 <- vmmc_iso3
 
+# test with specific countries
+# iso3 <- c("AGO", "MLI", "SWZ")
+# iso3 <- "BDI"
+
 pars_df <- tidyr::crossing(
-  # "cntry" = iso3,
-  cntry = c(iso3, vmmc_iso3, no_type_iso3),
+  "cntry" = iso3,
+  # cntry = c(iso3, vmmc_iso3, no_type_iso3),
   "rw_order" = c(0, 1, 2),
   "paed_age_cutoff" = c(10, Inf),
   "inc_time_tmc" = c(FALSE, TRUE)
 )
+
+# temporary test
+# pars_df <- pars_df[1:30, ]
 
 # uncomment to only look at models we are currently using
 # pars_df <- pars_df %>%
@@ -40,62 +49,7 @@ pars_df <- tidyr::crossing(
 #       (cntry %in% iso3 & paed_age_cutoff == Inf & inc_time_tmc == TRUE)
 #  )
 
-
-#### Function to load orderly data ####
-
-# takes a data frame of parameters and performs an orderly search on each row.
-# By default, can also load these files (also ran parallel)
-load_orderly_data <- function(
-    # parameters fed to orderly::orderly_search
-    task,
-    parameters = NULL, # needs to be a df, not a list!
-    query = NULL, 
-    filenames = NULL, # name of specific artefact file to load, if desired
-    dirs = NULL, # optionally just provide dirs to skip orderly_search
-    load_fun = readr::read_csv, # function to load data with, if so desired
-    ncores = max(1, parallel::detectCores() - 2) 
-  ) {
-  
-  # check that either parameters & query or just dirs have been provided
-  # (could also add a query parser here for the parameters!)
-  stopifnot((!is.null(parameters) & !is.null(query)) || !is.null(dirs))
-  
-  if (is.null(dirs)) {
-    # search parameter space specified for previously run orderly tasks
-    dirs <- unlist(parallel::mclapply(seq_len(nrow(parameters)), function(i) {
-      # give progress (no longer works properly w/ mclapply rather than lapply)
-      # message(100 * (i / nrow(parameters)), "% completed") 
-      system(sprintf(
-        'echo "\n%s\n"', 
-        paste0(100 * (i / nrow(parameters)), "% completed", collapse = "")
-      ))
-      orderly::orderly_search(
-        query = query, 
-        name = task, 
-        parameters = c(parameters[i, ]) # coerces pars df to a list 
-      )
-    }, mc.cores = ncores))  
-  }
-  
-  # return NAs in parameters search, but only load files from found directories
-  dirs_return <- dirs
-  dirs <- dirs[!is.na(dirs)]
-  # return dirs if filenames unspecified
-  if (is.null(filenames)) return(list("dirs" = dirs_return))
-  files <- file.path(
-    "archive", 
-    task,
-    dirs, 
-    "artefacts/", # prob don't need this? I just structure my tasks this way
-    filenames
-  )
-  # return filenames if load_fun isn't specified
-  if (!is.null(load_fun) == FALSE) return(files)
-  return(list(
-    "dirs" = dirs_return, 
-    "output" = lapply(files, load_fun)
-  ))
-}
+#### Load and Preprocess ####
 
 fit_stats <- load_orderly_data(
   task = "01e_new_final_ppc_models", 
@@ -138,6 +92,7 @@ fit_stats_join <- fit_stats1 %>%
     by = c("cntry" = "iso3")
   ) %>% 
   relocate(c(region, four_region), .after = "cntry")
+# fit_stats_join <- readr::read_csv("01e_new_final_ppc_models_fit_stats.csv")
 
 # For now: 
 # Only look at countries where all model specifications have successfully fit
@@ -160,33 +115,78 @@ iso3_full <- fit_stats_join %>%
 print(length(iso3_full))
 print(length(unique(fit_stats_join$cntry)))
 
-
 fit_stats_join_partial <- fit_stats_join %>% 
   filter(cntry %in% iso3_full)
 
-####  ####
+# readr::write_csv(fit_stats_join, "01e_new_final_ppc_models_fit_stats.csv")
+# readr::write_csv(
+#   fit_stats_join_partial, 
+#   "01e_new_final_ppc_models_fit_stats_full.csv"
+# )
 
-# best model for each country based on RMSE
+#### Analysis ####
+
+# What do we need to do? 
+# Determine the best model, for both VMMC and non-VMMC countries, in terms of: 
+# RMSE, and CI coverage
+# This will also be for each different type & rw_order
+
+## best model by RMSE ##
+
+# for VMMC
 fit_stats_join_partial %>% 
-  filter(rmse == min(rmse), .by = c(cntry, rw_order)) %>% 
-  mutate(spec = paste0(
-    "rw_order = ", 
-    rw_order, 
-    ", paed_age_cutoff = ", 
-    paed_age_cutoff, 
-    ", inc_time_tmc = ", 
-    inc_time_tmc
-  )) %>% 
-  summarise(n = n(), .by = c(spec, rw_order, region)) %>% 
-  # filter(grepl("rw_order = 0", spec))
-  arrange(rw_order, region, desc(n)) %>% 
+  # filter(region == "ESA") %>% 
+  filter(cntry %in% vmmc_iso3) %>% 
+  filter(rmse == min(rmse), .by = c(cntry, rw_order, type)) %>% 
+  summarise(n = n(), .by = c(spec, type, rw_order)) %>% 
+  arrange(rw_order, type, desc(n)) %>% 
   identity()
 
-# best model for each country based on posterior predictive coverage
+# For VMMC countries, seems to be little difference between the models, which 
+# is unsurprising. However, having a paediatric age cutoff of 10 seems to be 
+# preferred, which was again to be expected. 
+
+# for non-VMMC
 fit_stats_join_partial %>% 
+  # filter(region == "WCA") %>% 
+  filter(!cntry %in% vmmc_iso3) %>% 
+  filter(rmse == min(rmse), .by = c(cntry, rw_order, type)) %>% 
+  summarise(n = n(), .by = c(spec, type, rw_order)) %>% 
+  arrange(rw_order, type, desc(n)) %>% 
+  identity()
+
+# for MC, best model is mixed, but for MMC and TMC, it's nearly always the
+# model with no paed age cutoff and a time TMC effect
+# Weird result for MC may be explained by MC being very high in many of these 
+# countries anyway, so MC/TMC accuracy should be prioritised
+
+
+## best by coverage ##
+
+# ESA
+fit_stats_join_partial %>% 
+  filter(region == "ESA") %>% 
   filter(ppd_0.950 == max(ppd_0.950), .by = c(cntry, rw_order, type)) %>% 
-  summarise(n = n(), .by = c(spec, rw_order, type, region)) %>% 
-  # filter(grepl("rw_order = 0", spec))
-  arrange(rw_order, region, desc(n)) %>% 
-  group_split(type)
+  summarise(n = n(), .by = c(spec, type, rw_order)) %>% 
+  arrange(rw_order, type, desc(n)) %>% 
+  identity()
+
+# WCA
+fit_stats_join_partial %>% 
+  filter(region == "WCA") %>% 
+  filter(ppd_0.950 == max(ppd_0.950), .by = c(cntry, rw_order, type)) %>% 
+  summarise(n = n(), .by = c(spec, type, rw_order)) %>% 
+  arrange(rw_order, type, desc(n)) %>% 
+  identity()
+ 
+# Notes:  
+# for ESA, CI coverage is best for model with paed_age_cutoff = 10, 
+# inc_time_tmc = TRUE for almost all types and rw_order combinations. 
+# Model choice is, unsurprisingly, less clear than for WCA, as there is not such
+# a drastic difference between the fits for each model spec
+
+# For WCA, it is very pleasing to see that the model with paed_age_cutoff = Inf 
+# and inc_time_tmc = TRUE is preferred for every type and rw_order. This is 
+# unsurprising, as these parameters have quite a large effect on model fit for 
+# WCA countries. 
 
