@@ -187,7 +187,7 @@ fit <- threemc_fit_model(
     "u_spacetime_mmc",
     "u_time_tmc", 
     "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
-  )
+  ),
   N             = N, 
   inner.control = list(maxit = 250)
 )
