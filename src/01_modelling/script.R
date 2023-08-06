@@ -152,7 +152,7 @@ dat_tmb <- threemc_prepare_model_data(
   aggregated        = TRUE,
   weight            = "population",
   k_dt_age          = k_dt_age,
-  paed_age_cutoff   = paed_age_cutoff
+  paed_age_cutoff   = paed_age_cutoff,
   rw_order          = rw_order,
   inc_time_tmc      = inc_time_tmc
 )
@@ -165,7 +165,7 @@ parameters <- threemc_initial_pars(
   rw_order        = rw_order, 
   paed_age_cutoff = paed_age_cutoff, 
   inc_time_tmc    = inc_time_tmc 
-
+)
 
 # fit model with TMB
 fit <- threemc_fit_model(

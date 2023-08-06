@@ -84,22 +84,21 @@ out_spec <- out_spec %>%
 
 # resample from fit
 if (!"sample" %in% names(fit)) {
+  
+  randoms <- c(
+  "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
+  "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
+  "u_spacetime_mmc",
+  "u_time_tmc", 
+  "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+  )
+  randoms <- randoms[randoms %in% names(fit$par_init)]
+  
   set.seed(123)
   memuse::Sys.meminfo()
   fit <- threemc_fit_model(
     fit           = fit,
-    randoms       = c(
-      "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
-      "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-      "u_spacetime_mmc",
-      "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
-    ),
-    randoms = c(
-      "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
-      "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-      "u_spacetime_mmc",
-      "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
-    ) 
+    randoms       = randoms, 
     N             = N, 
     inner.control = list(maxit = 250)
   )
@@ -128,6 +127,14 @@ if ("n" %in% names(out_spec)) {
 
 
 #### Perform Posterior Predictive Checks on original models ####
+
+print(paste0(
+  " n NAs ", 
+  nrow(filter(
+    survey_circumcision_test, 
+    is.na(area_id)
+  ))
+))
 
 ppc <- threemc_ppc2(
   fit,
