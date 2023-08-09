@@ -8,8 +8,11 @@
 library(orderly)
 library(dplyr)
 library(tidyr)
+library(parallel)
 
 #### Metadata ####
+
+n_cores <- max(1, parallel::detectCores() - 1)
 
 # task to run
 task <- "01final_modelling"
@@ -41,19 +44,19 @@ pars_df_x <- paste0("pars_df", cluster_type)
 # List of arguments to didehpc::didehpc_config
 # TODO: Fill this in
 is_mrc <- grepl("mrc", cluster_type) # check if running on large cluster
-cores <- NULL
-if (is_mrc == FALSE) cores = ifelse(grepl("4", cluster_type), 4, 32)
+cluster_cores <- NULL
+if (is_mrc == FALSE) cluster_cores = ifelse(grepl("4", cluster_type), 4, 32)
 config_args <- list(
   # cluster to use (mrc is large cluster, > 1TB memory)
-  cluster = ifelse(
+  "cluster" = ifelse(
     is_mrc,
     "mrc",
     "fi--didemrchnb"
   ),
   # template to use
-  template = ifelse(is_mrc, "MEM1024", "32Core"),
+  "template" = ifelse(is_mrc, "MEM1024", "32Core"),
   # if using 32Core template, how many cores to use (4 or 32) 
-  cores = cores
+  "cores" = cluster_cores
 )
 
 
@@ -168,7 +171,7 @@ pars_df <- readr::read_csv("01final_modelling_remaining_tasks.csv")
 
 #### Perform Orderly Search for Outstanding Tasks ####
 
-names_ran <- (unlist(lapply(seq_len(nrow(pars_df)), function(i) {
+names_ran <- (unlist(mclapply(seq_len(nrow(pars_df)), function(i) {
   message(100 * (i / nrow(pars_df)), "% completed")
   is_paper <- TRUE
   # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
@@ -194,7 +197,7 @@ names_ran <- (unlist(lapply(seq_len(nrow(pars_df)), function(i) {
     ),
     root = orderly_root
   )
-})))
+}, mc.cores = n_cores)))
 
 pars_df <- pars_df[is.na(names_ran), ]
 
@@ -220,7 +223,7 @@ assign(pars_df_x, pars_df)
 
 # pack up task for each country
 # pars_df <- pars_df[c(1, 10), ]
-bundles <- lapply(seq_len(nrow(pars_df)), function(i) {
+bundles <- mclapply(seq_len(nrow(pars_df)), function(i) {
   
   is_paper <- TRUE
   # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
@@ -233,7 +236,7 @@ bundles <- lapply(seq_len(nrow(pars_df)), function(i) {
     parameters = c(as.list(pars_df[i, ]), "is_paper" = is_paper),
     root = orderly_root
   )
-})
+}, mc.cores = n_cores)
 
 #### contexts ####
 

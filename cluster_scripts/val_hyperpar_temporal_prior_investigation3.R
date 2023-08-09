@@ -12,7 +12,7 @@ library(parallel)
 
 #### Metadata ####
 
-cores <- max(1, parallel::detectCores() - 1)
+n_cores <- max(1, parallel::detectCores() - 1)
 
 # task to run
 task <- "val_hyperpar_temporal_prior_investigation3"
@@ -44,19 +44,19 @@ pars_df_x <- paste0("pars_df", cluster_type)
 # List of arguments to didehpc::didehpc_config
 # TODO: Fill this in
 is_mrc <- grepl("mrc", cluster_type) # check if running on large cluster
-cores <- NULL
-if (is_mrc == FALSE) cores = ifelse(grepl("4", cluster_type), 4, 32)
+cluster_cores <- NULL
+if (is_mrc == FALSE) cluster_cores = ifelse(grepl("4", cluster_type), 4, 32)
 config_args <- list(
   # cluster to use (mrc is large cluster, > 1TB memory)
-  cluster = ifelse(
+  "cluster" = ifelse(
     is_mrc,
     "mrc",
     "fi--didemrchnb"
   ),
   # template to use
-  template = ifelse(is_mrc, "MEM1024", "32Core"),
+  "template" = ifelse(is_mrc, "MEM1024", "32Core"),
   # if using 32Core template, how many cores to use (4 or 32) 
-  cores = cores
+  "cores" = cluster_cores
 )
 
 
@@ -265,7 +265,7 @@ pars_df <- pars_df %>%
     parameters = c(pars_df[i, ], "is_paper" = is_paper),
     root = orderly_root
   )
-}, mc.cores = cores)))
+}, mc.cores = n_cores)))
 
 pars_df <- pars_df[is.na(names_ran), ]
 
@@ -292,7 +292,7 @@ bundles <- mclapply(seq_len(nrow(pars_df)), function(i) {
     parameters = c(as.list(pars_df[i, ]), "is_paper" = is_paper),
     root = orderly_root
   )
-}, mc.cores = cores)
+}, mc.cores = n_cores)
 
 if (length(bundles[[1]]) != 2) {
   print(bundles[[1]])

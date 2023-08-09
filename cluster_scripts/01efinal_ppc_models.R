@@ -11,6 +11,8 @@ library(tidyr)
 
 #### Metadata ####
 
+n_cores <- max(1, parallel::detectCores() - 1)
+
 # task to run
 # task <- "01efinal_ppc_models"
 task <- "01e_new_final_ppc_models"
@@ -39,19 +41,19 @@ pars_df_x <- paste0("pars_df", cluster_type)
 # List of arguments to didehpc::didehpc_config
 # TODO: Fill this in
 is_mrc <- grepl("mrc", cluster_type) # check if running on large cluster
-cores <- NULL
-if (is_mrc == FALSE) cores = ifelse(grepl("4", cluster_type), 4, 32)
+cluster_cores <- NULL
+if (is_mrc == FALSE) cluster_cores = ifelse(grepl("4", cluster_type), 4, 32)
 config_args <- list(
   # cluster to use (mrc is large cluster, > 1TB memory)
-  cluster = ifelse(
+  "cluster" = ifelse(
     is_mrc,
     "mrc",
     "fi--didemrchnb"
   ),
   # template to use
-  template = ifelse(is_mrc, "MEM1024", "32Core"),
+  "template" = ifelse(is_mrc, "MEM1024", "32Core"),
   # if using 32Core template, how many cores to use (4 or 32) 
-  cores = cores
+  "cores" = cluster_cores
 )
 
 
@@ -164,7 +166,7 @@ pars_df <- pars_df %>%
 
 # only run for parameters with successful models
 if (task != "01e2final_mod_and_ppc") {
-  (names <- (unlist(lapply(seq_len(nrow(pars_df)), function(i) {
+  (names <- (unlist(mclapply(seq_len(nrow(pars_df)), function(i) {
     message(100 * (i / nrow(pars_df)), "% completed")
     is_paper <- TRUE
     # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
@@ -186,7 +188,7 @@ if (task != "01e2final_mod_and_ppc") {
       ),
       root = orderly_root
     )
-  }))))
+  }, mc.cores = n_cores))))
   
   pars_df <- pars_df[!is.na(names), ]
 }
@@ -196,7 +198,7 @@ if (task != "01e2final_mod_and_ppc") {
 
 # only run for tasks which haven't been run before 
 rm_ran_tasks <- function(pars_df, check_task) {
-  (names_ran <- (unlist(lapply(seq_len(nrow(pars_df)), function(i) {
+  (names_ran <- (unlist(mclapply(seq_len(nrow(pars_df)), function(i) {
     message(100 * (i / nrow(pars_df)), "% completed")
     is_paper <- TRUE
     # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
@@ -221,7 +223,7 @@ rm_ran_tasks <- function(pars_df, check_task) {
       ),
       root = orderly_root
     )
-  }))))
+  }, mc.cores = n_cores))))
   pars_df <- pars_df[is.na(names_ran), ]
 }
 
@@ -246,7 +248,7 @@ assign(pars_df_x, pars_df)
 #### bundle orderly tasks #### 
 
 # pack up task for each country
-bundles <- lapply(seq_len(nrow(pars_df)), function(i) {
+bundles <- mclapply(seq_len(nrow(pars_df)), function(i) {
   
   is_paper <- TRUE
   # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
@@ -259,7 +261,7 @@ bundles <- lapply(seq_len(nrow(pars_df)), function(i) {
     parameters = c(as.list(pars_df[i, ]), "is_paper" = is_paper),
     root = orderly_root
   )
-})
+}, mc.cores = n_cores)
 
 #### contexts ####
 
