@@ -1,0 +1,212 @@
+---
+title: "Orderly Cluster Example"
+author: "Patrick O'Toole"
+date: "2023-02-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Here is a simple script for running an orderly task on the cluster. 
+
+```{r}
+library(orderly)
+library(dplyr)
+library(tidyr)
+```
+
+
+## Directory Setup ##
+
+First, confirm that we are in our orderly repository (in my case, 
+`threemc-orderly`):
+```{r}
+# will fail with "reached root without finding 'orderly_config.yml'" if not
+orderly_config() 
+```
+
+Now, we will set our metadata for this task: 
+```{r}
+task <- "01final_modelling" # task to be run
+root <- "~/net/unaids-naomi/threemc-orderly/contexts_2" # contexts directory
+orderly_root <- here::here() # orderly repos with tasks to be bundled
+path_bundles <- file.path(root, "bundles") # path to save bundles (absolute)
+output_path <- "output" # path to save output (not absolute!!)
+```
+
+Notice that our `output_path` is not absolute, while our `root` and 
+`path_bundles` paths are. 
+
+## Create parameters table ##
+
+```{r}
+cntries <- c("LSO", "SWZ") # countries to run model for
+is_paper <- c(FALSE, TRUE) # task specific parameter
+  
+(pars_df <- crossing(
+  "cntry" = cntries, 
+  is_paper
+))
+```
+
+## Check for and remove previously run tasks ##
+
+```{r}
+# check to see if tasks have already been run
+names_ran <- unlist(lapply(seq_len(nrow(pars_df)), function(i) {
+  
+  message(100 * (i / nrow(pars_df)), "% completed")
+  
+  orderly::orderly_search(
+    name = task,
+    query = "latest(
+      parameter:cntry == cntry && parameter:is_paper == is_paper
+    )",
+    parameters = list(
+      cntry                  = pars_df$cntry[i],
+      is_paper               = pars_df$is_paper[i]
+    ),
+    root = orderly_root
+  )
+}))
+
+# remove already run tasks
+pars_df <- pars_df[is.na(names_ran), ]
+```
+
+## Bundle tasks to be run ##
+
+```{r}
+# pack up task for each country
+pars_df <- pars_df[1, ] # can just do one task
+bundles <- lapply(seq_len(nrow(pars_df[1, ])), function(i) {
+  
+  orderly::orderly_bundle_pack(
+    path_bundles,
+    task,
+    parameters = list(
+      cntry    = pars_df$cntry[i],
+      is_paper = pars_df$is_paper[i]
+    ),
+    root = orderly_root
+  )
+})
+```
+
+## Cluster Setup ##
+
+First, we must specify our cluster config:
+```{r}
+# cluster config
+config <- didehpc::didehpc_config(
+  workdir = root,
+  cluster = "fi--didemrchnb", # for running many tasks and as safe default
+  # cluster = "mrc",          # for running single, memory-intensive tasks
+  # may be required for large memory tasks (only for "fi--didemrchnb")
+  template = "32Core",        # see help for other options
+  # template = "MEM1024"      # only for "mrc", template for ~1TB memory node
+  cores = 4                   # useful if running in parallel or need more mem
+)
+```
+
+Next, we must specify the packages which must be downloaded on the (Windows)
+cluster: 
+```{r}
+# setup context for orderly task (packages required, etc)
+ctx <- context::context_save(
+  path = root,
+  # CRAN packages
+  packages = c(
+    "orderly", "dplyr", "sf",
+    "data.table", "rlang", "ggplot2", "memuse"
+  ),
+  # packages from github 
+  package_sources = conan::conan_sources(c(
+    "github::mrc-ide/threemc@rm_naomi_dependencies"
+  ))
+)
+```
+
+Finally, we que the above contexts on the cluster:
+```{r}
+obj <- didehpc::queue_didehpc(context = ctx, config = config)
+```
+
+## Run Bundles ## 
+
+```{r}
+paths <- lapply(bundles, function(x) {
+  paste(last(strsplit(dirname(x$path), "/")[[1]]), 
+        basename(x$path), sep = "/")
+})
+
+# send orderly tasks to cluster!
+t <- obj$lapply(paths, orderly::orderly_bundle_run, workdir = output_path)
+
+# look at individual tasks for logs
+tasks <- t$tasks
+
+# have a look at internals of t
+print(str(t))
+
+```
+
+```{r eval = FALSE}
+# cancel jobs, if desired
+obj$unsubmit(t$ids)
+```
+
+## Some useful functions ##
+
+```{r}
+# check log for specific tasks
+# Allow task to move from pending to running
+while (t$status()[[1]] == "PENDING") {
+  Sys.sleep(30)
+}
+Sys.sleep(30) # allow log file to populate!
+tasks[[1]]$log() # check log for first task
+```
+
+```{r}
+# check all tasks to see if they are "COMPLETE", "ERRROR" or "RUNNING"
+t$status()
+```
+
+```{r}
+# check if tasks are completed or not (even if failed)
+t$done
+```
+
+```{r}
+# can check these on the cluster portal
+t$ids 
+```
+
+
+## Importing Tasks ##
+
+In R, you can import tasks with: 
+```{r eval = FALSE}
+for (output in t$wait(100)) {
+  out <- strsplit(output$path, "\\\\")[[1]]
+  output_filename <- out[length(out)]
+  orderly::orderly_bundle_import(file.path(root, output_path, output_filename),
+                                 root = orderly_root)
+}
+```
+
+You can also directly copy/move the files from `output_path` to your `archive/`
+(probably not recommended by `orderly` devs!). Once complete, they will change
+to a zip file, rather than a directory. They must be unzipped and the `pack/` 
+directory should be moved to the top directory, for the completed task to be 
+visible to `orderly` 
+(can do so with my shell script [here](https://tinyurl.com/2p9f5mwp).
+```{r}
+list.files(file.path(root, output_path))
+```
+
+
+
