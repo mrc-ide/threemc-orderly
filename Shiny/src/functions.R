@@ -662,7 +662,7 @@ plt_coverage_map <- function(
     tmp$year <- as.factor(tmp$year)
     if (inc_difference == TRUE) {
 
-      # browser()
+      # split by country, take spec_years, calculate difference between the two
       diff_df <- tmp %>%
         arrange(year) %>%
         group_split(area_id, model, type, age_group) # %>%
@@ -677,11 +677,14 @@ plt_coverage_map <- function(
         #   n()
         # )) %>%
      diff_df <- lapply(diff_df, function(x) {
+         # take negative difference for TMC (expecting decline)
          if (all(x$type == "Traditional")) x <- x[nrow(x):1, ]
-         x <- slice(
-             mutate(x, across(mean:upper, ~ max(0, diff(.)))),
-             n()
-         )
+         # take
+         x <- x %>% 
+           # don't allow change to be < 0
+           mutate(across(mean:upper, ~ max(0, diff(.)))) %>% 
+           # take final line, only this shows difference
+           slice(n())
      }) %>%
         bind_rows() %>%
         mutate(
@@ -689,10 +692,9 @@ plt_coverage_map <- function(
           year = ifelse(type == "Traditional", "-% Change"  ,"% Change")
         )
 
+      levels <- c(spec_years, unique(diff_df$year))
       tmp <- bind_rows(tmp, diff_df) %>%
-          mutate(year = factor(
-              year, levels = c(spec_years, "% Change", "-% Change"))
-          )
+          mutate(year = factor(year, levels = levels))
     }
 
     # split by type
@@ -771,17 +773,17 @@ plt_coverage_map <- function(
                                               "-",
                                               unique(x$age_group),
                                               "year olds"))
-            } else {
-              x$year <- factor(
-                x$year,
-                levels = c(
-                  spec_years[1],
-                  spec_years[2],
-                  # paste0("% Change, ", spec_years[1], "-", last(spec_years))
-                  "% Change"
-                )
-              )
-            }
+            } # else {
+              # x$year <- factor(
+              #   x$year,
+              #   levels = c(
+              #     spec_years[1],
+              #     spec_years[2],
+              #     # paste0("% Change, ", spec_years[1], "-", last(spec_years))
+              #     "% Change"
+              #   )
+              # )
+            # }
             map_plot(x, areas_plot, colourPalette)
         })
 
@@ -3311,6 +3313,7 @@ threemc_val_plt <- function(
     x_var = "year",
     colour_var = NULL,
     take_log = FALSE,
+    add_error = TRUE,
     facet = "grid",
     facet_formula = formula(~ area_name),
     xlab, ylab, title,
@@ -3468,16 +3471,30 @@ threemc_val_plt <- function(
         geom_line(
           aes(y = mean, col = as.factor(.data[[colour_var]])),
           size = 1
-        ) +
-        # Credible interval
-        geom_ribbon(
-          data = filter(plt_data1, light == "Surveyed"),
-          aes(ymin = lower, ymax = upper, fill = as.factor(.data[[colour_var]]), alpha = light)
-        ) +
-        geom_ribbon(
-          data = filter(plt_data1, light == "Projected"),
-          aes(ymin = lower, ymax = upper, fill = as.factor(.data[[colour_var]]), alpha = light)
         )
+      
+      if (add_error == TRUE) {
+        # Credible interval
+        p <- p +
+          geom_ribbon(
+            data = filter(plt_data1, light == "Surveyed"),
+            aes(
+              ymin = lower, 
+              ymax = upper, 
+              fill = as.factor(.data[[colour_var]]), 
+              alpha = light
+            )
+          ) +
+          geom_ribbon(
+            data = filter(plt_data1, light == "Projected"),
+            aes(
+              ymin = lower, 
+              ymax = upper, 
+              fill = as.factor(.data[[colour_var]]), 
+              alpha = light
+            )
+          )
+      }
 
       if (!is.null(df_results_survey)) {
         p <- p +
