@@ -316,14 +316,14 @@ assign(tasks_x, get(t_x)$tasks)
 # cancel jobs
 # obj$unsubmit(t$ids)
 
-tasks_run <- file.path(
+run_tasks <- file.path(
   root, 
   "output",
   # vapply(t$X[t$status() == "COMPLETE"], basename, character(1))
   vapply(get(t_x)$X[get(t_x)$status() == "COMPLETE"], basename, character(1))
 )
 
-lapply(tasks_run, function(x) {
+lapply(run_tasks, function(x) {
   system(paste0(
   # print(paste0(
     # "mv ", x, " ~/OneDrive/", task, "/zips_new/."

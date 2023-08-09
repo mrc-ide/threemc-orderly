@@ -1,11 +1,9 @@
 #### Check Status of Cluster Tasks ####
 
 # tabulate status for each cluster run
-table(t_32_tmbad$status())
-table(t_32_cppad$status())
-table(t_mrc_tmbad$status())
-table(t_mrc_cppad$status())
-
+ts <- ls()[grepl("^t_", ls())]
+ts <- ts[!ts == "t_x"]
+lapply(ts, function(x) get(x)$status())
 
 # parse for error (& success) messages (can join these with corresponding parameters)
 
@@ -62,13 +60,8 @@ tabulate_messages <- function(tasks, preparse = TRUE) {
   return(return_obj) 
 }
 
-m_32_tmbad <- tabulate_messages(tasks_32_tmbad)
-m_32_cppad <- tabulate_messages(tasks_32_cppad)
-m_mrc_tmbad <- tabulate_messages(tasks_mrc_tmbad)
-m_mrc_cppad <- tabulate_messages(tasks_mrc_cppad)
+tasks <- ls()[grepl("^tasks_", ls())]
+tasks <- tasks[tasks != c("tasks_x")]
+messages <- lapply(tasks, function(x) tabulate_messages(get(x)))
 
-table(m_32_tmbad$messages)
-table(m_32_cppad$messages)
-table(m_mrc_tmbad$messages)
-table(m_mrc_cppad$messages)
-
+lapply(messages, function(x) table(x$messages))
