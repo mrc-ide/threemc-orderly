@@ -13,14 +13,14 @@ artefacts:
   #     description: Modelling results for area level of interest, including quantiles
   #     filenames:
   #     - artefacts/Results_DistrictAgeTime_ByType.csv.gz
-  # - data:
-  #     description: To be filled in 
-  #     filenames:
-  #     - artefacts/pointwise_ppc_df.csv.gz
+  - data:
+      description: To be filled in 
+      filenames:
+      - artefacts/pointwise_ppc_df.csv.gz
   - data:
       description: Summary of PPC results
       filenames:
-      - artefacts/ppc_summary.rds
+      - artefacts/ppc_summary.csv
   # - staticgraph:
   #     description: Plot of circumcision coverage for all areas modelled.
   #     filenames:

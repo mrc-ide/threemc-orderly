@@ -7,6 +7,7 @@ k_dt_age <- 5 # Age knot spacing
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
+start_year <- 2002
 # paed_age_cutoff <- 10
 # five-year age groups to perform posterior predictive checks for
 five_year_age_groups <- c(
@@ -90,8 +91,17 @@ survey_circumcision <- survey_circumcision %>%
 
 # re-calculate start as earliest year - 60 (only where TMC needs to vary)
 survey_years <- unique(survey_circumcision$survey_year)
-start_year <- min(c(survey_years - 2, 2002)) # have lower bound on start
-if (inc_time_tmc == TRUE) start_year <- min(survey_years) - 60
+
+# set start year back a generation if fitting with traditional circumcision
+if (inc_time_tmc == TRUE) {
+  start_year <- min(c(survey_years, start_year))
+  # start_year <- start_year - cens_age
+  start_year <- start_year - 50
+  # start_year <- start_year - 70
+} else {
+  # have lower bound on start
+  start_year <- min(c(survey_years - 2, start_year)) 
+} 
 
 
 #### Preparing circumcision data ####
@@ -176,10 +186,11 @@ parameters[replacement_par_names] <- replacement_pars
 # list of NA factors with names == hyperparameters to fix
 maps <- lapply(replacement_pars, function(x) factor(NA))
 
+
 #### Fit Model with mapped hyperparameters
 
-
 # function to fit model with fixed hyperpars
+# proposal_parameters <- parameters
 fit_proposal_model <- function(proposal_parameters, maps) {
   
   # fit proposal TMB model
@@ -257,15 +268,25 @@ fit_proposal_model <- function(proposal_parameters, maps) {
     labs(y = "Rate")
   
   # perform posterior predictive checks on model
-  ppc_fixed <- threemc_ppc(
+  # ppc_fixed <- threemc_ppc(
+  #   fit_fixed,
+  #   out_spec_fixed,
+  #   survey_circumcision_test,
+  #   areas, 
+  #   area_lev, 
+  #   type = "MMC",
+  #   age_groups = five_year_age_groups,
+  #   CI_range = CI_range,
+  #   N = N
+  # )
+  ppc_fixed <- threemc_ppc2(
     fit_fixed,
     out_spec_fixed,
-    survey_circumcision_test,
+    # fix for MWI (??)
+    filter(survey_circumcision_test, !is.na(area_id)),
     areas, 
     area_lev, 
-    type = "MMC",
     age_groups = five_year_age_groups,
-    CI_range = CI_range,
     N = N
   )
   
@@ -290,7 +311,7 @@ fit_min <- minimise_fit_obj(proposal_mod$fit, dat_tmb, parameters)
 #### Save results ####
 
 # Save results
-# not required! Never used, so using valuable disk space
+# not required! Never used, using valuable disk space
 # data.table::fwrite(
 #   proposal_mod$out, file = paste0(save_dir, "Results_DistrictAgeTime_ByType.csv.gz")
 # )
@@ -299,12 +320,15 @@ fit_min <- minimise_fit_obj(proposal_mod$fit, dat_tmb, parameters)
 # saveRDS(fit_min, paste0(save_dir, "TMBObjects_DistrictAgeTime_ByType.rds"))
 
 # save ppc df 
-# data.table::fwrite(
-#   proposal_mod$ppc$ppc_df, file = file.path(save_dir, "pointwise_ppc_df.csv.gz")
-# )
+readr::write_csv(
+  proposal_mod$ppc$ppc_df, file = file.path(save_dir, "pointwise_ppc_df.csv.gz")
+)
 
-# save summarised ppc as .rds file
-saveRDS(proposal_mod$ppc$summary_stats, file.path(save_dir, "ppc_summary.rds"))
+# save summarised ppc
+# saveRDS(proposal_mod$ppc$summary_stats, file.path(save_dir, "ppc_summary.rds"))
+readr::write_csv(
+  proposal_mod$ppc$ppc_summary_df, file.path(save_dir, "ppc_summary.csv")
+)
 
 # save plots 
 # ggsave(file.path(save_dir, "Circ_Coverage.pdf"), proposal_mod$plots[[1]])
