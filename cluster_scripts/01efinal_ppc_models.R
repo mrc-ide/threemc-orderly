@@ -172,6 +172,13 @@ if (task != "01e2final_mod_and_ppc") {
     # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
     #   is_paper <- FALSE
     # }
+   
+    # return progress message
+    system(sprintf(
+      'echo "\n%s\n"', 
+      paste0(100 * (i / nrow(pars_df)), "% completed", collapse = "")
+    ))
+    
     orderly::orderly_search(
       name = "01final_modelling",
       query = "latest(
@@ -204,6 +211,13 @@ rm_ran_tasks <- function(pars_df, check_task) {
     # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
     #   is_paper <- FALSE
     # }
+    
+    # return progress message
+    system(sprintf(
+      'echo "\n%s\n"', 
+      paste0(100 * (i / nrow(pars_df)), "% completed", collapse = "")
+    ))
+    
     orderly::orderly_search(
       name = check_task,
       query = "latest(
@@ -285,9 +299,9 @@ package_sources <- c(
 )
 # use development version of threemc (TMBad or cppAD choice made in metadata)
 if (grepl("cppad", cluster_type)) {
- package_sources <- c(package_sources, "github::mrc-ide/threemc@master_cppad")
+  package_sources <- c(package_sources, "github::mrc-ide/threemc@master_cppad")
 } else {
- package_sources <- c(package_sources, "github::mrc-ide/threemc")
+  package_sources <- c(package_sources, "github::mrc-ide/threemc")
 }
 
 ctx <- context::context_save(
@@ -338,7 +352,7 @@ tasks_run <- file.path(
 
 lapply(tasks_run, function(x) {
   system(paste0(
-  # print(paste0(
+    # print(paste0(
     # "mv ", x, " ~/OneDrive/", task, "/zips_new/."
     "mv ", x, " ~/", task, "/zips_new/."
   ))

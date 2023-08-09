@@ -180,6 +180,12 @@ names_ran <- (unlist(mclapply(seq_len(nrow(pars_df)), function(i) {
     
   # print(is_paper)
   
+  # return progress message
+  system(sprintf(
+    'echo "\n%s\n"', 
+    paste0(100 * (i / nrow(pars_df)), "% completed", collapse = "")
+  ))
+  
   orderly::orderly_search(
     name = check_task,
     # query = "(
@@ -229,6 +235,12 @@ bundles <- mclapply(seq_len(nrow(pars_df)), function(i) {
   # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
   #   is_paper <- FALSE 
   # }
+  
+  # return progress message
+  system(sprintf(
+    'echo "\n%s\n"', 
+    paste0(100 * (i / nrow(pars_df)), "% completed", collapse = "")
+  ))
   
   orderly::orderly_bundle_pack(
     path_bundles,

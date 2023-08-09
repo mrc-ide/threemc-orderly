@@ -27,10 +27,10 @@ check_task <- task
 # - cores to use if not mrc (large cluster), 
 # - choice of TMBad or CppAD AD framework in threemc/TMB
 
-# cluster_type <- "_4_tmbad"
+cluster_type <- "_4_tmbad"
 # cluster_type <- "_4_cppad"
 # cluster_type <- "_32_tmbad"
-cluster_type <- "_32_cppad"
+# cluster_type <- "_32_cppad"
 # cluster_type <- "_mrc_tmbad"
 # cluster_type <- "_mrc_cppad"
 
@@ -100,24 +100,26 @@ vmmc_iso3 <- c(
   "LSO", "MOZ", "NAM", "RWA", "TZA", "UGA", "MWI",
   "SWZ", "ZWE", "ZMB", "ETH", "KEN", "ZAF" 
 )
+# countries with no type information
 # no_type_iso3 <- c("LBR", "SEN", "NER", "GIN", "COD", "BFA", "COG") # ??
 no_type_iso3 <- c("LBR", "SEN", "NER", "GIN", "COD")
 iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE",
           "ZMB", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV",
           "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE", "KEN", "ETH",
           "ZAF", "LBR", "GHA", "GMB", "NGA", "COD")
-# Also need to remove countries for which there is only a single survey
+# remove countries for which there is only a single survey
 single_year_iso3 <- c(
   "AGO", "CAF", "COD", "GAB", "GIN", "GMB", "NER", "SEN", "TGO"
 )
 iso3 <- iso3[!iso3 %in% c(single_year_iso3, vmmc_iso3, no_type_iso3)]
+# iso3 <- iso3[!iso3 %in% c(single_year_iso3)]
 
 # Also remove countries which need to be run on pocatello (investigate!)
 # iso3 <- iso3[!iso3 %in% c("LSO", "BDI")]
 
 # for now, just do vmmc countries
 # iso3 <- vmmc_iso3
-# iso3 <- c("LSO", "SWZ") # just do some for now!
+iso3 <- c("LSO", "SWZ") # just do some for now!
 # iso3 <- c("RWA", "NAM", "ZMB")
 # iso3 <- c("KEN", "ZAF", "MWI")
 # iso3 <- "MOZ" # run while KEN, ZAF, MWI are pending
@@ -247,12 +249,19 @@ pars_df <- pars_df %>%
 #### Perform Orderly Search for Outstanding Tasks ####
 
 # don't run already ran tasks
-(names_ran <- unlist(mclapply(seq_len(nrow(pars_df)), function(i) {
+names_ran <- unlist(mclapply(seq_len(nrow(pars_df)), function(i) {
   message(round(100 * (i / nrow(pars_df)), 3), "% completed")
   is_paper <- TRUE
   if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
     is_paper <- FALSE
   }
+  
+  # return progress message
+  system(sprintf(
+    'echo "\n%s\n"', 
+    paste0(100 * (i / nrow(pars_df)), "% completed", collapse = "")
+  ))
+  
   orderly::orderly_search(
     name = check_task,
     query = "latest(
@@ -265,7 +274,7 @@ pars_df <- pars_df %>%
     parameters = c(pars_df[i, ], "is_paper" = is_paper),
     root = orderly_root
   )
-}, mc.cores = n_cores)))
+}, mc.cores = n_cores))
 
 pars_df <- pars_df[is.na(names_ran), ]
 
@@ -285,6 +294,12 @@ bundles <- mclapply(seq_len(nrow(pars_df)), function(i) {
   # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
   #   is_paper <- FALSE 
   # }
+  
+  # return progress message
+  system(sprintf(
+    'echo "\n%s\n"', 
+    paste0(100 * (i / nrow(pars_df)), "% completed", collapse = "")
+  ))
   
   orderly::orderly_bundle_pack(
     path_bundles,
