@@ -110,11 +110,6 @@ if (!"n" %in% names(out_spec)) {
     mutate(n = row_number())
 }
 
-# add n column if not already present 
-if (!"n" %in% names(out_spec)) {
-  out_spec <- out_spec %>% 
-    mutate(n = row_number())
-}
 # finally, remove older prediction years
 out_spec <- out_spec %>% 
   filter(year >= start_year)
@@ -139,13 +134,14 @@ print(paste0(
 ppc <- threemc_ppc2(
   fit,
   out_spec,
-  # fix for MWI
+  # fix for MWI (??)
   filter(survey_circumcision_test, !is.na(area_id)),
   areas, 
   area_lev, 
   age_groups = five_year_age_groups,
   N = N
 )
+
 
 #### Save results ####
 
