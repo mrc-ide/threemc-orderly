@@ -29,8 +29,8 @@ check_task <- task
 
 # cluster_type <- "_4_tmbad"
 # cluster_type <- "_4_cppad"
-# cluster_type <- "_32_tmbad"
-cluster_type <- "_32_cppad"
+cluster_type <- "_32_tmbad"
+# cluster_type <- "_32_cppad"
 # cluster_type <- "_mrc_tmbad"
 # cluster_type <- "_mrc_cppad"
 
@@ -65,7 +65,7 @@ config_args <- list(
 # directory to save contexts
 # uses TMBad
 if (grepl("tmbad", cluster_type)) {
-  root <- "~/net/unaids-naomi/threemc-orderly/contexts"
+  root <- "~/net/unaids-naomi/threemc-orderly/contexts_2"
 # uses CppAD
 } else {
   root <- "~/net/unaids-naomi/threemc-orderly/contexts_4"
@@ -167,7 +167,7 @@ if (task == "01a_model_aggregate_spec_area_lev") {
 #   filter(cntry == "ETH", rw_order == 1, inc_time_tmc == TRUE)
 
 # pars_df <- pars_df[1, ]
-pars_df <- readr::read_csv("01final_modelling_remaining_tasks.csv")
+# pars_df <- readr::read_csv("01final_modelling_remaining_tasks.csv")
 
 #### Perform Orderly Search for Outstanding Tasks ####
 
@@ -224,6 +224,9 @@ assign(pars_df_x, pars_df)
 
 # save for later
 # readr::write_csv(pars_df, "01final_modelling_remaining_tasks.csv")
+readr::write_csv(
+  "remaining_tasks/01final_modelling.csv"
+)
 
 #### bundle orderly tasks #### 
 

@@ -256,7 +256,10 @@ if (length(add_check_task) == 1) {
 assign(pars_df_x, pars_df)
 
 # save for later
-# readr::write_csv(pars_df, "01e_new_final_ppc_models_emaining_tasks.csv")
+readr::write_csv(
+  pars_df, 
+  "remaining_tasks/01e_new_final_ppc_models.csv"
+)
 
 
 #### bundle orderly tasks #### 
