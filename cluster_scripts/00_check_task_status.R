@@ -3,7 +3,7 @@
 # tabulate status for each cluster run
 ts <- ls()[grepl("^t_", ls())]
 ts <- ts[!ts == "t_x"]
-lapply(ts, function(x) get(x)$status())
+lapply(ts, function(x) table(get(x)$status()))
 
 # parse for error (& success) messages (can join these with corresponding parameters)
 
