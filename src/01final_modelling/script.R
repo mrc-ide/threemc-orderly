@@ -8,7 +8,7 @@
 
 k_dt_age <- 5 # Age knot spacing
 k_dt_time <- NULL # Disable time knot spacing
-start_year <-  2002
+start_year <-  1998 # want to make comparisons between 2000 and 2020
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 # cens_age <- 59
 # cens_age <- 45
@@ -97,7 +97,7 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
   # stop if paed_age_cutoff or inc_time_tmc are specified
   stopifnot(is.null(paed_age_cutoff))
   stopifnot(inc_time_tmc == FALSE)
-  start_year <- min(c(survey_years, start_year)) # have lower bound on start
+  # start_year <- min(c(survey_years, start_year)) # have lower bound on start
 } else is_type <- TRUE
 
 
@@ -210,7 +210,7 @@ out_spec <- out_spec %>%
   ) %>%
   # remove years before 2000, to keep save object small
   mutate(n = row_number()) %>% 
-  filter(year >= 2000)
+  filter(year >= 1998)
 
 # minimise fit object for saving
 fit <- minimise_fit_obj(fit, dat_tmb, parameters)

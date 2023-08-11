@@ -6,7 +6,7 @@
 # !! Change this to use dataset stored in threemc
 k_dt_age <- 5 # Age knot spacing
 k_dt_time <- NULL # Disable time knot spacing
-start_year <-  2002
+start_year <- 1998
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 forecast_year <- 2021
 # paed_age_cutoff <- 10
@@ -52,7 +52,7 @@ if (inc_time_tmc == TRUE) {
   start_year <- start_year - 50
   # start_year <- start_year - 70
 } else {
-  # have lower bound on start
+  # have lower bound on start (start at least 2 years before first survey)
   start_year <- min(c(survey_years - 2, start_year)) 
 } 
 
@@ -80,7 +80,6 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
   # stop if paed_age_cutoff or inc_time_tmc are specified
   stopifnot(is.null(paed_age_cutoff))
   stopifnot(inc_time_tmc == FALSE)
-  start_year <- min(c(survey_years, start_year)) # have lower bound on start
 } else is_type <- TRUE
 
 
@@ -163,9 +162,10 @@ fit <- threemc_fit_model(
   randoms       = c(
     "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
     "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-    "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+    "u_spacetime_mmc", 
+    "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
   ),
-  N             = N, 
+  N             = 1000, 
   inner.control = list(maxit = 250)
 )
 
@@ -185,7 +185,8 @@ out_spec <- out_spec %>%
     contains("surv"),
     contains("cum_inc_mmc"), contains("cum_inc_tmc"), contains("cum_inc"),
     contains("inc_mmc"), contains("inc_tmc"), contains("inc")
-  )
+  ) %>%
+  filter(year >= 1998)
 
 # minimise fit object for saving
 fit_save <- minimise_fit_obj(fit, dat_tmb, parameters)
@@ -217,7 +218,8 @@ if (is.null(fit$sample)) {
     randoms = c(
       "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
       "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-      "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+      "u_spacetime_mmc", 
+      "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
     ),
     N       = 1000
   )
@@ -244,7 +246,7 @@ lapply(seq_along(age_vars$inputs), function(i) {
       type        = types[j],
       area_lev    = area_lev,
       N           = N,
-      prev_year = 2008 # year to compare with for prevalence
+      prev_year = 2006 # year to compare with for prevalence
     )
     readr::write_csv(
       x = spec_results,

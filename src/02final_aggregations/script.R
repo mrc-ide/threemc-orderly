@@ -73,9 +73,10 @@ if (is.null(fit$sample)) {
     randoms = c(
       "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
       "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
-      "u_spacetime_mmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
-    ), 
-    N       = N
+      "u_spacetime_mmc",
+      "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+    ),
+    N       = 1000
   )
 }
 
@@ -119,9 +120,9 @@ lapply(seq_along(age_vars$inputs), function(i) {
       populations = populations,
       age_var     = age_vars$inputs[[i]],
       type        = types[j],
-      area_lev = area_lev,
-      N = N,
-      prev_year = 2008 # year to compare with for prevalence
+      area_lev    = area_lev,
+      N           = N,
+      prev_year   = 2006 # year to compare with for prevalence
     )
     readr::write_csv(
       x = spec_results,

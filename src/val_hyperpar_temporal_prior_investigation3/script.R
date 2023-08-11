@@ -7,7 +7,7 @@ k_dt_age <- 5 # Age knot spacing
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
-start_year <- 2002
+start_year <- 1998
 # paed_age_cutoff <- 10
 # five-year age groups to perform posterior predictive checks for
 five_year_age_groups <- c(
@@ -128,7 +128,7 @@ if (nrow(survey_circ_preprocess) == 0) {
 if (all(is.na(survey_circ_preprocess$circ_who) &
         is.na(survey_circ_preprocess$circ_where))) {
   stop("No type distinction made in valid surveys for this country")
-  is_type <- FALSE 
+  is_type <- FALSE
   paed_age_cutoff <- NULL
 } else is_type <- TRUE
 
@@ -222,7 +222,7 @@ fit_proposal_model <- function(proposal_parameters, maps) {
     ) %>% 
     # remove years before 2000, to keep save object small
     mutate(n = row_number()) %>% 
-    filter(year >= 2000)
+    filter(year >= 1998)
   
   # plots to diagnose any issues with fits
   common_plot_aspects <- function(p) {

@@ -6,7 +6,7 @@
 
 k_dt_age <- 5 # Age knot spacing
 k_dt_time <- NULL # Disable time knot spacing
-start_year <-  2002
+start_year <-  1998
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
 forecast_year <- 2021
@@ -96,7 +96,7 @@ if (all(is.na(survey_circ_preprocess$circ_who) &
   # stop if paed_age_cutoff or inc_time_tmc are specified
   stopifnot(is.null(paed_age_cutoff))
   stopifnot(inc_time_tmc == FALSE)
-  start_year <- min(c(survey_years, start_year)) # have lower bound on start
+  # start_year <- min(c(survey_years, start_year)) # have lower bound on start
 } else is_type <- TRUE
 
 
@@ -185,10 +185,9 @@ fit <- threemc_fit_model(
     "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
     "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
     "u_spacetime_mmc",
-    "u_time_tmc", 
-    "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+    "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
   ),
-  N             = N, 
+  N             = N,
   inner.control = list(maxit = 250)
 )
 
@@ -210,7 +209,7 @@ out_spec <- out_spec %>%
   ) %>%
   # remove years before 2000, to keep save object small
   mutate(n = row_number()) %>% 
-  filter(year >= 2000)
+  filter(year >= 1998)
 
 # minimise fit object for saving
 # fit_min <- minimise_fit_obj(fit, dat_tmb, parameters)

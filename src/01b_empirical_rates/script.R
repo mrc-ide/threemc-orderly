@@ -25,7 +25,7 @@ age_groups <- c(five_year_age_groups, add_age_groups)
 # remove circumcisions with missing type?
 rm_missing_type <- FALSE
 
-start_year <-  2002
+start_year <-  1998
 forecast_year <- 2021
 cens_age <- 59
 

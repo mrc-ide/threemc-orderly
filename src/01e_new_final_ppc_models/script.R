@@ -8,7 +8,7 @@ k_dt_age <- 5 # Age knot spacing
 k_dt_time <- NULL
 if (cntry == "LBR") cens_age <- 29 else cens_age <- 59
 N <- 1000
-start_year <- 2002 # (variable) lower bound on start date
+start_year <- 1998 # lower bound on start date
 paed_age_cutoff <- 10
 # five-year age groups to perform posterior predictive checks for
 five_year_age_groups <- c(
@@ -89,8 +89,7 @@ if (!"sample" %in% names(fit)) {
   "u_time_mmc", "u_age_mmc", "u_age_mmc_paed", "u_space_mmc",
   "u_agetime_mmc", "u_agespace_mmc", "u_agespace_mmc_paed",
   "u_spacetime_mmc",
-  "u_time_tmc", 
-  "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
+  "u_time_tmc", "u_age_tmc", "u_space_tmc", "u_agespace_tmc"
   )
   randoms <- randoms[randoms %in% names(fit$par_init)]
   
@@ -98,8 +97,8 @@ if (!"sample" %in% names(fit)) {
   memuse::Sys.meminfo()
   fit <- threemc_fit_model(
     fit           = fit,
-    randoms       = randoms, 
-    N             = N, 
+    randoms       = randoms,
+    N             = N,
     inner.control = list(maxit = 250)
   )
 }
