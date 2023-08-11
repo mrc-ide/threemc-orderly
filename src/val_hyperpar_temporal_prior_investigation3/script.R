@@ -81,13 +81,14 @@ if (last(survey_years) - second_last_year == 1) {
   removed_years <- last(survey_years)
 }
 
-# ?
+# survey removed from training data
 survey_circumcision_test <- survey_circumcision %>% 
   filter(survey_year %in% removed_years)
 
-# ?
+# surveys in training data (removing test surveys)
 survey_circumcision <- survey_circumcision %>% 
   filter(!survey_year %in% removed_years)
+
 
 # re-calculate start as earliest year - 60 (only where TMC needs to vary)
 survey_years <- unique(survey_circumcision$survey_year)
