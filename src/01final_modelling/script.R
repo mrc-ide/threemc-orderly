@@ -68,6 +68,16 @@ if (inc_time_tmc == TRUE) {
   # start_year <- start_year - cens_age
   start_year <- start_year - 50
   # start_year <- start_year - 70
+  
+  non_fitting_iso3 <- c(
+    "BEN", "CMR", "ETH", "GAB", "GHA", "MOZ", "NGA", "TZA", "UGA", "ZMB"
+  )
+  if (cntry %in% non_fitting_iso3) {
+    start_years <- readr::read_csv("depends/tmc_start_dates.csv")
+    start_year <- start_years %>% 
+      filter(iso3 == cntry) %>% 
+      pull(year)
+  }
 } else {
   # have lower bound on start
   start_year <- min(c(survey_years - 2, start_year)) 

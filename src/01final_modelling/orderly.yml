@@ -68,3 +68,8 @@ depends:
       id: latest
       use: 
         depends/population_singleage_aggr.csv.gz: artefacts/population_singleage_aggr.csv.gz
+  # start dates for certain "problem" countries
+  - 00b6_tmc_start_year:
+      id: latest
+      use: 
+        depends/tmc_start_dates.csv:  artefacts/tmc_start_dates.csv
