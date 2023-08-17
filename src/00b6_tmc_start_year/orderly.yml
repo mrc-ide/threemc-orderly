@@ -30,6 +30,7 @@ parameters:
 
 packages:
   - threemc
+  - janitor
   - sf
   - data.table
   - dplyr
