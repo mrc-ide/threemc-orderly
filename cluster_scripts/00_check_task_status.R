@@ -44,7 +44,9 @@ tabulate_messages <- function(tasks, preparse = TRUE) {
     "PENDING", 
     "Optimising...",
     "MakeADFun",
-    "rw_order", 
+    "rw_order",
+    "Sampling",
+    "compute_quantiles",
     "inc_time_tmc"
   ), collapse = "|")
   
