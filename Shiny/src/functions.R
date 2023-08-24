@@ -2787,12 +2787,6 @@ plt_coverage_year_national_single_age <- function(
     n_plots = 1
 ) {
   
-  # if (length(spec_years) == 2 && (spec_years[2] - spec_years[1]) > 1) {
-  #   message("Changing spec_years to a sequence from the first to last year")
-  #   spec_years <- sort(spec_years)
-  #   spec_years <- spec_years[1]:spec_years[2]
-  # }
-  
   # Subset results
   tmp <- results_age %>%
     filter(
@@ -2897,12 +2891,15 @@ plt_coverage_year_national_single_age <- function(
       mean.y > 0
     )
   
+  # browser()
+  
   missing_type_iso3 <- unique(tmp1$iso3)
   missing_type_iso3 <- missing_type_iso3[!missing_type_iso3 %in% unique(dat_all$iso3)]
   if (length(missing_type_iso3) > 0) {
     missing_dat_all <- tmp1 %>%
       filter(iso3 %in% missing_type_iso3) %>%
-      mutate(type = "Unknown")
+      # mutate(type = "Unknown")
+      mutate(type = "Male Circumcision")
     dat_all <- bind_rows(dat_all, missing_dat_all)
   }
   
@@ -2911,11 +2908,21 @@ plt_coverage_year_national_single_age <- function(
     mutate(
       # light = factor(light, levels = c("Surveyed", "Projected")),
       type = case_when(
-        grepl("MMC", type) ~ "MMC",
-        grepl("TMC", type) ~ "TMC",
+        # grepl("MMC", type) ~ "MMC",
+        grepl("MMC", type) ~ "Medical Male Circumcision",
+        # grepl("TMC", type) ~ "TMC",
+        grepl("TMC", type) ~ "Traditional Male Circumcision",
         TRUE               ~ as.character(type)
-      ),
-      type = forcats::fct_drop(type)
+      )# ,
+      # type = forcats::fct_drop(type)
+    ) %>% 
+    mutate(
+      type = factor(
+        type, 
+        levels = c("Medical Male Circumcision", 
+                   "Traditional Male Circumcision", 
+                   "Male Circumcision")
+      )
     )
   
   dat_all <- purrr::flatten(split_area_level(dat_all, n_plots = n_plots))
@@ -2938,7 +2945,8 @@ plt_coverage_year_national_single_age <- function(
     manual_fill <- wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
     
     # add purple for unknown type, to be in line with map plots
-    if ("Unknown" %in% all_data$type) {
+    # if ("Unknown" %in% all_data$type) {
+    if ("Male Circumcision" %in% all_data$type) {
       manual_fill <- c(manual_fill, "#5e4fa2")
     }
     
@@ -2947,7 +2955,8 @@ plt_coverage_year_national_single_age <- function(
         aes(
           # x = year,
           x = age, 
-          y = 100 * mean.y,
+          # y = 100 * mean.y,
+          y = mean.y,
           # alpha = light,
           fill = type
         )
@@ -2955,7 +2964,8 @@ plt_coverage_year_national_single_age <- function(
       # Adding target line to prevalence
       geom_hline(
         # yintercept = 80,
-        yintercept = 90,
+        # yintercept = 90,
+        yintercept = 0.9,
         size = 0.5,
         linetype = "dashed",
         colour = "grey50"
@@ -3037,8 +3047,11 @@ plt_coverage_year_national_single_age <- function(
         limits = c(spec_ages[1], last(spec_ages))
       ) +
       scale_y_continuous(
-        breaks = scales::pretty_breaks(5),
-        limits = c(0, 108)
+        # breaks = scales::pretty_breaks(5),
+        # limits = c(0, 108)
+        label = scales::label_percent(),
+        breaks = seq(0, 1, by = 0.25), 
+        limits = c(0, 1)
       ) +
       # Setting colour palette
       scale_fill_manual(
@@ -3053,15 +3066,15 @@ plt_coverage_year_national_single_age <- function(
       # facet_wrap(. ~ area_name, ncol = 4) +
       facet_wrap(. ~ area_name, ncol = ceiling(n_plots / 4)) +
       # Minimal theme
-      theme_minimal() +
+      theme_bw() +
       # labs(tag = "B") +
       # Altering plot text size
       theme(
-        axis.text.y = element_blank(),
+        # axis.text.y = element_blank(),
         strip.text = element_text(size = 20, face = "bold"),
         strip.background = element_blank(),
         axis.title = element_text(size = 16),
-        panel.grid = element_blank(),
+        # panel.grid = element_blank(),
         plot.title = element_text(size = 22, hjust = 0.0),
         legend.text = element_text(size = 12),
         axis.text.x = element_text(size = 12, angle = 45, hjust = 1, vjust = 1),
