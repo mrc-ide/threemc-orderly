@@ -8,6 +8,7 @@
 library(orderly)
 library(dplyr)
 library(tidyr)
+library(parallel)
 
 #### Metadata ####
 
@@ -26,6 +27,12 @@ task <- "01e_new_final_ppc_models"
 
 # cluster_type <- "_4_tmbad"
 # cluster_type <- "_4_cppad"
+# cluster_type <- "_8_tmbad"
+# cluster_type <- "_8_cppad"
+# cluster_type <- "_12_tmbad"
+# cluster_type <- "_12_cppad"
+# cluster_type <- "_16_tmbad"
+# cluster_type <- "_16_cppad"
 cluster_type <- "_32_tmbad"
 # cluster_type <- "_32_cppad"
 # cluster_type <- "_mrc_tmbad"
@@ -42,7 +49,15 @@ pars_df_x <- paste0("pars_df", cluster_type)
 # TODO: Fill this in
 is_mrc <- grepl("mrc", cluster_type) # check if running on large cluster
 cluster_cores <- NULL
-if (is_mrc == FALSE) cluster_cores = ifelse(grepl("4", cluster_type), 4, 32)
+if (is_mrc == FALSE) {
+  cluster_cores = case_when(
+    grepl("4", cluster_type)  ~ 4, 
+    grepl("8", cluster_type)  ~ 8, 
+    grepl("16", cluster_type) ~ 16, 
+    TRUE                      ~ 32
+  )
+}
+
 config_args <- list(
   # cluster to use (mrc is large cluster, > 1TB memory)
   "cluster" = ifelse(
@@ -167,7 +182,7 @@ pars_df <- pars_df %>%
 # only run for parameters with successful models
 if (task != "01e2final_mod_and_ppc") {
   (names <- (unlist(mclapply(seq_len(nrow(pars_df)), function(i) {
-    message(100 * (i / nrow(pars_df)), "% completed")
+    
     is_paper <- TRUE
     # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
     #   is_paper <- FALSE
@@ -256,10 +271,10 @@ if (length(add_check_task) == 1) {
 assign(pars_df_x, pars_df)
 
 # save for later
-readr::write_csv(
-  pars_df, 
-  "remaining_tasks/01e_new_final_ppc_models.csv"
-)
+# readr::write_csv(
+#   pars_df, 
+#   "remaining_tasks/01e_new_final_ppc_models.csv"
+# )
 
 
 #### bundle orderly tasks #### 
@@ -271,6 +286,12 @@ bundles <- mclapply(seq_len(nrow(pars_df)), function(i) {
   # if (pars_df$cntry[i] %in% c("UGA", "MWI")) {
   #   is_paper <- FALSE 
   # }
+  
+  # return progress message
+  system(sprintf(
+    'echo "\n%s\n"', 
+    paste0(100 * (i / nrow(pars_df)), "% completed", collapse = "")
+  ))
   
   orderly::orderly_bundle_pack(
     path_bundles,
@@ -310,8 +331,8 @@ if (grepl("cppad", cluster_type)) {
 ctx <- context::context_save(
   path = root,
   packages = c(
-    "dplyr", "sf", "Matrix",
-    "data.table", "rlang", "ggplot2", "memuse", "readr"
+    "dplyr", "sf", "Matrix", "R.utils", "spdep", "scoringutils",
+    "loo", "data.table", "rlang", "ggplot2", "memuse", "readr"
   ),
   package_sources = conan::conan_sources(package_sources)
 )

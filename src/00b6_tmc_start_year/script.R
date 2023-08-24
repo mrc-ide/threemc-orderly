@@ -78,7 +78,8 @@ start_dates_final <-  start_dates %>%
     iso3 == "MWI" ~ 1978,
     iso3 == "UGA" ~ 1976,
     iso3 == "MOZ" ~ 1972,
-    iso3 == "GHA" ~ 1980, 
+    iso3 == "GHA" ~ 1985, 
+    iso3 == "CMR" ~ 1970, 
     TRUE          ~ year
   ))
 

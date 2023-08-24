@@ -29,6 +29,12 @@ check_task <- task
 
 # cluster_type <- "_4_tmbad"
 # cluster_type <- "_4_cppad"
+# cluster_type <- "_8_tmbad"
+# cluster_type <- "_8_cppad"
+# cluster_type <- "_12_tmbad"
+# cluster_type <- "_12_cppad"
+# cluster_type <- "_16_tmbad"
+# cluster_type <- "_16_cppad"
 cluster_type <- "_32_tmbad"
 # cluster_type <- "_32_cppad"
 # cluster_type <- "_mrc_tmbad"
@@ -45,7 +51,15 @@ pars_df_x <- paste0("pars_df", cluster_type)
 # TODO: Fill this in
 is_mrc <- grepl("mrc", cluster_type) # check if running on large cluster
 cluster_cores <- NULL
-if (is_mrc == FALSE) cluster_cores = ifelse(grepl("4", cluster_type), 4, 32)
+if (is_mrc == FALSE) {
+  cluster_cores = case_when(
+    grepl("4", cluster_type)  ~ 4, 
+    grepl("8", cluster_type)  ~ 8, 
+    grepl("16", cluster_type) ~ 16, 
+    TRUE                      ~ 32
+  )
+}
+
 config_args <- list(
   # cluster to use (mrc is large cluster, > 1TB memory)
   "cluster" = ifelse(
@@ -55,7 +69,10 @@ config_args <- list(
   ),
   # template to use
   "template" = ifelse(is_mrc, "MEM1024", "32Core"),
-  # if using 32Core template, how many cores to use (4 or 32) 
+  # "template" = ifelse(is_mrc, "MEM1024", "12Core"),
+  # "template" = ifelse(is_mrc, "MEM1024", "12and16Core"),
+  # "template" = ifelse(is_mrc, "MEM1024", "GeneralNodes")
+  # if using 32Core template, how many cores to use 
   "cores" = cluster_cores
 )
 
@@ -65,7 +82,7 @@ config_args <- list(
 # directory to save contexts
 # uses TMBad
 if (grepl("tmbad", cluster_type)) {
-  root <- "~/net/unaids-naomi/threemc-orderly/contexts_2"
+  root <- "~/net/unaids-naomi/threemc-orderly/contexts_3"
 # uses CppAD
 } else {
   root <- "~/net/unaids-naomi/threemc-orderly/contexts_4"
@@ -171,6 +188,10 @@ if (task == "01a_model_aggregate_spec_area_lev") {
 
 #### Perform Orderly Search for Outstanding Tasks ####
 
+# pars_df <- pars_df %>% 
+#   filter(cntry == "MOZ", inc_time_tmc == TRUE) %>% 
+#   slice(1)
+
 names_ran <- (unlist(mclapply(seq_len(nrow(pars_df)), function(i) {
   message(100 * (i / nrow(pars_df)), "% completed")
   is_paper <- TRUE
@@ -224,9 +245,9 @@ assign(pars_df_x, pars_df)
 
 # save for later
 # readr::write_csv(pars_df, "01final_modelling_remaining_tasks.csv")
-readr::write_csv(
-  "remaining_tasks/01final_modelling.csv"
-)
+# readr::write_csv(
+#   "remaining_tasks/01final_modelling.csv"
+# )
 
 #### bundle orderly tasks #### 
 
@@ -253,17 +274,17 @@ bundles <- mclapply(seq_len(nrow(pars_df)), function(i) {
   )
 }, mc.cores = n_cores)
 
+
 #### contexts ####
 
 # cluster config
 # config <- didehpc::didehpc_config(
 #   workdir = root,
-#   # cluster = "fi--didemrchnb", 
-#   cluster = "mrc", 
-#   # template = "32Core",
-#   template = "MEM1024"
-#   # cores = 32
-#   # cores = 4
+#   cluster = "fi--didemrchnb",
+#   # cluster = "mrc",
+#   template = "12Core",
+#   # template = "MEM1024"
+#   cores = 12
 # )
 config <- do.call(didehpc::didehpc_config, config_args)
 
@@ -283,7 +304,7 @@ if (grepl("cppad", cluster_type)) {
 ctx <- context::context_save(
   path = root,
   packages = c(
-    "dplyr", "sf",
+    "dplyr", "sf", "R.utils", "spdep",
     "data.table", "rlang", "ggplot2", "memuse"
   ),
   package_sources = conan::conan_sources(package_sources)

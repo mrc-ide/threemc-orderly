@@ -27,8 +27,14 @@ check_task <- task
 # - cores to use if not mrc (large cluster), 
 # - choice of TMBad or CppAD AD framework in threemc/TMB
 
-cluster_type <- "_4_tmbad"
+# cluster_type <- "_4_tmbad"
 # cluster_type <- "_4_cppad"
+# cluster_type <- "_8_tmbad"
+# cluster_type <- "_8_cppad"
+cluster_type <- "_12_tmbad"
+# cluster_type <- "_12_cppad"
+# cluster_type <- "_16_tmbad"
+# cluster_type <- "_16_cppad"
 # cluster_type <- "_32_tmbad"
 # cluster_type <- "_32_cppad"
 # cluster_type <- "_mrc_tmbad"
@@ -45,7 +51,14 @@ pars_df_x <- paste0("pars_df", cluster_type)
 # TODO: Fill this in
 is_mrc <- grepl("mrc", cluster_type) # check if running on large cluster
 cluster_cores <- NULL
-if (is_mrc == FALSE) cluster_cores = ifelse(grepl("4", cluster_type), 4, 32)
+if (is_mrc == FALSE) {
+  cluster_cores = case_when(
+    grepl("4", cluster_type)  ~ 4, 
+    grepl("8", cluster_type)  ~ 8, 
+    grepl("16", cluster_type) ~ 16, 
+    TRUE                      ~ 32
+  )
+}
 config_args <- list(
   # cluster to use (mrc is large cluster, > 1TB memory)
   "cluster" = ifelse(
@@ -55,7 +68,7 @@ config_args <- list(
   ),
   # template to use
   "template" = ifelse(is_mrc, "MEM1024", "32Core"),
-  # if using 32Core template, how many cores to use (4 or 32) 
+  # if using 32Core template, how many cores to use (8 or 32) 
   "cores" = cluster_cores
 )
 
@@ -108,8 +121,9 @@ iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE",
           "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE", "KEN", "ETH",
           "ZAF", "LBR", "GHA", "GMB", "NGA", "COD")
 # remove countries for which there is only a single survey
+# BFA has two surveys but the earlier one has no type info
 single_year_iso3 <- c(
-  "AGO", "CAF", "COD", "GAB", "GIN", "GMB", "NER", "SEN", "TGO"
+  "AGO", "CAF", "COD", "GAB", "GIN", "GMB", "NER", "SEN", "TGO", "BFA"
 )
 iso3 <- iso3[!iso3 %in% c(single_year_iso3, vmmc_iso3, no_type_iso3)]
 # iso3 <- iso3[!iso3 %in% c(single_year_iso3)]
@@ -118,8 +132,11 @@ iso3 <- iso3[!iso3 %in% c(single_year_iso3, vmmc_iso3, no_type_iso3)]
 # iso3 <- iso3[!iso3 %in% c("LSO", "BDI")]
 
 # for now, just do vmmc countries
-# iso3 <- vmmc_iso3
-iso3 <- c("LSO", "SWZ") # just do some for now!
+# iso3 <- vmmc_iso3 (way too many tasks to do this!!)
+# iso3 <- c("LSO", "SWZ") # LSO must be run on pocatello, fails here
+# iso3 <- "RWA"
+# iso3 <- "NAM"
+# iso3 <- "ZAF" # didn't run these
 # iso3 <- c("RWA", "NAM", "ZMB")
 # iso3 <- c("KEN", "ZAF", "MWI")
 # iso3 <- "MOZ" # run while KEN, ZAF, MWI are pending
@@ -138,8 +155,19 @@ iso3 <- c("LSO", "SWZ") # just do some for now!
 # iso3 <- iso3[6:7] # SLE + GHA, most failing, skipping for now! (still a lot failing, but not as many!)
 # iso3 <- iso3[8] # NGA, try at least (may be v large) (good news is that's the last one!!)
 
-# countries already completed
-# complete_iso3 <- c("KEN", "MOZ", "NAM", "RWA", "ZAF", "ZMB", "LSO", "SWZ")
+# new idea: Run non-VMMC countries, might have to change model spec for VMMCs!
+# all non-VMMC: 
+# reminder
+iso3 <- c("COG", "BEN", "BDI", "CMR", "TCD", "CIV", "MLI", "SLE", "GHA", "NGA")
+# Countries 
+# Countries that may run small models: COG, BFA, MLI, TCD, SLE
+# Think COG, BDI needs to be fit on pocatello
+# iso3 <- iso3[c(2:)]
+# iso3 <- c("BEN", "CMR") # almost all fitting! 
+iso3 <- c("TCD", "CIV")
+
+# countries already completed (null and void now unfortunately)
+# complete_iso3 <- c("SWZ")
 # iso3 <- iso3[!iso3 %in% complete_iso3]
 
 # Model calibration: Do grid searches over time related variance hyperpars
@@ -248,6 +276,9 @@ pars_df <- pars_df %>%
 
 #### Perform Orderly Search for Outstanding Tasks ####
 
+# pars_df <- pars_df %>% group_by(cntry) %>% slice(1)
+pars_df <- pars_df[1, ]
+
 # don't run already ran tasks
 names_ran <- unlist(mclapply(seq_len(nrow(pars_df)), function(i) {
   message(round(100 * (i / nrow(pars_df)), 3), "% completed")
@@ -345,8 +376,9 @@ if (grepl("cppad", cluster_type)) {
 ctx <- context::context_save(
   path = root,
   packages = c(
-    "orderly", "dplyr", "sf",
-    "data.table", "rlang", "ggplot2"
+    "orderly", "dplyr", "sf", "tidyr",
+    "data.table", "rlang", "ggplot2", "readr", 
+    "R.utils"
   ),
   package_sources = conan::conan_sources(package_sources)
 )
