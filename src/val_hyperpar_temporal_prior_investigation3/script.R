@@ -241,32 +241,32 @@ fit_proposal_model <- function(proposal_parameters, maps) {
   }
   
   # coverage
-  cov_plot <- ggplot(
-    out_spec_fixed,
-    aes(
-      x = circ_age,
-      y = cum_inc_mmcM,
-      ymin = cum_inc_mmcL,
-      ymax = cum_inc_mmcU,
-      group = as.factor(year),
-      colour = as.factor(year)
-    )
-  ) %>% 
-    common_plot_aspects()
-  
-  rates_plot <- ggplot(
-    out_spec_fixed,
-    aes(
-      x = circ_age,
-      y = rate_mmcM,
-      ymin = rate_mmcL,
-      ymax = rate_mmcU,
-      group = as.factor(year),
-      colour = as.factor(year)
-    )
-  ) %>% 
-    common_plot_aspects() + 
-    labs(y = "Rate")
+  # cov_plot <- ggplot(
+  #   out_spec_fixed,
+  #   aes(
+  #     x = circ_age,
+  #     y = cum_inc_mmcM,
+  #     ymin = cum_inc_mmcL,
+  #     ymax = cum_inc_mmcU,
+  #     group = as.factor(year),
+  #     colour = as.factor(year)
+  #   )
+  # ) %>% 
+  #   common_plot_aspects()
+  # 
+  # rates_plot <- ggplot(
+  #   out_spec_fixed,
+  #   aes(
+  #     x = circ_age,
+  #     y = rate_mmcM,
+  #     ymin = rate_mmcL,
+  #     ymax = rate_mmcU,
+  #     group = as.factor(year),
+  #     colour = as.factor(year)
+  #   )
+  # ) %>% 
+  #   common_plot_aspects() + 
+  #   labs(y = "Rate")
   
   # perform posterior predictive checks on model
   # ppc_fixed <- threemc_ppc(
@@ -295,7 +295,7 @@ fit_proposal_model <- function(proposal_parameters, maps) {
   ppc_fixed$summary_stats$replacement_pars <- replacement_pars
   
   return(list("fit" = fit_fixed,
-              "plots" = list(cov_plot, rates_plot),
+              # "plots" = list(cov_plot, rates_plot),
               "out" = out_spec_fixed,
               "ppc" = ppc_fixed))
 }
