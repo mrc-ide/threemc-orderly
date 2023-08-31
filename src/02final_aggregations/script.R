@@ -4,6 +4,19 @@
 save_dir <- "artefacts/"
 threemc::create_dirs_r(save_dir) # ensure save_dir exists; create if not
 
+# age groups to aggregate for
+age_groups <- c(
+  "0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", 
+  "35-39", "40-44", "45-49", "50-54", "54-59", "0+", "10+", 
+  "15+", "0-14", "10-24", "15-24", "10-29", "15-29", "10-39", 
+  "15-39", "10-49", "15-49", "30-49"
+)
+
+# split age groups into 3 to run three times
+age_group_splits <- split(
+  seq_along(age_groups), sort(seq_along(age_groups)) %% 3
+)
+
 #### Preparing location/shapefile information ####
 
 # load shapefile
@@ -113,17 +126,37 @@ types <- c("probability", "incidence", "prevalence")
 # run aggregations for each combination of age_vars and types
 lapply(seq_along(age_vars$inputs), function(i) {
   lapply(seq_along(types), function(j) {
-    spec_results <-  threemc_aggregate(
-      .data       = results,
-      fit         = fit_no_prog,
-      areas       = areas,
-      populations = populations,
-      age_var     = age_vars$inputs[[i]],
-      type        = types[j],
-      area_lev    = area_lev,
-      N           = N,
-      prev_year   = 2006 # year to compare with for prevalence
-    )
+    # split age groups calculations to avoid large vectors
+    if (cntry %in% c("GHA", "COD") && age_vars$inputs[[i]] == "age_group") {
+      spec_results <- bind_rows(lapply(age_group_splits, function(x) {
+        threemc_aggregate(
+          .data       = results,
+          fit         = fit_no_prog,
+          areas       = areas,
+          populations = populations,
+          age_var     = age_vars$inputs[[i]],
+          type        = types[j],
+          area_lev    = area_lev,
+          N           = N,
+          prev_year   = 2006, # year to compare with for prevalence
+          age_groups = age_groups[x]
+        )
+      })) %>% 
+        arrange(area_id, year, type, age_group)
+      
+    } else {
+      spec_results <-  threemc_aggregate(
+        .data       = results,
+        fit         = fit_no_prog,
+        areas       = areas,
+        populations = populations,
+        age_var     = age_vars$inputs[[i]],
+        type        = types[j],
+        area_lev    = area_lev,
+        N           = N,
+        prev_year   = 2006 # year to compare with for prevalence
+      )
+    }
     readr::write_csv(
       x = spec_results,
       file = paste0(

@@ -1232,6 +1232,75 @@ plt_age_coverage_multi_years <- function(
 
 # fig 6, plotting distributions/ridges for mean circ age for TMIC and MMC-nT
 # for different areas
+
+# calculations (needs to be reused elsewhere)
+calc_circ_age_ridge <- function(
+    results_age,
+    areas,
+    spec_years = last(results_age$year),
+    area_levels = unique(results_age$area_level),
+    spec_model = "No program data",
+    spec_ages = 0:30,
+    spec_types = c("MCs performed", "MMCs performed", "TMCs performed")
+    # n_plots = 8
+) {
+
+    # temp fix
+    # if (length(spec_ages) != 31 || !all(spec_ages == 0:30)) {
+    #   spec_ages <- 0:30
+    # }
+
+    # Keep relevant information (also calculate density from mean)
+    tmp <- results_age %>%
+        # Only keeping relevant data
+        filter(
+          # type %in% c("MMC-nTs performed", "TMICs performed") ,
+          # type %in% c("MMCs performed", "TMCs performed") ,
+          type %in% spec_types,
+          area_level %in% area_levels,
+          model == spec_model,
+          year %in% spec_years,
+          age %in% spec_ages
+          # area_level %in% c(0:1)# ,
+          # model == "With program data"
+        ) %>%
+        # Getting density for the ridge plot
+        # Grouping for normalising
+        group_by(area_id, year, type) %>%
+        # Estimating density
+        mutate(density = mean / (2 * sum(mean))) %>%
+        ungroup() %>%
+        # Altering labels for the plot
+        # mutate(type = ifelse(grepl("MMC-nT", type), "Medical", "Traditional")) 
+        # mutate(type = ifelse(grepl("MMC", type), "Medical", "Traditional")) %>% 
+        # order_area_name()
+       identity()
+    
+    stopifnot(nrow(tmp) > 0)
+
+    tmp2 <- tmp %>%
+        group_by(area_id, area_name, type, year) %>%
+        summarise(
+            average_age       = weighted.mean(age, w = density),
+            average_age_lower = weighted.mean(age, w = lower),
+            average_age_upper = weighted.mean(age, w = upper),
+            .groups = "drop"
+        )
+
+    # add in required columns from areas and order area names
+    tmp <- add_area_info(tmp, areas)
+    tmp2 <- add_area_info(tmp2, areas)
+    
+    # split by area level and number of desired plots
+    # tmp <- split_area_level(tmp, n_plots = n_plots, years = TRUE)
+    # tmp2 <- split_area_level(tmp2, n_plots = n_plots, years = TRUE)
+       
+    return(list(
+      "density_age_at_circ" = list(tmp), "mean_age_at_circ" = list(tmp2)
+    ))
+}
+
+
 plt_circ_age_ridge <- function(
     results_age,
     areas,
@@ -1246,51 +1315,44 @@ plt_circ_age_ridge <- function(
 ) {
 
     # temp fix
-    if (length(spec_ages) != 31 || !all(spec_ages == 0:30)) {
-      spec_ages <- 0:30
+    # if (length(spec_ages) != 31 || !all(spec_ages == 0:30)) {
+    #   spec_ages <- 0:30
+    # }
+  
+    # perform calculations for plots (calc density and mean circ ages)
+    calcs <- calc_circ_age_ridge(
+      results_age,
+      areas,
+      spec_years,
+      area_levels,
+      spec_model,
+      spec_ages, 
+      spec_types = c("MMCs performed", "TMCs performed"),
+      n_plots = n_plots # currently an unused arg!
+    )
+
+    # calcs <- lapply(calcs, function(x) {
+    #   mutate(x, type = ifelse(grepl("MMC", type), "Medical", "Traditional"))
+    # })
+    
+    change_type_label <- function(lst) {
+      if (is.data.frame(lst[[1]])) {
+        return(mutate(
+          lst[[1]], 
+          type = ifelse(grepl("MMC", type), "Medical", "Traditional")
+        ))
+      } else {
+        return(change_type_label(lst[[1]]))
+      }
     }
-
-    # Keeping relevant information
-    tmp <- results_age %>%
-        # Only keeping relevant data
-        filter(
-            type %in% c("MMC-nTs performed", "TMICs performed") ,
-            area_level %in% area_levels,
-            model == spec_model,
-            year %in% spec_years,
-            age %in% spec_ages
-            # area_level %in% c(0:1)# ,
-            # model == "With program data"
-        ) %>%
-    # Getting density for the ridge plot
-        # Grouping for normalising
-        group_by(area_id, year, type) %>%
-        # Estimating density
-        mutate(density = mean / (2 * sum(mean))) %>%
-        ungroup() %>%
-        # Altering labels for the plot
-        mutate(type = ifelse(grepl("MMC-nT", type), "Medical", "Traditional")) #  %>%
-        # order_area_name()
-
-    tmp2 <- tmp %>%
-        group_by(area_id, area_name, type, year) %>%
-        summarise(
-            average_age = weighted.mean(age, w = density),
-            average_age_lower = weighted.mean(age, w = lower),
-            average_age_upper = weighted.mean(age, w = upper),
-            .groups = "drop"
-        )
-
-    # add in required columns from areas and order area names
-    tmp <- add_area_info(tmp, areas)
-    tmp2 <- add_area_info(tmp2, areas)
-
-    # split by area level and number of desired plots
-    # tmp <- split_area_level(tmp, n_plots = n_plots, years = TRUE)
-    # tmp2 <- split_area_level(tmp2, n_plots = n_plots, years = TRUE)
-    tmp <- list(tmp)
-    tmp2 <- list(tmp2)
-
+    
+    calcs <- lapply(calcs, function (x) list(change_type_label(x)))
+    
+    # tmp <- calcs$density_age_at_circ
+    tmp <- calcs[[1]]
+    # tmp2 <- calcs$mean_age_at_circ
+    tmp2 <- calcs[[2]]
+    
     plots <- lapply(seq_along(tmp), function(i) {
         # lapply(seq_along(tmp[[i]]), function(j) {
           # lapply(seq_along(tmp[[i]][[j]]), function(k) {
@@ -2780,6 +2842,7 @@ plt_coverage_year_national_single_age <- function(
     spec_year,
     spec_model = "No program data",
     # esa_wca_split = FALSE,
+    ssa_grid = NULL,
     main = NULL,
     str_save = NULL,
     save_width = NULL,
@@ -2903,6 +2966,34 @@ plt_coverage_year_national_single_age <- function(
     dat_all <- bind_rows(dat_all, missing_dat_all)
   }
   
+  # add in missing countries
+  missing_cntries <- ssa_grid$name[!ssa_grid$name %in% dat_all$area_name]
+  if (!is.null(ssa_grid) && length(missing_cntries) > 0) {
+    
+    # dummy dataframe for missing countries
+    dat_missing <- dat_all %>% 
+      distinct(year, age) %>% 
+      tidyr::crossing("area_name" = missing_cntries) %>% 
+      mutate(mean.y = 1, type = "Missing", area_level = 0)
+    
+    # add to plot data 
+    dat_all <- bind_rows(dat_all, dat_missing)
+      
+    # factor levels
+    levs <- c(
+      "Medical Male Circumcision", 
+      "Traditional Male Circumcision", 
+      "Male Circumcision",
+      "Missing"
+    )
+  } else {
+    levs <- c(
+      "Medical Male Circumcision", 
+      "Traditional Male Circumcision", 
+      "Male Circumcision"
+    )
+  }
+  
   dat_all <- dat_all %>%
     arrange(area_name) %>%
     mutate(
@@ -2916,13 +3007,14 @@ plt_coverage_year_national_single_age <- function(
       )# ,
       # type = forcats::fct_drop(type)
     ) %>% 
-    mutate(
-      type = factor(
-        type, 
-        levels = c("Medical Male Circumcision", 
-                   "Traditional Male Circumcision", 
-                   "Male Circumcision")
-      )
+    mutate(type = factor(type, levels = levs))
+  
+  # fill in whitespace at end of each plot by using same cov for max age + 1
+  dat_all <- dat_all %>% 
+    bind_rows(
+      dat_all %>% 
+        filter(age == max(age)) %>% 
+        mutate(age = (max(age) + 1))
     )
   
   dat_all <- purrr::flatten(split_area_level(dat_all, n_plots = n_plots))
@@ -2950,6 +3042,10 @@ plt_coverage_year_national_single_age <- function(
       manual_fill <- c(manual_fill, "#5e4fa2")
     }
     
+    if (!is.null(ssa_grid) && length(missing_cntries) > 0) {
+     manual_fill <- c(manual_fill, "lightgrey") 
+    }
+    
     all_data %>%
       ggplot(
         aes(
@@ -2961,6 +3057,12 @@ plt_coverage_year_national_single_age <- function(
           fill = type
         )
       ) +
+      geom_area(
+        position = "stack", 
+        data = all_data
+      ) + 
+      # facet_wrap(. ~ area_name, ncol = 4) +
+      facet_wrap(. ~ area_name, ncol = ceiling(n_plots / 4)) +
       # Adding target line to prevalence
       geom_hline(
         # yintercept = 80,
@@ -2970,19 +3072,6 @@ plt_coverage_year_national_single_age <- function(
         linetype = "dashed",
         colour = "grey50"
       ) +
-      # Prevalence as area plot
-      # geom_area(
-      #   position = "stack",
-      #   data = filter(all_data, light == "Surveyed")
-      # ) +
-      # geom_area(
-      #   position = "stack",
-      #   data = filter(all_data, light == "Projected")
-      # ) +
-      geom_area(
-        position = "stack", 
-        data = all_data
-      ) + 
       # add alpha and associated legend
       # scale_alpha_manual(values = c("Surveyed" = 1, "Projected" = 0.5)) +
       guides(
@@ -2990,68 +3079,19 @@ plt_coverage_year_national_single_age <- function(
           fill = wesanderson::wes_palette("Zissou1", 1)
         ))
       ) +
-      # annotate plots with coverage at first year
-      # geom_text(
-      #   data = mc_data %>%
-      #     filter(type == "Male Circumcision (MC)", year == spec_years[1]) %>%
-      #     select(area_id, area_name, year, mean.y),
-      #   aes(x = spec_years[1],
-      #       y = 100 * mean.y,
-      #       label = if_else(year %in% spec_years[1],
-      #                       scales::percent(mean.y, 1),
-      #                       NA_character_)),
-      #   inherit.aes = FALSE,
-      #   fontface = "bold",
-      #   nudge_x = 1,
-      #   colour = "grey30",
-      #   size = 6,
-      #   nudge_y = -1,
-      #   show.legend = FALSE
-      # ) +
-      # # annotate plots with coverage at last year
-      # geom_text(
-      #   data = mc_data %>%
-      #     filter(type == "Male Circumcision (MC)", year == last(spec_years)) %>%
-      #     select(area_id, area_name, year, mean.y),
-      #   aes(
-      #     x = last(spec_years),
-      #     y = 100 * mean.y,
-      #     label = if_else(
-      #       year %in% c(last(spec_years)),
-      #       scales::percent(mean.y, 1),
-      #       NA_character_
-      #     )# ,
-      #     # fill = NA
-      #   ),
-      #   inherit.aes = FALSE,
-      #   fontface = "bold",
-      #   # vjust = 0,
-      #   # vjust = 1,
-      #   nudge_x = -1,
-      #   colour = "grey30",
-      #   # size = 6,
-      #   # size = 17,
-      #   size = 6,
-      #   # nudge_y = 7,
-      #   # nudge_y = 2,
-      #   nudge_y = -1,
-      #   show.legend = FALSE
-      # ) +
-      # Setting for the axes
-      # scale_x_continuous(
-      #   breaks = seq(spec_years[1], last(spec_years), by = 2),
-      #   limits = c(spec_years[1] - 0.25, last(spec_years) + 0.75)
-      # ) +
+      #### 
       scale_x_continuous(
         breaks = seq(spec_ages[1], last(spec_ages), by = 10),
-        limits = c(spec_ages[1], last(spec_ages))
+        limits = c(spec_ages[1], last(spec_ages)),
+        expand = c(0, 0)
       ) +
       scale_y_continuous(
         # breaks = scales::pretty_breaks(5),
         # limits = c(0, 108)
         label = scales::label_percent(),
         breaks = seq(0, 1, by = 0.25), 
-        limits = c(0, 1)
+        limits = c(0, 1), 
+        expand = c(0, 0)
       ) +
       # Setting colour palette
       scale_fill_manual(
@@ -3063,8 +3103,6 @@ plt_coverage_year_national_single_age <- function(
            y = "Circumcision Coverage (%)",
            alpha = "",
            fill = "") +
-      # facet_wrap(. ~ area_name, ncol = 4) +
-      facet_wrap(. ~ area_name, ncol = ceiling(n_plots / 4)) +
       # Minimal theme
       theme_bw() +
       # labs(tag = "B") +
