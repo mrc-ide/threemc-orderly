@@ -177,6 +177,12 @@ dat_tmb <- threemc_prepare_model_data(
   inc_time_tmc      = inc_time_tmc
 )
 
+# temporary fix: need to fix threemc_prepare_model_data to use is_type as "type_info"
+if (dat_tmb$type_info != is_type) {
+  print("Error in determining whether type info is available in function")
+  dat_tmb$type_info <- is_type
+}
+
 #### Initialise Parameters and define mapped hyperparameters ####
 
 # initial (AR 1) hyperparameters
