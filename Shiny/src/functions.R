@@ -877,6 +877,288 @@ plt_coverage_map <- function(
     }
 }
 
+# Plot Map (Fig 3), updated to include different colouring for change 
+# plot. Should work for both single countries and all of SSA
+# keep old function above for posterity
+plt_coverage_map_change <- function(
+    results_agegroup, 
+    areas, 
+    lake_vic = NULL, 
+    colourPalette, # for coverages
+    colourPalette2, # for change in coverages
+    spec_age_group, 
+    spec_years, 
+    spec_model,
+    spec_main_title    = NULL,
+    spec_countries     = NULL, 
+    results_area_level = NULL, 
+    country_area_level = NULL,
+    inc_difference     = TRUE,
+    str_save           = NULL, 
+    save_width         = 6.3, 
+    save_height        = 6.5
+) {
+  
+  # add iso3 column, if not present
+  if (!"iso3" %in% names(results_agegroup)) {
+    results_agegroup$iso3 <- substr(results_agegroup$area_id, 0, 3)
+  }
+  
+  # take only required columns in areas for later joining with results
+  areas_join <- areas %>%
+    dplyr::select(iso3, area_id, area_name, area_level)
+  
+  # only model specific countries, if desired
+  if (!is.null(spec_countries)) {
+    results_agegroup <- results_agegroup %>% 
+      filter(iso3 %in% spec_countries)
+    
+    areas_join <- areas_join %>% 
+      filter(iso3 %in% spec_countries)
+  }
+  
+  # Subsetting results
+  if (!is.null(results_area_level)) {
+    results_agegroup <- results_agegroup %>%
+      filter(area_level == results_area_level)
+  } else {
+    results_agegroup <- results_agegroup %>%
+      group_by(iso3) %>%
+      filter(area_level == max(area_level)) %>%
+      ungroup()
+  }
+  tmp <- results_agegroup %>%
+    filter(
+      area_id != "",
+      year %in%       spec_years,
+      age_group ==    spec_age_group,
+      # area_level <=   results_area_level,
+      model ==        spec_model,
+      type %in%       c("MC coverage", "MMC coverage", "TMC coverage")
+    )
+  
+  # Create dummy rows of NAs for missing countries - want them grey in map
+  missing_iso3 <- unique(
+    areas_join$iso3[!areas_join$iso3 %in% results_agegroup$iso3]
+  )
+  
+  tmp_missing <- tidyr::crossing(
+    "iso3" = missing_iso3, 
+    "age_group" = tmp$age_group, 
+    "year" = tmp$year, 
+    "type" = tmp$type
+  ) %>% 
+    left_join(areas_join, by = "iso3", relationship = "many-to-many")
+  
+  # Merge to shapefiles
+  tmp <- tmp %>% 
+    select(-matches("area_name")) %>%
+    left_join(areas_join) %>% 
+    bind_rows(tmp_missing)
+  
+  tmp <- tmp %>% 
+    # filter out areas with missing iso3, which cause errors with below
+    filter(!is.na(iso3)) %>%
+    # take maximum area level for known regions
+    group_by(iso3) %>%
+    filter(area_level == max(area_level, na.rm = TRUE)) %>%
+    ungroup() %>%
+    # Altering labels for the plot
+    dplyr::mutate(
+      type = ifelse(grepl("MMC", type), "Medical",
+                    ifelse(grepl("TMC", type), "Traditional", "Total"))
+    ) %>%
+    # change data to sf object
+    st_as_sf()
+  
+  # filter overlaying area shapes for specified area level
+  areas_plot <- areas
+  if (!is.null(country_area_level)) {
+    areas_plot <- areas_plot %>%
+      filter(area_level == country_area_level)
+  }
+  
+  # repair polygons which may be invalid
+  tmp <- st_make_valid(tmp)
+  areas_plot <- st_make_valid(areas_plot)
+  
+  # Add difference, if specified
+  tmp$year <- as.factor(tmp$year)
+  if (inc_difference == TRUE) {
+  
+    # split by country, take spec_years, calculate difference between the two
+    diff_df <- tmp %>%
+      arrange(year) %>%
+      group_split(area_id, model, type, age_group)
+    
+    diff_df <- lapply(diff_df, function(x) {
+      # take negative difference for TMC (expecting decline)
+      # Now colouring % Change differently to total coverage
+      # if (all(x$type == "Traditional")) x <- x[nrow(x):1, ]
+      x <- x%>% 
+        # don't allow change to be < 0
+        # mutate(across(mean:upper, ~ max(0, diff(.)))) %>% 
+        mutate(across(mean:upper, ~ case_when(
+          type == "Traditional" ~ diff(.), 
+          TRUE                  ~ max(0, diff(.))
+        ))) %>% 
+        # take final line, only this shows difference
+        slice(n())
+    }) %>%
+      bind_rows() %>%
+      mutate(
+        year = "% Change"
+        # year = ifelse(type == "Traditional", "-% Change"  ,"% Change")
+      )
+    
+    levels <- c(spec_years, unique(diff_df$year))
+    tmp <- bind_rows(tmp, diff_df) %>%
+      mutate(year = factor(year, levels = levels))
+  
+  # finally, change 0s for countries with no type info to NAs
+  tmp <- tmp %>% 
+    mutate(mean = ifelse(
+      iso3 %in% no_type_iso3 & type != "Total", NA, mean
+    ))
+  }
+  
+  # for testing plot
+  # spec_results <- tmp
+  # spec_areas <- areas_plot
+  
+  # rm(results_agegroup1, areas1); gc()
+  
+  map_plot <- function(
+    spec_results, spec_areas, lake_vic = NULL, colourPalette, colourPalette2
+  ) {
+    
+    spec_results$type <- factor(
+      spec_results$type, 
+      levels = c("Total", "Medical", "Traditional")
+    )
+    
+    spec_results_change <- filter(spec_results, year == "% Change")
+    spec_results_year <- filter(spec_results, year != "% Change")
+    
+    p <- ggplot() +
+      geom_sf(
+        data = spec_results_year,
+        aes(fill = mean), 
+        size = 0.5,
+        colour = NA
+      ) +
+      labs(fill = "") +
+      scale_fill_gradientn(
+        colours = colourPalette,
+        na.value = "grey",
+        breaks = seq(0, 1, by = 0.1),
+        limits = c(0, 1),
+        label = scales::label_percent(accuracy = 1, trim = FALSE), 
+        guide = guide_colourbar(
+          # title = " Percent circumcised, 15–29 years",
+          title = paste0(" Percent circumcised, ", spec_age_group, " years"),
+          direction = "horizontal",
+          label = TRUE,
+          draw.ulim = TRUE,
+          draw.llim = TRUE,
+          frame.colour = "black",
+          ticks = TRUE,
+          barheight = 1,
+          barwidth = 17,
+          title.position = "bottom", 
+          plot.background = element_rect(fill = "white", colour = "white")
+        )
+      ) +
+      ggnewscale::new_scale_fill() +
+      # colour percentage change differently
+      geom_sf(
+        data = spec_results_change,
+        aes(fill = mean),
+        size = 0.5,
+        colour = NA
+      ) +
+      geom_sf(
+        data = spec_areas,
+        colour = "black",
+        size = 0.5,
+        fill = NA
+      )
+    
+    if (!is.null(lake_vic)) {
+      p <- p + 
+        geom_sf(
+          data   = lake_vic, 
+          colour = "lightblue", 
+          fill   = "lightblue",
+          size   = 0.5
+        )
+    }
+    p <- p + 
+      labs(fill = "") +
+      ## ggtitle("Circumcision coverage 2006-2020, 15-29 year olds") + 
+      scale_fill_gradientn(
+        colours = colourPalette2,
+        na.value = "grey",
+        # breaks = seq(-0.2, 0.5, by = 0.1), 
+        breaks = seq(-0.3, 0.7, by = 0.2), 
+        # breaks = sort(c(seq(-0.3, 0.7, by = 0.2), 0)),
+        # limits = c(-0.2, 0.5),
+        limits = c(-0.3, 0.7),
+        label = scales::label_percent(accuracy = 1, trim = TRUE),
+        guide = guide_colourbar(
+          # title = "Absolute change, 2006–2020",
+          title = paste0("Absolute change, ", spec_years[1], "-", spec_years[2]),
+          direction = "horizontal",
+          label = TRUE, 
+          draw.ulim = TRUE,
+          draw.llim = TRUE,
+          frame.colour = "black", 
+          ticks = TRUE, 
+          barheight = 1,
+          # barwidth = 10,
+          barwidth = 10,
+          title.position = "bottom"
+        )
+      ) +
+      facet_grid(type ~ year, switch = "y") + 
+      theme_minimal(base_size = 9) +
+      theme(
+        strip.text    = element_text(size = rel(1.1), face = "bold"), 
+        legend.text   = element_text(size = rel(0.75)),
+        legend.title = element_text(size = rel(1.0), face = "bold", hjust = 0.5),
+        axis.text       = element_blank(),
+        axis.ticks      = element_blank(),
+        legend.position = "bottom",
+        panel.grid      = element_blank(),
+        panel.spacing   = unit(0.01, "lines"), # make plot as "dense" as possible
+        plot.background = element_rect(fill = "white", colour = "white")
+      )
+  }
+  
+  plot <- map_plot(tmp, areas_plot, lake_vic, colourPalette, colourPalette2)
+  
+  # add title, if desired
+  if (!is.null(spec_main_title)) {
+   plot <- plot + 
+     ggtitle(spec_main_title) + 
+     theme(plot.title = element_text(size = rel(1.3), hjust = 0.5))
+  }
+  
+  # If desired, save plots, else, return them ("ungrobbed")
+  if (!is.null(str_save)) {
+    # plots <- gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
+    ggsave(
+      filename = str_save,
+      plot     = plot,
+      width    = save_width,
+      height   = save_height,
+      units    = "in"
+    )
+  } else {
+    return(plot)
+  }
+}
+
 
 # Plot MC coverage by year, split by type (figure 4)
 plt_area_facet_coverage <- function(
