@@ -1601,8 +1601,8 @@ calc_circ_age_ridge <- function(
       tmp <- list(tmp)
       tmp2 <- list(tmp2)
     } else {
-      tmp <- split_area_level(tmp, n_plots = n_plots, years = TRUE)
-      tmp2 <- split_area_level(tmp2, n_plots = n_plots, years = TRUE)
+      tmp <- split_area_level(tmp,   n_plots = n_plots, years = FALSE)
+      tmp2 <- split_area_level(tmp2, n_plots = n_plots, years = FALSE)
     }
        
     return(list(
@@ -1645,14 +1645,18 @@ plt_circ_age_ridge <- function(
     #   mutate(x, type = ifelse(grepl("MMC", type), "Medical", "Traditional"))
     # })
     
+    # function to change type label in list items
     change_type_label <- function(lst) {
       if (is.data.frame(lst[[1]])) {
-        return(mutate(
-          lst[[1]], 
-          type = ifelse(grepl("MMC", type), "Medical", "Traditional")
-        ))
+        return(lapply(lst, function(x) {
+          x %>% 
+            mutate(
+              type = ifelse(grepl("MMC", type), "Medical", "Traditional")
+            )
+        }))
       } else {
-        return(change_type_label(lst[[1]]))
+        # return(change_type_label(lst))
+        return(lapply(lst, change_type_label))
       }
     }
     
@@ -1663,80 +1667,164 @@ plt_circ_age_ridge <- function(
     # tmp2 <- calcs$mean_age_at_circ
     tmp2 <- calcs[[2]]
     
+    plot_fun <- function(plt_data, plt_data2) {
+      spec_title <- paste(
+        plt_data$year[1],
+        plt_data$iso3[1],
+        plt_data$area_level[1],
+        plt_data$area_level_label[1],
+        sep = ", "
+      )
+      
+      ggplot(plt_data,
+             aes(x = age,
+                 y = area_name,
+                 height = density,
+                 fill = type,
+                 colour = type)) +
+        ggridges::geom_density_ridges(
+          stat = "identity",
+          scale = 1,
+          alpha = 0.7,
+          colour = NA
+        )  +
+        # Adding average age of circumcision
+        geom_point(data = plt_data2,
+                   aes(x = average_age,
+                       y = as.integer(area_name) - 0.05,
+                       colour = type),
+                   inherit.aes = FALSE,
+                   show.legend = FALSE) +
+        # Adding uncertainty interval of average age of circumcision
+        geom_segment(data = plt_data2,
+                     aes(x = average_age_lower,
+                         xend = average_age_upper,
+                         y = as.integer(area_name) - 0.05,
+                         yend = as.integer(area_name) - 0.05,
+                         colour = type),
+                     inherit.aes = FALSE,
+                     show.legend = FALSE) +
+        # Colour palette
+        scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
+        scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
+        # Setting theme
+        theme_minimal() +
+        # Splitting by circumcision type
+        # facet_grid(. ~ type) +
+        # Setting labels
+        ggtitle(spec_title) +
+        labs(y = NULL,
+             x = "Age at circumcision",
+             colour = NULL,
+             fill = NULL) +
+        # Changing plot themes
+        theme(
+          axis.title = element_text(size = 24),
+          axis.text = element_text(size = 20, face = "bold"),
+          # axis.text.x = element_text(size = 20, face = "bold"),
+          # axis.text.y = element_text(size = 16),
+          plot.title = element_text(size = 30, hjust = 0.5),
+          strip.text = element_text(size = 16),
+          strip.background = element_blank(),
+          legend.title = element_text(size = 16),
+          legend.text = element_text(size = 24),
+          legend.position = "bottom",
+          panel.spacing = unit(0.2, "lines")
+        )
+    }
+    
+    # plots <- lapply(seq_along(tmp), function(i) {
+    #     # lapply(seq_along(tmp[[i]]), function(j) {
+    #       # lapply(seq_along(tmp[[i]][[j]]), function(k) {
+    # 
+    #         # plt_data <- tmp[[i]][[j]][[k]]
+    #         # plt_data2 <- tmp2[[i]][[j]][[k]]
+    #         plt_data <- tmp[[i]]
+    #         plt_data2 <- tmp2[[i]]
+    # 
+    #         spec_title <- paste(
+    #           plt_data$year[1],
+    #           plt_data$iso3[1],
+    #           plt_data$area_level[1],
+    #           plt_data$area_level_label[1],
+    #           sep = ", "
+    #         )
+    # 
+    #         ggplot(plt_data,
+    #                aes(x = age,
+    #                    y = area_name,
+    #                    height = density,
+    #                    fill = type,
+    #                    colour = type)) +
+    #           ggridges::geom_density_ridges(
+    #             stat = "identity",
+    #             scale = 1,
+    #             alpha = 0.7,
+    #             colour = NA
+    #           )  +
+    #           # Adding average age of circumcision
+    #           geom_point(data = plt_data2,
+    #                      aes(x = average_age,
+    #                          y = as.integer(area_name) - 0.05,
+    #                          colour = type),
+    #                      inherit.aes = FALSE,
+    #                      show.legend = FALSE) +
+    #           # Adding uncertainty interval of average age of circumcision
+    #           geom_segment(data = plt_data2,
+    #                        aes(x = average_age_lower,
+    #                            xend = average_age_upper,
+    #                            y = as.integer(area_name) - 0.05,
+    #                            yend = as.integer(area_name) - 0.05,
+    #                            colour = type),
+    #                        inherit.aes = FALSE,
+    #                        show.legend = FALSE) +
+    #           # Colour palette
+    #           scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
+    #           scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
+    #           # Setting theme
+    #           theme_minimal() +
+    #           # Splitting by circumcision type
+    #           # facet_grid(. ~ type) +
+    #           # Setting labels
+    #           ggtitle(spec_title) +
+    #           labs(y = NULL,
+    #                x = "Age at circumcision",
+    #                colour = NULL,
+    #                fill = NULL) +
+    #           # Changing plot themes
+    #           theme(
+    #             axis.title = element_text(size = 24),
+    #             axis.text = element_text(size = 20, face = "bold"),
+    #             # axis.text.x = element_text(size = 20, face = "bold"),
+    #             # axis.text.y = element_text(size = 16),
+    #             plot.title = element_text(size = 30, hjust = 0.5),
+    #             strip.text = element_text(size = 16),
+    #             strip.background = element_blank(),
+    #             legend.title = element_text(size = 16),
+    #             legend.text = element_text(size = 24),
+    #             legend.position = "bottom",
+    #             panel.spacing = unit(0.2, "lines")
+    #           )
+    #       # })
+    #     # })
+    # })
+    
+    # recursively fit plots
+    # TODO: This is repeated in other functions; have as it's own fun!
+    recursive_plot_fun <- function(plt_data1, plt_data2, ...) {
+    if (!inherits(plt_data1, "data.frame")) {
+      lapply(seq_along(plt_data1), function(i) {
+        recursive_plot_fun(plt_data1[[i]], plt_data2[[i]], ...)
+      })
+     } else {
+      plot_fun(plt_data1, plt_data2, ...)
+     }
+    }
+  
+    # plot for each (nested) loop
+    # plots <- recursive_plot_fun(tmp1, tmp2)
     plots <- lapply(seq_along(tmp), function(i) {
-        # lapply(seq_along(tmp[[i]]), function(j) {
-          # lapply(seq_along(tmp[[i]][[j]]), function(k) {
-
-            # plt_data <- tmp[[i]][[j]][[k]]
-            # plt_data2 <- tmp2[[i]][[j]][[k]]
-            plt_data <- tmp[[i]]
-            plt_data2 <- tmp2[[i]]
-
-            spec_title <- paste(
-              plt_data$year[1],
-              plt_data$iso3[1],
-              plt_data$area_level[1],
-              plt_data$area_level_label[1],
-              sep = ", "
-            )
-
-            ggplot(plt_data,
-                   aes(x = age,
-                       y = area_name,
-                       height = density,
-                       fill = type,
-                       colour = type)) +
-              ggridges::geom_density_ridges(
-                stat = "identity",
-                scale = 1,
-                alpha = 0.7,
-                colour = NA
-              )  +
-              # Adding average age of circumcision
-              geom_point(data = plt_data2,
-                         aes(x = average_age,
-                             y = as.integer(area_name) - 0.05,
-                             colour = type),
-                         inherit.aes = FALSE,
-                         show.legend = FALSE) +
-              # Adding uncertainty interval of average age of circumcision
-              geom_segment(data = plt_data2,
-                           aes(x = average_age_lower,
-                               xend = average_age_upper,
-                               y = as.integer(area_name) - 0.05,
-                               yend = as.integer(area_name) - 0.05,
-                               colour = type),
-                           inherit.aes = FALSE,
-                           show.legend = FALSE) +
-              # Colour palette
-              scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
-              scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
-              # Setting theme
-              theme_minimal() +
-              # Splitting by circumcision type
-              # facet_grid(. ~ type) +
-              # Setting labels
-              ggtitle(spec_title) +
-              labs(y = NULL,
-                   x = "Age at circumcision",
-                   colour = NULL,
-                   fill = NULL) +
-              # Changing plot themes
-              theme(
-                axis.title = element_text(size = 24),
-                axis.text = element_text(size = 20, face = "bold"),
-                # axis.text.x = element_text(size = 20, face = "bold"),
-                # axis.text.y = element_text(size = 16),
-                plot.title = element_text(size = 30, hjust = 0.5),
-                strip.text = element_text(size = 16),
-                strip.background = element_blank(),
-                legend.title = element_text(size = 16),
-                legend.text = element_text(size = 24),
-                legend.position = "bottom",
-                panel.spacing = unit(0.2, "lines")
-              )
-          # })
-        # })
+      recursive_plot_fun(tmp[[i]], tmp2[[i]])
     })
 
     plots <- rlang::squash(plots)
