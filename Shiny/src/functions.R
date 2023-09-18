@@ -913,14 +913,11 @@ plt_area_facet_coverage <- function(
         mutate(
             # type = stringr::str_remove(type, " coverage")# ,
             # area_id = factor(area_id, unique(.data$area_id))
-            type = ifelse(grepl("MMC", type),
-                          # "Medical Male Circumcision (MMC)",
-                          "MMC",
-                          ifelse(grepl("TMC", type),
-                                 # "Traditional Male Circumcision (TMC)",
-                                 "TMC",
-                                 # "Medical Circumcision (MC)")),
-                                 "MC")),
+            type = case_when(
+              grepl("MMC", type) ~ "MMC", 
+              grepl("TMC", type) ~ "TMC", 
+              TRUE               ~ "MC"
+            ),
             area_name = ifelse(grepl("Tanzania", area_name),
                                "Tanzania",
                                area_name)
@@ -997,57 +994,83 @@ plt_area_facet_coverage <- function(
                     sep = ", "
                 )
             }
-
-            ggplot(dat,
-                   aes(x = year,
-                       group = type,
-                       fill = type)) +
-                # Adding target line to prevalence
-                geom_hline(yintercept = hor_line,
-                           size = 1,
-                           linetype = "dashed",
-                           colour = "grey50") +
+            
+            min_year <- min(dat$year)
+            max_year <- max(dat$year)
+            
+            ggplot(dat, aes(x = year, group = type, fill = type)) +
+                # Add target line to prevalence
+                geom_hline(
+                  yintercept = hor_line,
+                  size = 1,
+                  linetype = "dashed",
+                  colour = "grey50"
+                ) +
                 # Prevalence as area plot
                 geom_area(aes(y = 100 * mean.y)) +
-                suppressWarnings(geom_text(data = dat1,
-                                           aes(x = 2008,
-                                               y = 100 * mean.y,
-                                               fill = NA,
-                                               label = if_else(year %in% c(2008),
-                                                               scales::percent(mean.y, 1),
-                                                               NA_character_)),
-                                           fontface = "bold",
-                                           vjust = 0,
-                                           colour = "grey30",
-                                           size = 6,
-                                           nudge_y = 0.02,
-                                           show.legend = FALSE)) +
-                suppressWarnings(geom_text(data = dat1,
-                                           aes(x = 2020,
-                                               y = 100 * mean.y,
-                                               fill = NA,
-                                               label = if_else(year %in% c(2020),
-                                                               scales::percent(mean.y, 1),
-                                                               NA_character_)),
-                                           fontface = "bold",
-                                           vjust = 0,
-                                           colour = "grey30",
-                                           size = 6,
-                                           nudge_y = 0.02,
-                                           show.legend = FALSE)) +
+                # suppressWarnings(geom_text(data = dat1,
+                geom_text(
+                  data = dat1,
+                  aes(
+                    # x = 2008,
+                    x = min_year,
+                    y = 100 * mean.y,
+                    fill = NA,
+                    label = if_else(
+                      # year %in% c(2008),
+                      year %in% min_year,
+                      scales::percent(mean.y, 1),
+                      NA_character_)
+                  ),
+                  fontface = "bold",
+                  vjust = 0,
+                  colour = "grey30",
+                  size = 6,
+                  nudge_y = 0.02,
+                  show.legend = FALSE
+                ) +
+                # suppressWarnings(geom_text(data = dat1,
+                geom_text(
+                  data = dat1,
+                  aes(
+                    x = max_year,
+                    y = 100 * mean.y,
+                    fill = NA,
+                    label = if_else(
+                      # year %in% c(2020),
+                      year %in% max_year,
+                      scales::percent(mean.y, 1),
+                      NA_character_
+                    )
+                  ),
+                  fontface = "bold",
+                  vjust = 0,
+                  colour = "grey30",
+                  size = 6,
+                  nudge_y = 0.02,
+                  show.legend = FALSE
+                ) +
                 # Setting for the axes
-                scale_x_continuous(breaks = seq(2008, 2020, by = 2),
-                                   limits = c(2007.25, 2020.75)) +
-                scale_y_continuous(breaks = scales::pretty_breaks(5),
-                                   limits = c(0, 108)) +
+                scale_x_continuous(
+                  # breaks = seq(2008, 2020, by = 2),
+                  breaks = seq(min_year, max_year, by = 2),
+                  # limits = c(2007.25, 2020.75)
+                  limits = c(min_year - 0.75, max_year + 0.75)
+                ) +
+                scale_y_continuous(
+                  breaks = scales::pretty_breaks(5),
+                  limits = c(0, 108)
+                ) +
                 # Setting colour palette
                 scale_fill_manual(
                     values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
                 ) +
                 # Plotting labels
-                labs(x = "",
-                     y = "Circumcision Coverage (%)",
-                     fill = "") +
+                labs(
+                  x = "",
+                  y = "Circumcision Coverage (%)",
+                  fill = ""
+                ) +
                 facet_wrap(. ~ area_name) +
                 ggtitle(plot_title) +
                 # Minimal theme
@@ -1241,8 +1264,8 @@ calc_circ_age_ridge <- function(
     area_levels = unique(results_age$area_level),
     spec_model = "No program data",
     spec_ages = 0:30,
-    spec_types = c("MCs performed", "MMCs performed", "TMCs performed")
-    # n_plots = 8
+    spec_types = c("MCs performed", "MMCs performed", "TMCs performed"),
+    n_plots = 1 # 8
 ) {
 
     # temp fix
@@ -1292,11 +1315,16 @@ calc_circ_age_ridge <- function(
     tmp2 <- add_area_info(tmp2, areas)
     
     # split by area level and number of desired plots
-    # tmp <- split_area_level(tmp, n_plots = n_plots, years = TRUE)
-    # tmp2 <- split_area_level(tmp2, n_plots = n_plots, years = TRUE)
+    if (n_plots == 1) {
+      tmp <- list(tmp)
+      tmp2 <- list(tmp2)
+    } else {
+      tmp <- split_area_level(tmp, n_plots = n_plots, years = TRUE)
+      tmp2 <- split_area_level(tmp2, n_plots = n_plots, years = TRUE)
+    }
        
     return(list(
-      "density_age_at_circ" = list(tmp), "mean_age_at_circ" = list(tmp2)
+      "density_age_at_circ" = tmp, "mean_age_at_circ" = tmp2
     ))
 }
 
