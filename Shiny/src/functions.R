@@ -1841,6 +1841,125 @@ plt_circ_age_ridge <- function(
     }
 }
 
+# Function to create population pyramids for each country
+pop_pyramid_plt <- function(
+    results_age, 
+    # areas, 
+    spec_years,
+    spec_area_levs, 
+    str_save = NULL, 
+    save_width = 6.3, 
+    save_height = 6.5,
+    n_plots = 1
+  ) {
+  
+  # initial filtering and setup
+  tmp <- results_age  %>%
+      filter(
+          # year %in% c(2009, 2015, 2020),
+          year %in% spec_years, 
+          # area_name %in% area,
+          type %in% c(
+              "Number circumcised (MMC)",
+              "Number circumcised (TMC)",
+              "Unmet need"
+          ),
+          area_level %in% spec_area_levs
+      ) %>%
+      mutate(
+        type = case_when(
+          grepl("MMC", type) ~ "Medical",
+          grepl("TMC", type) ~ "Traditional",
+          TRUE               ~ type
+        ),
+        type = factor(
+          type, levels = c("Unmet need", "Medical", "Traditional")
+        )
+      )
+  
+  # split by number of plots desired in one "page"
+  tmp <- split_area_level(tmp, years = FALSE, n_plots = n_plots)
+  
+  # function to create population pyramid for `n_plots` areas
+  plot_fun <- function(tmp) {
+    # create stacked bar plot
+    p <- tmp %>% 
+      ggplot(aes(x = age, y = mean, fill = type)) +
+      geom_bar(stat = "identity", position = "stack", width = 1)
+
+    # different facets depending on how many area_ids are present
+    if (length(unique(tmp$area_id)) > 1) {
+        p <- p + facet_grid(area_name ~ year, scales = "free")
+    } else {
+        p <- p + facet_wrap(~ year)
+    }
+   
+    p +
+        # colour plot
+        scale_fill_manual(
+          values = c(
+            "#5e4fa2", wesanderson::wes_palette("Zissou1", 3)[c(1, 3)])
+        ) +
+        # add comma to y-axis labels
+        scale_y_continuous(
+            breaks = scales::breaks_pretty(7),
+            labels = scales::comma
+        ) +
+        labs(
+            x = "Age",
+            y = "",
+            # title = paste("Total Unmet Need & Circumcisions vs Age,", area),
+            title = paste("Total Unmet Need & Circumcisions vs Age,", cntry),
+            fill = ""
+        ) +
+        theme_bw() +
+        theme(
+            plot.title = element_text(size = 20, hjust = 0.5),
+            axis.text.x = element_text(size = 14, face = "bold"),
+            axis.text.y = element_text(size = 14, vjust = 0.5, face = "bold"),
+            strip.text = element_text(size = 14, face = "bold"),
+            legend.text = element_text(size = 14, face = "bold"),
+            strip.background = element_blank(),
+            # panel.grid.minor = element_blank(),
+            # panel.grid.major = element_blank(),
+            # legend.position = "none",
+            panel.border = element_blank(),
+            legend.position = "bottom"
+        ) 
+    }
+  
+  # function to recursively create plots for every item in `tmp` list
+  recursive_plot_fun <- function(plt_data1, ...) {
+    if (!inherits(plt_data1, "data.frame")) {
+      lapply(seq_along(plt_data1), function(i) {
+        recursive_plot_fun(plt_data1[[i]], ...)
+      })
+    } else {
+      plot_fun(plt_data1, ...)
+    }
+  }
+  
+  # plot for each (nested) list item in `tmp`
+  plots <- lapply(seq_along(tmp), function(i) {
+    recursive_plot_fun(tmp)
+  })
+  
+  # save or return plots
+  plots <- rlang::squash(plots)
+  if (!is.null(str_save)) {
+    ggsave(
+      filename = str_save,
+      plot   = gridExtra:: marrangeGrob(plots, nrow = 1, ncol = 1),
+      dpi    = "retina",
+      width  = save_width,
+      height = save_height
+    )
+  } else {
+    return(plots)
+  }
+}
+
+
 #### Plots for comparing survey points with model fit ####
 plt_MC_modelfit_spec_age <- function(
   df_results, df_results_survey,
