@@ -161,15 +161,15 @@ split_area_level <- function(.data, years = FALSE, n_plots = NULL) {
 
   if (years == TRUE & !is.null(n_plots)) { # 1.
     .data <- lapply(.data, function(x) split(x, x$year))
-    lapply(.data, function(x) {
+    return(lapply(.data, function(x) {
       lapply(x, function(y) {
         split(y, y$split)
       })
-    })
+    }))
   } else if (years == TRUE & is.null(n_plots)) { # 2.
-      lapply(.data, function(x) split(x, x$year))
+      return(lapply(.data, function(x) split(x, x$year)))
   } else if (years == FALSE & !is.null(n_plots)) { # 3.
-      lapply(.data, function(x) split(x, x$split))
+      return(lapply(.data, function(x) split(x, x$split)))
   } else { # 4.
       return(.data)
   }
