@@ -186,9 +186,9 @@ split_area_level <- function(
   }
   
   # split by area level
-  if (length(unique(.data$area_level)) > 1) {
+  # if (length(unique(.data$area_level)) > 1) {
     .data <- split_fun(.data, "area_level")
-  }
+  # }
 
   # Split options:
   # 1. split by year and number of regions to show on each plot (n_plot) desired
@@ -315,14 +315,20 @@ plt_mc_coverage_prevalence <- function(
   tmp <- add_area_info(tmp, areas)
 
   # Dummy dataset for limits in each panel
-  dummy1 <- rbind(expand.grid(x = c(first(spec_years), last(spec_years)),
-                              y = c(0, 100),
-                              type = NA,
-                              test = "A"),
-                  expand.grid(x = c(2009, 2021),
-                              y = c(0, 600),
-                              type = NA,
-                              test = "B"))
+  dummy1 <- rbind(
+    expand.grid(
+      x = c(first(spec_years), last(spec_years)),
+      y = c(0, 100),
+      type = NA,
+      test = "A"
+    ),
+    expand.grid(
+      x = c(2009, 2021),
+      y = c(0, 600),
+      type = NA,
+      test = "B"
+    )
+  )
 
   # Dummy dataset to add 90% target
   if (spec_age_group == "15-49") {
@@ -339,13 +345,16 @@ plt_mc_coverage_prevalence <- function(
 
   plots <- lapply(tmp, function(a) {
     lapply(a, function(b) {
-
+      
       # title displaying area level and label
       spec_title <- paste(
         b$iso3[1],
         b$area_name[1],
-        paste0("Area Level: ", b$area_level[1]),
-        b$area_level_label[1],
+        paste0(
+          "Area Level: ", b$area_level[1], 
+          " (", b$area_level_label[1], ")"
+        ),
+        # b$area_level_label[1],
         paste0(b$age_group[1], " years old"),
         sep = ", "
       )
@@ -355,30 +364,30 @@ plt_mc_coverage_prevalence <- function(
           spec_title <- paste(main, spec_title)
       }
 
-      ggplot(b,
-             aes(x = year,
-                 group = type,
-                 fill = type)) +
+      ggplot(b, aes(x = year, group = type, fill = type)) +
         # Adding fake limits to the plot
-        geom_point(data = dummy1,
-                   aes(x = x,
-                       y = y),
-                   colour = NA) +
+        geom_point(data = dummy1, aes(x = x, y = y), colour = NA) +
         # Adding target line to prevalence
-        geom_hline(data = dummy2,
-                   aes(yintercept = y),
-                   size = 2,
-                   linetype = "dashed",
-                   colour = "grey50") +
+        geom_hline(
+          data = dummy2,
+          aes(yintercept = y),
+          size = 2,
+          linetype = "dashed",
+          colour = "grey50"
+        ) +
         # Prevalence as area plot
         geom_area(aes(y = 100 * mean.y)) +
         # Number of MCs performed as bar chart
         # geom_bar(aes(y = mean.x/1000),
-        geom_bar(aes(y = mean.x),
-                 stat = "identity") +
+        geom_bar(
+          aes(y = mean.x),
+          stat = "identity"
+        ) +
         # Setting for the axes
         scale_x_continuous(
-            breaks = seq(first(spec_years), last(spec_years), by = 1)
+            breaks = seq(first(spec_years), last(spec_years), by = 2),
+            expand = c(0, 0),
+            limits = c(first(spec_years), last(spec_years)), 
         ) +
         scale_y_continuous(
             breaks = scales::pretty_breaks(8),
@@ -390,39 +399,44 @@ plt_mc_coverage_prevalence <- function(
           values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
         ) +
         # Plotting labels
-        labs(x = "Year",
-             y = "",
-             fill = "") +
+        labs(
+          x = "Year",
+          y = "",
+          fill = ""
+        ) +
         # Minimal theme
-        theme_bw() +
+        theme_bw(base_size = 9) +
         ggtitle(spec_title) +
         # Facet wrapping
-        facet_wrap(vars(test),
-                   strip.position = "left",
-                   scales = "free",
-                   labeller = as_labeller(c(
-                     A = "Circumcision coverage (%)",
-                     # B = "Number of circumcisions performed (in 1000s)"))) +
-                     B = "Number of circumcisions performed"))) +
-        # facet_wrap again by area_name
-        # facet_wrap(~ area_name) +
+        facet_wrap(
+          vars(test),
+          strip.position = "left",
+          scales = "free",
+          labeller = as_labeller(c(
+            A = "Circumcision coverage (%)",
+            B = "Number of circumcisions performed"))
+        ) +
         # Extra options on the plot
-        theme(axis.text = element_text(size = 15),
-              strip.text = element_text(size = 16),
-              strip.background = element_blank(),
-              panel.grid.minor = element_blank(),
-              # panel.grid.major = element_blank(),
-              legend.text = element_text(size = 16),
-              axis.title = element_text(size = 18),
-              plot.title = element_text(size = 26, hjust = 0.5),
-              axis.text.x = element_text(
-                # size = 12,
-                hjust = 1,
-                vjust = 1,
-                angle = 45
-              ),
-              strip.placement = "outside",
-              legend.position = "bottom")
+        theme(
+          axis.text.x = element_text(
+            size = rel(1.2),
+            hjust = 1,
+            vjust = 1,
+            angle = 45
+          ),
+          axis.text.y      = element_text(size = rel(1.2)),
+          axis.title.x     = element_text(size = rel(1.5)),
+          strip.text       = element_text(size = rel(1.5)),
+          strip.background = element_blank(),
+          panel.grid.minor = element_blank(),
+          # panel.grid.major = element_blank(),
+          legend.text      = element_text(size = rel(1.2)),
+          legend.title     = element_text(size = rel(1.5)),
+          # plot.title = element_text(size = 26, hjust = 0.5),
+          plot.title = element_text(size = rel(1.2), hjust = 0.5),
+          strip.placement  = "outside",
+          legend.position  = "bottom"
+        )
     })
   })
 
