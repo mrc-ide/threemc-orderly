@@ -1294,10 +1294,8 @@ plt_area_facet_coverage <- function(
         n_plots           = n_plots # ,
         # parent_area_split = province_split
       )
-    # }
+    }
       
-    plot_fun
-
     # plot
     plots <- lapply(seq_along(tmp), function(i) {
         lapply(seq_along(tmp[[i]]), function(j) {
