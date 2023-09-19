@@ -1894,6 +1894,8 @@ pop_pyramid_plt <- function(
     # areas, 
     spec_years,
     spec_area_levs, 
+    province_split = FALSE,
+    spec_title = "Total Unmet Need & Circumcisions vs Age",
     str_save = NULL, 
     save_width = 6.3, 
     save_height = 6.5,
@@ -1925,10 +1927,41 @@ pop_pyramid_plt <- function(
       )
   
   # split by number of plots desired in one "page"
-  tmp <- split_area_level(tmp, years = FALSE, n_plots = n_plots)
+  tmp <- split_area_level(
+    tmp, years = FALSE, n_plots = n_plots, parent_area_split = province_split
+  )
   
   # function to create population pyramid for `n_plots` areas
   plot_fun <- function(tmp) {
+    
+    # title displaying area level and label
+    spec_title <- paste(
+      spec_title,
+      tmp$iso3[1],
+      sep = ", "
+    )
+    
+    if (province_split) {
+      if (is.na(tmp$parent_area_name[1])) {
+        parent_lab <- NULL
+      } else {
+        parent_lab <- paste0("Parent Area: ", tmp$parent_area_name[1])
+      }
+      spec_title <- paste(
+        spec_title,
+        parent_lab,
+        sep = ", "
+      )
+    } else {
+      spec_title <- paste(
+        spec_title,
+        tmp$area_level[1],
+        tmp$area_level_label[1],
+        sep = ", "
+      )
+    }
+    
+    
     # create stacked bar plot
     p <- tmp %>% 
       ggplot(aes(x = age, y = mean, fill = type)) +
@@ -1956,7 +1989,8 @@ pop_pyramid_plt <- function(
             x = "Age",
             y = "",
             # title = paste("Total Unmet Need & Circumcisions vs Age,", area),
-            title = paste("Total Unmet Need & Circumcisions vs Age,", cntry),
+            # title = paste("Total Unmet Need & Circumcisions vs Age,", cntry),
+            title = spec_title,
             fill = ""
         ) +
         theme_bw() +
