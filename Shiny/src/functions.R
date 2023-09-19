@@ -55,7 +55,7 @@ add_last_surveys <- function(.data, last_surveys, add_rows = TRUE, join_cols = c
         extra_rows <- .data %>%
             filter(year == survey_year) %>%
             mutate(light = "Surveyed")
-        .data <- rbind(.data, extra_rows)
+        .data <- bind_rows(.data, extra_rows)
     }
 
     return(.data %>% arrange(area_id, year, type, age_group))
@@ -315,7 +315,7 @@ plt_mc_coverage_prevalence <- function(
   tmp <- add_area_info(tmp, areas)
 
   # Dummy dataset for limits in each panel
-  dummy1 <- rbind(
+  dummy1 <- bind_rows(
     expand.grid(
       x = c(first(spec_years), last(spec_years)),
       y = c(0, 100),
@@ -465,44 +465,56 @@ plt_age_coverage_by_type <- function(
   # Subsetting
   tmp1 <- results_age %>%
     filter(
-      type %in%     c("MC probability", "MMC probability", "TMC probability",
-                      "MC coverage",    "MMC coverage",    "TMC coverage"),
-      # year %in%     c(2009, 2015, 2021)# ,
-      year %in% spec_years,
+      type       %in% c(
+        "MC probability", "MMC probability", "TMC probability",
+        "MC coverage",    "MMC coverage",    "TMC coverage"
+      ),
+      year       %in% spec_years,
       area_level %in% area_levels,
-      age %in% seq(spec_ages[1], spec_ages[2], by = 1),
-      model == spec_model
+      age        %in% seq(spec_ages[1], spec_ages[2], by = 1),
+      model      == spec_model
     ) %>%
     # rename columns
     summary_col_renamer() %>%
+    # multiply prevalence by 100
     dplyr::mutate(
-      # multiply prevalence by 100
-      across(c(mean.x, lower.x, upper.x), ~ ifelse(grepl("coverage", type),
-                                                   . * 100,
-                                                   .)),
+      across(c(mean.x, lower.x, upper.x), ~ ifelse(
+        grepl("coverage", type), . * 100, .
+      )),
       # relabel for plot
       type1 = ifelse(grepl("coverage", type), "Y", "Z"),
-      type2 = ifelse(grepl("MMC", type), "B",
-                     ifelse(grepl("TMC", type), "C", "A")) # A for MC
+      type2 = case_when(
+        grepl("MMC", type) ~ "B",
+        grepl("TMC", type) ~ "C", 
+        TRUE               ~ "A" # A for MC
+      )
     )
 
   # Dummy dataset for limits in each panel
-  dummy1 <- rbind(expand.grid(x = spec_ages,
-                              y = c(0, 0.2),
-                              year = NA,
-                              type2 = c("A", "B", "C"),
-                              type1 = "Z"),
-                  expand.grid(x = spec_ages,
-                              y = c(0, 100),
-                              year = NA,
-                              type2 = c("A", "B", "C"),
-                              type1 = "Y"))
+  dummy1 <- bind_rows(
+    expand.grid(
+      x     = spec_ages,
+      y     = c(0, 0.2),
+      year  = NA,
+      type2 = c("A", "B", "C"),
+      type1 = "Z"
+    ),
+    expand.grid(
+      x     = spec_ages,
+      y     = c(0, 100),
+      year  = NA,
+      type2 = c("A", "B", "C"),
+      type1 = "Y"
+    )
+  )
 
   # Dummy dataset to add 90% target
-  dummy2 = data.frame(type2 = c("A", "B", "C"),
-                      type1 = "Y",
-                      year = NA,
-                      y = c(90, 90, 90))
+  dummy2 = data.frame(
+    type2 = c("A", "B", "C"),
+    type1 = "Y",
+    year = NA,
+    y = c(90, 90, 90)
+  )
 
   # add in required columns from areas and order area names
   tmp1 <- add_area_info(tmp1, areas)
@@ -517,69 +529,91 @@ plt_age_coverage_by_type <- function(
       spec_title <- paste(
         b$iso3[1],
         b$area_name[1],
-        paste0("Area Level: ", b$area_level[1]),
-        b$area_level_label[1],
+        paste0(
+          "Area Level: ", b$area_level[1], 
+          " (", b$area_level_label[1], ")"
+        ),
         sep = ", "
       )
       if (!is.null(main)) spec_title <- paste(main, spec_title)
-      ggplot(b,
-             aes(x = age,
-                 group = as.factor(year),
-                 fill = as.factor(year),
-                 colour = as.factor(year))) +
+      ggplot(
+        b,
+        aes(
+          x = age,
+          group = as.factor(year),
+          fill = as.factor(year),
+          colour = as.factor(year)
+        )
+      ) +
         # Adding fake limits to the plot
-        geom_point(data = dummy1,
-                   aes(x = x,
-                       y = y),
-                   colour = NA) +
+        geom_point(
+          data   = dummy1,
+          aes(x = x, y = y),
+          colour = NA
+        ) +
         # Adding target line to prevalence
-        geom_hline(data = dummy2,
-                   aes(yintercept = y),
-                   size = 2,
-                   linetype = "dashed",
-                   colour = "grey50") +
+        geom_hline(
+          data     = dummy2,
+          aes(yintercept = y),
+          size     = 2,
+          linetype = "dashed",
+          colour   = "grey50"
+        ) +
         # Prevalence as area plot
-        geom_ribbon(aes(ymin = lower.x,
-                        ymax = upper.x),
-                    colour = NA,
-                    alpha = 0.5) +
+        geom_ribbon(
+          aes(ymin = lower.x, ymax = upper.x),
+          colour = NA,
+          alpha  = 0.5
+        ) +
         # Prevalence as area plot
-        geom_line(aes(y = mean.x),
-                  size = 1) +
+        geom_line(aes(y = mean.x), size = 1) +
         # Setting for the axes
-        scale_x_continuous(breaks = seq(spec_ages[1], spec_ages[2], by = 5)) +
-        scale_y_continuous(breaks = scales::pretty_breaks(8), limits = c(0, NA)) +
+        scale_x_continuous(breaks = seq(spec_ages[1], spec_ages[2], by = 10)) +
+        scale_y_continuous(
+          breaks = scales::pretty_breaks(8), 
+          limits = c(0, NA)
+        ) +
         # Setting colour palette
         scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)) +
         scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)) +
         # Plotting labels
         ggtitle(spec_title) +
-        labs(x = "Age",
-             y = "",
-             colour = "",
-             fill = "") +
+        labs(x = "Age", y = "", colour = "", fill = "") +
+        guides(
+          colour = "none", 
+          fill   = guide_legend(override.aes = list(alpha = 1))
+        ) +
         # Minimal theme
-        theme_bw() +
+        theme_bw(base_size = 9) +
         # Facet wrapping
-        facet_grid(type1 ~ type2,
-                   scales = "free",
-                   labeller = as_labeller(c(
-                     A = "Total",
-                     B = "Medical",
-                     C = "Traditional",
-                     Y = "Circumcision coverage (%)",
-                     Z = "Annual probability of circumcision")),
-                   switch = "y") +
+        facet_grid(
+          type1 ~ type2,
+          scales = "free",
+          labeller = as_labeller(c(
+            A = "Total",
+            B = "Medical",
+            C = "Traditional",
+            Y = "Circumcision coverage (%)",
+            Z = "Annual circumcision probability")),
+          switch = "y"
+        ) +
         # Extra options on the plot
-        theme(axis.text = element_text(size = 16),
-              strip.text = element_text(size = 16),
-              panel.grid = element_blank(),
-              strip.background = element_blank(),
-              legend.text = element_text(size = 16),
-              axis.title = element_text(size = 18),
-              plot.title = element_text(size = 26, hjust = 0.5),
-              strip.placement = "outside",
-              legend.position = "bottom")
+        theme(
+          axis.text.x = element_text(
+            size = rel(1.2), hjust = 1, vjust = 1, angle = 45
+          ),          
+          axis.text.y = element_text(size = rel(1.2)),
+          axis.title = element_text(size = rel(1.5)),
+          strip.text = element_text(size = rel(1.4)),
+          panel.grid = element_blank(),
+          strip.background = element_blank(),
+          legend.text  = element_text(size = rel(1.2)),
+          legend.title = element_text(size = rel(1.5)), 
+          # plot.title = element_text(size = 26, hjust = 0.5),
+          plot.title = element_text(size = rel(1.5), hjust = 0.5),
+          strip.placement = "outside",
+          legend.position = "bottom"
+        )
     })
   })
 
@@ -3151,7 +3185,7 @@ plt_coverage_year_national <- function(
   extra_rows <- tmp %>%
     filter(year == survey_year) %>%
     mutate(light = "Projected")
-  tmp <- rbind(tmp, extra_rows) %>%
+  tmp <- bind_rows(tmp, extra_rows) %>%
     arrange(area_id, type, year)
 
   # add in required columns from areas and order area names
@@ -3458,7 +3492,7 @@ plt_coverage_year_national_single_age <- function(
   # extra_rows <- tmp %>%
   #   filter(year == survey_year) %>%
   #   mutate(light = "Projected")
-  # tmp <- rbind(tmp, extra_rows) %>%
+  # tmp <- bind_rows(tmp, extra_rows) %>%
   #   arrange(area_id, type, year)
   
   # add in required columns from areas and order area names
