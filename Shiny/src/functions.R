@@ -1636,12 +1636,13 @@ plt_age_coverage_multi_years <- function(
 calc_circ_age_ridge <- function(
     results_age,
     areas,
-    spec_years = last(results_age$year),
-    area_levels = unique(results_age$area_level),
-    spec_model = "No program data",
-    spec_ages = 0:30,
-    spec_types = c("MCs performed", "MMCs performed", "TMCs performed"),
-    n_plots = 1 # 8
+    spec_years     = last(results_age$year),
+    area_levels    = unique(results_age$area_level),
+    spec_model     = "No program data",
+    spec_ages      = 0:30,
+    province_split = province_split,
+    spec_types     = c("MCs performed", "MMCs performed", "TMCs performed"),
+    n_plots        = 1
 ) {
 
     # temp fix
@@ -1678,7 +1679,14 @@ calc_circ_age_ridge <- function(
     stopifnot(nrow(tmp) > 0)
 
     tmp2 <- tmp %>%
-        group_by(area_id, area_name, type, year) %>%
+        group_by(
+          area_id, 
+          area_name, 
+          parent_area_id, 
+          parent_area_name, 
+          type, 
+          year
+        ) %>%
         summarise(
             average_age       = weighted.mean(age, w = density),
             average_age_lower = weighted.mean(age, w = lower),
@@ -1695,12 +1703,23 @@ calc_circ_age_ridge <- function(
       tmp <- list(tmp)
       tmp2 <- list(tmp2)
     } else {
-      tmp <- split_area_level(tmp,   n_plots = n_plots, years = FALSE)
-      tmp2 <- split_area_level(tmp2, n_plots = n_plots, years = FALSE)
+      tmp <- split_area_level(
+        tmp, 
+        n_plots           = n_plots, 
+        years             = FALSE, 
+        parent_area_split = province_split
+      )
+      tmp2 <- split_area_level(
+        tmp2, 
+        n_plots           = n_plots, 
+        years             = FALSE, 
+        parent_area_split = province_split
+      )
     }
        
     return(list(
-      "density_age_at_circ" = tmp, "mean_age_at_circ" = tmp2
+      "density_age_at_circ" = tmp, 
+      "mean_age_at_circ"    = tmp2
     ))
 }
 
@@ -1709,140 +1728,164 @@ calc_circ_age_ridge <- function(
 plt_circ_age_ridge <- function(
     results_age,
     areas,
-    spec_years = last(results_age$year),
-    area_levels = unique(results_age$area_level),
-    spec_model = "No program data",
-    spec_ages = 0:30,
-    str_save = NULL,
-    save_width = 9,
-    save_height = 7,
-    n_plots = 8
+    spec_years     = last(results_age$year),
+    area_levels    = unique(results_age$area_level),
+    spec_model     = "No program data",
+    spec_ages      = 0:30,
+    province_split = FALSE,
+    str_save       = NULL,
+    save_width     = 9,
+    save_height    = 7,
+    n_plots        = 8
 ) {
 
-    # temp fix
-    # if (length(spec_ages) != 31 || !all(spec_ages == 0:30)) {
-    #   spec_ages <- 0:30
-    # }
+  # temp fix
+  # if (length(spec_ages) != 31 || !all(spec_ages == 0:30)) {
+  #   spec_ages <- 0:30
+  # }
   
-    # perform calculations for plots (calc density and mean circ ages)
-    calcs <- calc_circ_age_ridge(
-      results_age,
-      areas,
-      spec_years,
-      area_levels,
-      spec_model,
-      spec_ages, 
-      spec_types = c("MMCs performed", "TMCs performed"),
-      n_plots = n_plots # currently an unused arg!
-    )
+  
+  # perform calculations for plots (calc density and mean circ ages)
+  calcs <- calc_circ_age_ridge(
+    results_age,
+    areas,
+    spec_years,
+    area_levels,
+    spec_model,
+    spec_ages, 
+    province_split,
+    spec_types = c("MMCs performed", "TMCs performed"),
+    n_plots = n_plots # currently an unused arg!
+  )
 
-    # calcs <- lapply(calcs, function(x) {
-    #   mutate(x, type = ifelse(grepl("MMC", type), "Medical", "Traditional"))
-    # })
+  # calcs <- lapply(calcs, function(x) {
+  #   mutate(x, type = ifelse(grepl("MMC", type), "Medical", "Traditional"))
+  # })
     
-    # function to change type label in list items
-    change_type_label <- function(lst) {
-      if (is.data.frame(lst[[1]])) {
-        return(lapply(lst, function(x) {
-          x %>% 
-            mutate(
-              type = ifelse(grepl("MMC", type), "Medical", "Traditional")
-            )
-        }))
-      } else {
-        # return(change_type_label(lst))
-        return(lapply(lst, change_type_label))
-      }
+  # function to change type label in list items
+  change_type_label <- function(lst) {
+    if (is.data.frame(lst[[1]])) {
+      return(lapply(lst, function(x) {
+        x %>% 
+          mutate(
+            type = ifelse(grepl("MMC", type), "Medical", "Traditional")
+          )
+      }))
+    } else {
+      # return(change_type_label(lst))
+      return(lapply(lst, change_type_label))
     }
+  }
+  
+  calcs <- lapply(calcs, function (x) list(change_type_label(x)))
+  
+  # tmp <- calcs$density_age_at_circ
+  tmp <- calcs[[1]]
+  # tmp2 <- calcs$mean_age_at_circ
+  tmp2 <- calcs[[2]]
     
-    calcs <- lapply(calcs, function (x) list(change_type_label(x)))
+  plot_fun <- function(plt_data, plt_data2) {
     
-    # tmp <- calcs$density_age_at_circ
-    tmp <- calcs[[1]]
-    # tmp2 <- calcs$mean_age_at_circ
-    tmp2 <- calcs[[2]]
+    spec_title <- paste(
+      plt_data$year[1],
+      plt_data$iso3[1],
+      # plt_data$area_level[1],
+      # plt_data$area_level_label[1],
+      sep = ", "
+    )
     
-    plot_fun <- function(plt_data, plt_data2) {
+    if (province_split) {
+      if (is.na(plt_data$parent_area_name[1])) {
+        parent_lab <- NULL
+      } else {
+        parent_lab <- paste0("Parent Area: ", plt_data$parent_area_name[1])
+      }
       spec_title <- paste(
-        plt_data$year[1],
-        plt_data$iso3[1],
+        spec_title,
+        parent_lab,
+        sep = ", "
+      )
+    } else {
+      spec_title <- paste(
+        spec_title,
         plt_data$area_level[1],
         plt_data$area_level_label[1],
         sep = ", "
       )
-      
-      ggplot(plt_data,
-             aes(x = age,
-                 y = area_name,
-                 height = density,
-                 fill = type,
-                 colour = type)) +
-        ggridges::geom_density_ridges(
-          stat = "identity",
-          scale = 1,
-          alpha = 0.7,
-          colour = NA
-        )  +
-        # Adding average age of circumcision
-        geom_point(data = plt_data2,
-                   aes(x = average_age,
+    }
+    
+    ggplot(plt_data,
+           aes(x = age,
+               y = area_name,
+               height = density,
+               fill = type,
+               colour = type)) +
+      ggridges::geom_density_ridges(
+        stat = "identity",
+        scale = 1,
+        alpha = 0.7,
+        colour = NA
+      )  +
+      # Adding average age of circumcision
+      geom_point(data = plt_data2,
+                 aes(x = average_age,
+                     y = as.integer(area_name) - 0.05,
+                     colour = type),
+                 inherit.aes = FALSE,
+                 show.legend = FALSE) +
+      # Adding uncertainty interval of average age of circumcision
+      geom_segment(data = plt_data2,
+                   aes(x = average_age_lower,
+                       xend = average_age_upper,
                        y = as.integer(area_name) - 0.05,
+                       yend = as.integer(area_name) - 0.05,
                        colour = type),
                    inherit.aes = FALSE,
                    show.legend = FALSE) +
-        # Adding uncertainty interval of average age of circumcision
-        geom_segment(data = plt_data2,
-                     aes(x = average_age_lower,
-                         xend = average_age_upper,
-                         y = as.integer(area_name) - 0.05,
-                         yend = as.integer(area_name) - 0.05,
-                         colour = type),
-                     inherit.aes = FALSE,
-                     show.legend = FALSE) +
-        # Colour palette
-        scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
-        scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
-        # Setting theme
-        theme_minimal() +
-        # Splitting by circumcision type
-        # facet_grid(. ~ type) +
-        # Setting labels
-        ggtitle(spec_title) +
-        labs(y = NULL,
-             x = "Age at circumcision",
-             colour = NULL,
-             fill = NULL) +
-        # Changing plot themes
-        theme(
-          axis.title = element_text(size = 24),
-          axis.text = element_text(size = 20, face = "bold"),
-          # axis.text.x = element_text(size = 20, face = "bold"),
-          # axis.text.y = element_text(size = 16),
-          plot.title = element_text(size = 30, hjust = 0.5),
-          strip.text = element_text(size = 16),
-          strip.background = element_blank(),
-          legend.title = element_text(size = 16),
-          legend.text = element_text(size = 24),
-          legend.position = "bottom",
-          panel.spacing = unit(0.2, "lines")
-        )
-    }
+      # Colour palette
+      scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
+      scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
+      # Setting theme
+      theme_minimal() +
+      # Splitting by circumcision type
+      # facet_grid(. ~ type) +
+      # Setting labels
+      ggtitle(spec_title) +
+      labs(y = NULL,
+           x = "Age at circumcision",
+           colour = NULL,
+           fill = NULL) +
+      # Changing plot themes
+      theme(
+        axis.title = element_text(size = 24),
+        axis.text = element_text(size = 20, face = "bold"),
+        # axis.text.x = element_text(size = 20, face = "bold"),
+        # axis.text.y = element_text(size = 16),
+        plot.title = element_text(size = 30, hjust = 0.5),
+        strip.text = element_text(size = 16),
+        strip.background = element_blank(),
+        legend.title = element_text(size = 16),
+        legend.text = element_text(size = 24),
+        legend.position = "bottom",
+        panel.spacing = unit(0.2, "lines")
+      )
+  }
        
-    # plot for each (nested) loop
-    plots <- recursive_plot_2(tmp, tmp2, plot_fun)
+  # plot for each (nested) loop
+  plots <- recursive_plot_2(tmp, tmp2, plot_fun)
 
-    if (!is.null(str_save)) {
-        plots <- rlang::squash(plots)
-        ggsave(
-            filename = str_save,
-            plot = gridExtra:: marrangeGrob(plots, nrow = 1, ncol = 1),
-            dpi = "retina",
-            width = save_width,
-            height = save_height
-        )
-    } else {
-        return(plots)
-    }
+  if (!is.null(str_save)) {
+    plots <- rlang::squash(plots)
+    ggsave(
+      filename = str_save,
+      plot = gridExtra:: marrangeGrob(plots, nrow = 1, ncol = 1),
+      dpi = "retina",
+      width = save_width,
+      height = save_height
+    )
+  } else {
+    return(plots)
+  }
 }
 
 #### Population Pyramids ####
