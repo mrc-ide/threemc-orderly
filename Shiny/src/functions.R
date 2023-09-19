@@ -62,7 +62,7 @@ add_last_surveys <- function(.data, last_surveys, add_rows = TRUE, join_cols = c
 }
 
 
-# function to change age_group convention from "Y0x_0y" to "x - y"
+#### function to change age_group convention from "Y0x_0y" to "x - y" ####
 change_agegroup_convention <- function(.data) {
 
     lower <- as.numeric(substr(.data$age_group, 3, 4))
@@ -137,7 +137,12 @@ add_area_info <- function(.data, areas, area_names_from = "areas") {
 #### split_area_level ####
 # split results by area level (and optionally by year), and then again so
 # only the number of plots desired on each page is displayed
-split_area_level <- function(.data, years = FALSE, n_plots = NULL) {
+split_area_level <- function(
+    .data, 
+    years = FALSE,  # split by different years?
+    n_plots = NULL, # split by number of desired plots in each plot "window"
+    parent_area_split = FALSE # split by parent_area_id
+  ) {
 
   # find unique areas. Only want "n_plots" areas on each page of the plot
   if (!is.null(n_plots)) {
@@ -149,29 +154,67 @@ split_area_level <- function(.data, years = FALSE, n_plots = NULL) {
       .data <- .data %>%
           left_join(distinct_areas, by = c("area_id", "area_level"))
   }
+  
+  # add dummy for areas with no parent areas
+  if (parent_area_split) {
+    .data <- .data %>% 
+      mutate(
+        parent_area_id = ifelse(
+          is.na(parent_area_id), 
+          "NA", 
+          parent_area_id
+      )
+    )
+  }
 
+  # function to recursively split 
+  split_fun <- function(dat, col) {
+    # check if first object in .data is a vector; if so split by col
+    if (is.vector(dat[[1]])) {
+      # split(.data, .data[[col]])
+      group_split(dat, .data[[col]])
+    # if not, apply split fun recursively to list objects in .data
+    } else {
+      lapply(dat, split_fun, col)
+    }
+  }
+  
   # split by area level
-  .data <- split(.data, .data$area_level)
+  .data <- split_fun(.data, "area_level")
 
   # Split options:
   # 1. split by year and number of regions to show on each plot (n_plot) desired
   # 2. split by year but not by n_plot
   # 3. split by n_plot but not year
   # 4. split by neither year nor n_plot
+  
+  # Also, allow splits by parent area, to group close areas in same plot
 
   if (years == TRUE & !is.null(n_plots)) { # 1.
-    .data <- lapply(.data, function(x) split(x, x$year))
-    return(lapply(.data, function(x) {
-      lapply(x, function(y) {
-        split(y, y$split)
-      })
-    }))
+    # .data <- lapply(.data, function(x) split(x, x$year))
+    .data <- split_fun(.data, "year")
+    if (parent_area_split) .data <- split_fun(.data, "parent_area_id")
+    # return(lapply(.data, function(x) {
+    #   lapply(x, function(y) {
+    #     split(y, y$split)
+    #   })
+    # }))
+    return(split_fun(.data, "split"))
+    
   } else if (years == TRUE & is.null(n_plots)) { # 2.
-      return(lapply(.data, function(x) split(x, x$year)))
+    
+    # return(lapply(.data, function(x) split(x, x$year)))
+    if (parent_area_split) .data <- split_fun(.data, "parent_area_id")
+    return(split_fun(.data, "year"))
   } else if (years == FALSE & !is.null(n_plots)) { # 3.
-      return(lapply(.data, function(x) split(x, x$split)))
+    
+    # return(lapply(.data, function(x) split(x, x$split)))
+    if (parent_area_split) .data <- split_fun(.data, "parent_area_id")
+    return(split_fun(.data, "split"))
+    
   } else { # 4.
-      return(.data)
+    if (parent_area_split) .data <- split_fun(.data, "parent_area_id")
+    return(.data)
   }
 }
 
@@ -366,7 +409,7 @@ plt_mc_coverage_prevalence <- function(
   }
 }
 
-# fig 2 (circumcision coverage, split by type, across different discrete ages)
+#### fig 2 (circumcision coverage, split by type, across different discrete ages) ####
 plt_age_coverage_by_type <- function(
   results_age, areas, spec_years, area_levels, spec_model, spec_ages = c(0, 60),
   main = NULL, str_save = NULL, save_width, save_height, n_plots = 1
@@ -509,7 +552,8 @@ plt_age_coverage_by_type <- function(
   }
 }
 
-# Plot Map (fig 3). Works for multiple or single countries. Multiple can be either as
+#### Plot Map (fig 3) ####
+# Works for multiple or single countries. Multiple can be either as
 # a single plot of SSA (only way currently supported), or faceted by country
 plt_coverage_map <- function(
     results_agegroup, areas, colourPalette,
@@ -877,9 +921,9 @@ plt_coverage_map <- function(
     }
 }
 
-# Plot Map (Fig 3), updated to include different colouring for change 
-# plot. Should work for both single countries and all of SSA
-# keep old function above for posterity
+#### Plot Map (Fig 3) updated ####
+# Updated to include different colouring for change plot. Should work for 
+# both single countries and all of SSA keep old function above for posterity
 plt_coverage_map_change <- function(
     results_agegroup, 
     areas, 
@@ -1160,7 +1204,7 @@ plt_coverage_map_change <- function(
 }
 
 
-# Plot MC coverage by year, split by type (figure 4)
+#### Plot MC coverage by year, split by type (figure 4) ####
 plt_area_facet_coverage <- function(
     results_agegroup,
     areas,
@@ -1240,9 +1284,19 @@ plt_area_facet_coverage <- function(
       tmp1 <- dplyr::group_split(tmp1, area_level) %>%
           purrr::map(~ dplyr::group_split(.x, parent_area_id))
     } else {
-      tmp <- split_area_level(tmp, n_plots = n_plots)
-      tmp1 <- split_area_level(tmp1, n_plots = n_plots)
-    }
+      tmp <- split_area_level(
+        tmp,   
+        n_plots           = n_plots # , 
+        # parent_area_split = province_split
+      )
+      tmp1 <- split_area_level(
+        tmp1, 
+        n_plots           = n_plots # ,
+        # parent_area_split = province_split
+      )
+    # }
+      
+    plot_fun
 
     # plot
     plots <- lapply(seq_along(tmp), function(i) {
@@ -1392,6 +1446,7 @@ plt_area_facet_coverage <- function(
     }
 }
 
+#### Fig 5 ####
 # fig 5 (for one type, plot age vs coverage %, for multiple years and
 # including error bounds)
 plt_age_coverage_multi_years <- function(
@@ -1535,6 +1590,7 @@ plt_age_coverage_multi_years <- function(
     }
 }
 
+#### Calculate Distribution of age at circumcision ####
 # fig 6, plotting distributions/ridges for mean circ age for TMIC and MMC-nT
 # for different areas
 
@@ -1611,6 +1667,7 @@ calc_circ_age_ridge <- function(
 }
 
 
+#### Ridge Plot ####
 plt_circ_age_ridge <- function(
     results_age,
     areas,
@@ -1841,7 +1898,7 @@ plt_circ_age_ridge <- function(
     }
 }
 
-# Function to create population pyramids for each country
+#### Population Pyramids ####
 pop_pyramid_plt <- function(
     results_age, 
     # areas, 
@@ -1960,17 +2017,27 @@ pop_pyramid_plt <- function(
 }
 
 
-#### Plots for comparing survey points with model fit ####
+#### Plot Model Fit & Survey points vs year for specific age group(s) ####
 plt_MC_modelfit_spec_age <- function(
-  df_results, df_results_survey,
-  mc_type_model, mc_type_survey,
-  age_per, years, area_level_select = unique(df_results$area_level),
-  model_type = "No program data",
-  facet_vars = "area_name",
-  col_fill_vars = "parent_area_name",
-  province_split = FALSE,
-  xlab, ylab, title, str_save = NULL,
-  save_width = 16, save_height = 12, n_plots = 12) {
+    df_results, 
+    df_results_survey,
+    mc_type_model, 
+    mc_type_survey,
+    age_per, 
+    years, 
+    area_level_select = unique(df_results$area_level),
+    model_type        = "No program data",
+    facet_vars        = "area_name",
+    col_fill_vars     = "parent_area_name",
+    province_split    = FALSE,
+    xlab, 
+    ylab, 
+    title, 
+    str_save          = NULL,
+    save_width        = 16, 
+    save_height       = 12, 
+    n_plots           = 12
+  ) {
 
   # filter data accordingly
   initial_filter <- function(.data, type_filter) {
@@ -2136,27 +2203,30 @@ plt_MC_modelfit_spec_age <- function(
   }
 }
 
-plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
-                            mc_type_survey,
-                            age_per = c(
-                              "0-4",   "5-9",   "10-14", "15-19", "20-24",
-                              "25-29", "30-34", "35-39", "40-44",
-                              "45-49", "50-54", "54-59", "60-64"
-                            ),
-                            survey_years,
-                            model_type,
-                            area_level_select = unique(df_results$area_level),
-                            province_split = FALSE,
-                            # area_level_select,
-                            # facet_vars = "area_name",
-                            # col_fill_vars = "parent_area_name",
-                            # for year: "facet", have separate plots ("split"), or "colour"
-                            facet_year = "split",
-                            xlab, ylab, title,
-                            str_save = NULL,
-                            save_width = 16,
-                            save_height = 12,
-                            n_plots = 12) {
+#### Plot Model Fit & Survey points vs age group for specific year(s) ####
+plt_MC_modelfit <- function(
+    df_results, 
+    df_results_survey, 
+    mc_type_model,
+    mc_type_survey,
+    age_per           = c(
+      "0-4",   "5-9",   "10-14", "15-19", "20-24",
+      "25-29", "30-34", "35-39", "40-44",
+      "45-49", "50-54", "54-59", "60-64"
+    ),
+    survey_years,
+    model_type,
+    area_level_select = unique(df_results$area_level),
+    province_split    = FALSE,
+    facet_year        = "split",
+    xlab, 
+    ylab, 
+    title,
+    str_save          = NULL,
+    save_width        = 16,
+    save_height       = 12,
+    n_plots           = 12
+  ) {
 
   # Preparing dataset for plots
   initial_filter <- function(.data, spec_type) {
@@ -2402,6 +2472,8 @@ plt_MC_modelfit <- function(df_results, df_results_survey, mc_type_model,
 
 #### DMPPT2 Comparison Plots ####
 
+#### Utility Functions ####
+
 # would make a good function to add to aggregations code! Doesn't work for 0+ though
 change_agegroup_convention <- function(.data) {
 
@@ -2448,21 +2520,23 @@ calc_logit_confint <- function(estimate, std_error, tail, conf.level = 0.95) {
   ifelse(estimate < 1 & estimate > 0, stats::plogis(lest + crit * lest_se), NA_real_)
 }
 
-# function to produce scatter plots of coverage vs year for one age_group
-plt_dmppt2_compare_year <- function(circ_data,
-                                    dmppt2_data,
-                                    survey_data,
-                                    age_per = "15-49",
-                                    area_levels = NULL,
-                                    years = NULL,
-                                    model_type = NULL,
-                                    xlab = "Year",
-                                    ylab = "Circumcision Coverage",
-                                    title,
-                                    str_save = NULL,
-                                    save_width = NULL,
-                                    save_height = NULL,
-                                    n_plots = 12) {
+#### Scatter plot of coverage vs year for single age group ####
+plt_dmppt2_compare_year <- function(
+    circ_data,
+    dmppt2_data,
+    survey_data,
+    age_per     = "15-49",
+    area_levels = NULL,
+    years       = NULL,
+    model_type  = NULL,
+    xlab        = "Year",
+    ylab        = "Circumcision Coverage",
+    title,
+    str_save    = NULL,
+    save_width  = NULL,
+    save_height = NULL,
+    n_plots     = 12
+  ) {
 
   # initial filtering
   cols <- c("age_group", "area_level", "year", "model")
@@ -2621,22 +2695,23 @@ plt_dmppt2_compare_year <- function(circ_data,
   }
 }
 
-# function to produce scatter plots of coverage vs age-group for one year
-plt_dmppt2_compare_age_group <- function(circ_data,
-                                         dmppt2_data,
-                                         survey_data,
-                                         age_per, # required arg
-                                         area_levels = NULL,
-                                         years = NULL,
-                                         model_type = NULL,
-                                         xlab = "Year",
-                                         ylab = "Circumcision Prevalence",
-                                         title,
-                                         str_save = NULL,
-                                         save_width = NULL,
-                                         save_height = NULL,
-                                         n_plots = 1) {
-
+#### Scatter Plot of Coverage vs Age Group for single year ####
+plt_dmppt2_compare_age_group <- function(
+    circ_data,
+    dmppt2_data,
+    survey_data,
+    age_per, # required arg
+    area_levels = NULL,
+    years       = NULL,
+    model_type  = NULL,
+    xlab        = "Year",
+    ylab        = "Circumcision Prevalence",
+    title,
+    str_save    = NULL,
+    save_width  = NULL,
+    save_height = NULL,
+    n_plots     = 1
+  ) {
 
   # circ_data_test <- circ_data
   # dmppt2_data_test <-dmppt2_data
@@ -2851,23 +2926,23 @@ plt_dmppt2_compare_age_group <- function(circ_data,
 }
 
 # function to compare DMPTT2 fit to our model fit
-plt_dmppt2_compare_fits <- function(circ_data,
-                                    dmppt2_data,
-                                    age_per,
-                                    # by default, take highest area in dmppt2
-                                    area_levels =
-                                      max(dmppt2_data$area_level,
-                                          na.rm = TRUE),
-                                    years = NULL,
-                                    model_type = NULL,
-                                    xlab = "Year",
-                                    ylab = "Circumcision Prevalence",
-                                    title,
-                                    str_save = NULL,
-                                    save_width = NULL,
-                                    save_height = NULL,
-                                    # n_plots = 1) {
-                                    n_plots = 1) {
+#### Scatter plot of DMPPT2 coverage vs threemc coverage ####
+plt_dmppt2_compare_fits <- function(
+    circ_data,
+    dmppt2_data,
+    age_per,
+    # by default, take highest area in dmppt2
+    area_levels = max(dmppt2_data$area_level, na.rm = TRUE),
+    years       = NULL,
+    model_type  = NULL,
+    xlab        = "Year",
+    ylab        = "Circumcision Prevalence",
+    title,
+    str_save    = NULL,
+    save_width  = NULL,
+    save_height = NULL,
+    n_plots     = 1
+  ) {
 
   # circ_data_test <- circ_data
   # dmppt2_data_test <- dmppt2_data
@@ -3025,23 +3100,23 @@ plt_dmppt2_compare_fits <- function(circ_data,
   }
 }
 
-#### Abstract Plot ####
+#### Abstract Plots ####
 
 plt_coverage_year_national <- function(
-  results_agegroup,
-  areas,
-  last_surveys,
-  spec_age_group,
-  spec_years,
-  spec_model = "No program data",
-  spec_types =  c("MC coverage", "MMC coverage", "TMC coverage"),
-  # esa_wca_split = FALSE,
-  main = NULL,
-  str_save = NULL,
-  save_width = NULL,
-  save_height = NULL,
-  n_plots = 1
-) {
+    results_agegroup,
+    areas,
+    last_surveys,
+    spec_age_group,
+    spec_years,
+    spec_model  = "No program data",
+    spec_types  =  c("MC coverage", "MMC coverage", "TMC coverage"),
+    # esa_wca_split = FALSE,
+    main        = NULL,
+    str_save    = NULL,
+    save_width  = NULL,
+    save_height = NULL,
+    n_plots     = 1
+  ) {
 
   if (length(spec_years) == 2 && (spec_years[2] - spec_years[1]) > 1) {
     message("Changing spec_years to a sequence from the first to last year")
@@ -3359,13 +3434,13 @@ plt_coverage_year_national_single_age <- function(
     spec_year,
     spec_model = "No program data",
     # esa_wca_split = FALSE,
-    ssa_grid = NULL,
-    main = NULL,
-    str_save = NULL,
-    save_width = NULL,
+    ssa_grid    = NULL,
+    main        = NULL,
+    str_save    = NULL,
+    save_width  = NULL,
     save_height = NULL,
-    n_plots = 1
-) {
+    n_plots     = 1
+  ) {
   
   # Subset results
   tmp <- results_age %>%
@@ -3671,27 +3746,27 @@ plt_coverage_year_national_single_age <- function(
   }
 }
 
-#### Function to Plot Empirical vs Modelled Rates ####
+#### Plot Empirical vs Modelled Rates ####
 
 plt_empirical_model_rates <- function(
     empirical_rates,
-    df_results = NULL,
+    df_results       = NULL,
     spec_type,
-    spec_age_groups = c(
+    spec_age_groups  = c(
       "0-4",   "5-9",   "10-14", "15-19", "20-24", "25-29",
       "30-34", "35-39", "40-44", "45-49", "50-54", "54-59"
     ),
     spec_area_levels = NULL,
-    spec_years = NULL,
-    facet_var = "age_group",
-    take_log = FALSE,
-    split_areas = TRUE,
-    xlab = NULL,
-    ylab = NULL,
-    title = NULL,
-    str_save = NULL,
-    save_width = 9,
-    save_height = 7
+    spec_years       = NULL,
+    facet_var        = "age_group",
+    take_log         = FALSE,
+    split_areas      = TRUE,
+    xlab             = NULL,
+    ylab             = NULL,
+    title            = NULL,
+    str_save         = NULL,
+    save_width       = 9,
+    save_height      = 7
 ) {
 
   cols <- sort(c("type", "age_group", "area_level", "year"))
@@ -3867,29 +3942,31 @@ plt_empirical_model_rates <- function(
 
 #### OOS & Investigating Variance ####
 
-# plots vs year, should allow it to plot vs age group as well!
+# plots coverage vs year or coverage vs age group, depending on inputs
 threemc_val_plt <- function(
     df_results_oos,
-    df_results_orig = NULL,
+    df_results_orig   = NULL,
     df_results_survey = NULL,
-    all_surveys = NULL,
+    all_surveys       = NULL,
     spec_agegroup,
-    spec_years = unique(df_results_oos$year),
+    spec_years        = unique(df_results_oos$year),
     spec_type,
     # take_log = TRUE,
-    spec_area_level = unique(df_results_oos$area_level),
-    x_var = "year",
-    colour_var = NULL,
-    take_log = FALSE,
-    add_error = TRUE,
-    facet = "grid",
-    facet_formula = formula(~ area_name),
-    xlab, ylab, title,
-    str_save = NULL, save_width = 16, save_height = 12,
-    n_plots = 12
-) {
-
-  # browser()
+    spec_area_level   = unique(df_results_oos$area_level),
+    x_var             = "year",
+    colour_var        = NULL,
+    take_log          = FALSE,
+    add_error         = TRUE,
+    facet             = "grid",
+    facet_formula     = formula(~ area_name),
+    xlab, 
+    ylab, 
+    title,
+    str_save          = NULL, 
+    save_width        = 16, 
+    save_height       = 12,
+    n_plots           = 12
+  ) {
 
   # df_results_oos <- results_oos_val
   # df_results_orig <- results_agegroup_comparison
