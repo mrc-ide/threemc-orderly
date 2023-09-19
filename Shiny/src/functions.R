@@ -255,9 +255,18 @@ if (!inherits(plt_data1, "data.frame")) {
 # figure 1 (coverage and number of circumcisions performed)
 # if str_save is left blank, just return the plot
 plt_mc_coverage_prevalence <- function(
-  results_agegroup, areas, spec_age_group, spec_years, area_levels, spec_model,
+  results_agegroup, 
+  areas, 
+  spec_age_group, 
+  spec_years, 
+  area_levels, 
+  spec_model,
   # spec_types = c("MMC coverage", "TMC coverage"),
-  main = NULL, str_save = NULL, save_width, save_height, n_plots = 1
+  main     = NULL, 
+  str_save = NULL, 
+  save_width, 
+  save_height, 
+  n_plots  = 1
   ) {
 
   if (length(spec_years) == 2) {
@@ -458,8 +467,17 @@ plt_mc_coverage_prevalence <- function(
 
 #### fig 2 (circumcision coverage, split by type, across different discrete ages) ####
 plt_age_coverage_by_type <- function(
-  results_age, areas, spec_years, area_levels, spec_model, spec_ages = c(0, 60),
-  main = NULL, str_save = NULL, save_width, save_height, n_plots = 1
+  results_age, 
+  areas, 
+  spec_years, 
+  area_levels, 
+  spec_model, 
+  spec_ages = c(0, 60),
+  main      = NULL, 
+  str_save  = NULL, 
+  save_width, 
+  save_height, 
+  n_plots   = 1
 ) {
 
   # Subsetting
@@ -1292,21 +1310,23 @@ plt_coverage_map_change <- function(
 plt_area_facet_coverage <- function(
     results_agegroup,
     areas,
-    area_order = NULL,
-    hor_line = 90,
-    spec_years = 2008:2020,
+    area_order     = NULL,
+    hor_line       = 90,
+    spec_years     = 2008:2020,
     spec_age_group = "10-29",
-    area_levels = unique(results_agegroup$area_level),
+    area_levels    = unique(results_agegroup$area_level),
     province_split = FALSE,
-    spec_model = "No program data",
-    str_save = NULL,
+    spec_model     = "No program data",
+    str_save       = NULL,
     # spec_title = paste0("Male Circumcision Coverage, ",
-    spec_title = paste0("Coverage, ",
-                        spec_years[1], "-", last(spec_years),
-                        ", ages ", spec_age_group),
-    save_width = 24,
-    save_height = 21,
-    n_plots = 12
+    spec_title     = paste0(
+      "Coverage, ",
+      spec_years[1], "-", last(spec_years),
+      ", ages ", spec_age_group
+    ),
+    save_width     = 24,
+    save_height    = 21,
+    n_plots        = 12
 ) {
 
     # Subsetting
@@ -1382,14 +1402,19 @@ plt_area_facet_coverage <- function(
       
     # function to create single plot
     plot_fun <- function(dat, dat1) {
+      
+      # title displaying area level and label
       plot_title <- paste(
-        spec_title,
         dat$iso3[1],
-        # dat$area_level[1],
-        # dat$area_level_label[1],
+        dat$area_name[1],
+        paste0(
+          "Area Level: ", dat$area_level[1], 
+          " (", dat$area_level_label[1], ")"
+        ),
         sep = ", "
       )
-
+      if (!is.null(spec_title)) plot_title <- paste(spec_title, plot_title)
+      
       if (province_split) {
           if (!is.na(dat$parent_area_name[1])) {
             plot_title <- paste(
@@ -1425,7 +1450,7 @@ plt_area_facet_coverage <- function(
             data = dat1,
             aes(
               # x = 2008,
-              x = min_year,
+              x = min_year + 0.5,
               y = 100 * mean.y,
               fill = NA,
               label = if_else(
@@ -1445,7 +1470,8 @@ plt_area_facet_coverage <- function(
           geom_text(
             data = dat1,
             aes(
-              x = max_year,
+              # x = max_year,
+              x = max_year - 0.5,
               y = 100 * mean.y,
               fill = NA,
               label = if_else(
@@ -1465,6 +1491,7 @@ plt_area_facet_coverage <- function(
           # Setting for the axes
           scale_x_continuous(
             # breaks = seq(2008, 2020, by = 2),
+            # expand = c(0, 0), 
             breaks = seq(min_year, max_year, by = 2),
             # limits = c(2007.25, 2020.75)
             limits = c(min_year - 0.75, max_year + 0.75)
@@ -1486,22 +1513,24 @@ plt_area_facet_coverage <- function(
           facet_wrap(. ~ area_name) +
           ggtitle(plot_title) +
           # Minimal theme
-          theme_minimal() +
-          # Altering plot text size
+          theme_minimal(base_size = 9) +
+          # Alter plot text size
           theme(
-              plot.title = element_text(size = 26, hjust = 0.5),
-              axis.text.y = element_blank(),
-              strip.text = element_text(size = 20, face = "bold"),
-              strip.background = element_blank(),
-              axis.title = element_text(size = 16),
-              # panel.grid.minor = element_blank(),
-              legend.text = element_text(size = 12),
-              axis.text.x = element_text(size = 12,
-                                         angle = 45,
-                                         hjust = 1,
-                                         vjust = 1),
-              legend.position = "bottom",
-              plot.tag = element_text(face = "bold", size = 22)
+            axis.text.x      = element_text(
+              size = rel(1.4),
+              angle = 45,
+              hjust = 1,
+              vjust = 1
+            ),
+            axis.text.y      = element_blank(),
+            axis.title.y     = element_text(size = rel(1.2)),
+            strip.text       = element_text(size = rel(1.5)),
+            strip.background = element_blank(),
+            panel.grid.minor = element_blank(),
+            legend.text      = element_text(size = rel(1.2)),
+            legend.position  = "bottom",
+            plot.title       = element_text(size = rel(1.3), hjust = 0.5),
+            plot.tag         = element_text(face = "bold", size = 22)
           )
     }
       
