@@ -218,6 +218,30 @@ split_area_level <- function(
   }
 }
 
+#### Recursively search through list and create plots ####
+# with one plotting object
+recursive_plot <- function(plt_data, plot_fun, ...) {
+if (!inherits(plt_data1, "data.frame")) {
+  lapply(seq_along(plt_data1), function(i) {
+    recursive_plot(plt_data[[i]], plot_fun, ...)
+  })
+ } else {
+  plot_fun(plt_data, ...)
+ }
+}
+
+# with two plotting objects
+recursive_plot_2 <- function(plt_data1, plt_data2, plot_fun, ...) {
+if (!inherits(plt_data1, "data.frame")) {
+  lapply(seq_along(plt_data1), function(i) {
+    recursive_plot_2(plt_data1[[i]], plt_data2[[i]], plot_fun, ...)
+  })
+ } else {
+  plot_fun(plt_data1, plt_data2, ...)
+ }
+}
+
+
 #### Plots from paper ####
 # figure 1 (coverage and number of circumcisions performed)
 # if str_save is left blank, just return the plot
@@ -1277,170 +1301,167 @@ plt_area_facet_coverage <- function(
         plyr::rbind.fill()
 
     # split by area level and number of desired plots
-    if (province_split) {
-      # if desired, split by parent area id instead of by n_plots
-      tmp <- dplyr::group_split(tmp, area_level) %>%
-          purrr::map(~ dplyr::group_split(.x, parent_area_id))
-      tmp1 <- dplyr::group_split(tmp1, area_level) %>%
-          purrr::map(~ dplyr::group_split(.x, parent_area_id))
-    } else {
+    # if (province_split) {
+    #   # if desired, split by parent area id instead of by n_plots
+    #   tmp <- dplyr::group_split(tmp, area_level) %>%
+    #       purrr::map(~ dplyr::group_split(.x, parent_area_id))
+    #   tmp1 <- dplyr::group_split(tmp1, area_level) %>%
+    #       purrr::map(~ dplyr::group_split(.x, parent_area_id))
+    # } else {
       tmp <- split_area_level(
         tmp,   
-        n_plots           = n_plots # , 
-        # parent_area_split = province_split
+        n_plots           = n_plots, 
+        parent_area_split = province_split
       )
       tmp1 <- split_area_level(
         tmp1, 
-        n_plots           = n_plots # ,
-        # parent_area_split = province_split
+        n_plots           = n_plots,
+        parent_area_split = province_split
       )
-    }
+    # }
       
-    # plot
-    plots <- lapply(seq_along(tmp), function(i) {
-        lapply(seq_along(tmp[[i]]), function(j) {
+    # function to create single plot
+    plot_fun <- function(dat, dat1) {
+      plot_title <- paste(
+        spec_title,
+        dat$iso3[1],
+        # dat$area_level[1],
+        # dat$area_level_label[1],
+        sep = ", "
+      )
 
-            dat <- tmp[[i]][[j]]
-            dat1 <- tmp1[[i]][[j]]
-
+      if (province_split) {
+          if (!is.na(dat$parent_area_name[1])) {
             plot_title <- paste(
-                spec_title,
-                dat$iso3[1],
-                # dat$area_level[1],
-                # dat$area_level_label[1],
+                plot_title,
+                paste0("Parent Area: ", dat$parent_area_name[1]),
                 sep = ", "
             )
-
-            if (province_split) {
-
-                if (!is.na(dat$parent_area_name[1])) {
-                  plot_title <- paste(
-                      plot_title,
-                      paste0("Parent Area: ", dat$parent_area_name[1]),
-                      sep = ", "
-                  )
-                }
-            } else {
-                plot_title <- paste(
-                    plot_title,
-                    dat$area_level[1],
-                    dat$area_level_label[1],
-                    sep = ", "
-                )
-            }
-            
-            min_year <- min(dat$year)
-            max_year <- max(dat$year)
-            
-            ggplot(dat, aes(x = year, group = type, fill = type)) +
-                # Add target line to prevalence
-                geom_hline(
-                  yintercept = hor_line,
-                  size = 1,
-                  linetype = "dashed",
-                  colour = "grey50"
-                ) +
-                # Prevalence as area plot
-                geom_area(aes(y = 100 * mean.y)) +
-                # suppressWarnings(geom_text(data = dat1,
-                geom_text(
-                  data = dat1,
-                  aes(
-                    # x = 2008,
-                    x = min_year,
-                    y = 100 * mean.y,
-                    fill = NA,
-                    label = if_else(
-                      # year %in% c(2008),
-                      year %in% min_year,
-                      scales::percent(mean.y, 1),
-                      NA_character_)
-                  ),
-                  fontface = "bold",
-                  vjust = 0,
-                  colour = "grey30",
-                  size = 6,
-                  nudge_y = 0.02,
-                  show.legend = FALSE
-                ) +
-                # suppressWarnings(geom_text(data = dat1,
-                geom_text(
-                  data = dat1,
-                  aes(
-                    x = max_year,
-                    y = 100 * mean.y,
-                    fill = NA,
-                    label = if_else(
-                      # year %in% c(2020),
-                      year %in% max_year,
-                      scales::percent(mean.y, 1),
-                      NA_character_
-                    )
-                  ),
-                  fontface = "bold",
-                  vjust = 0,
-                  colour = "grey30",
-                  size = 6,
-                  nudge_y = 0.02,
-                  show.legend = FALSE
-                ) +
-                # Setting for the axes
-                scale_x_continuous(
-                  # breaks = seq(2008, 2020, by = 2),
-                  breaks = seq(min_year, max_year, by = 2),
-                  # limits = c(2007.25, 2020.75)
-                  limits = c(min_year - 0.75, max_year + 0.75)
-                ) +
-                scale_y_continuous(
-                  breaks = scales::pretty_breaks(5),
-                  limits = c(0, 108)
-                ) +
-                # Setting colour palette
-                scale_fill_manual(
-                    values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
-                ) +
-                # Plotting labels
-                labs(
-                  x = "",
-                  y = "Circumcision Coverage (%)",
-                  fill = ""
-                ) +
-                facet_wrap(. ~ area_name) +
-                ggtitle(plot_title) +
-                # Minimal theme
-                theme_minimal() +
-                # Altering plot text size
-                theme(
-                    plot.title = element_text(size = 26, hjust = 0.5),
-                    axis.text.y = element_blank(),
-                    strip.text = element_text(size = 20, face = "bold"),
-                    strip.background = element_blank(),
-                    axis.title = element_text(size = 16),
-                    # panel.grid.minor = element_blank(),
-                    legend.text = element_text(size = 12),
-                    axis.text.x = element_text(size = 12,
-                                               angle = 45,
-                                               hjust = 1,
-                                               vjust = 1),
-                    legend.position = "bottom",
-                    plot.tag = element_text(face = "bold", size = 22)
-                )
-        })
-    })
-
+          }
+      } else {
+          plot_title <- paste(
+              plot_title,
+              dat$area_level[1],
+              dat$area_level_label[1],
+              sep = ", "
+          )
+      }
+      
+      min_year <- min(dat$year)
+      max_year <- max(dat$year)
+      
+      ggplot(dat, aes(x = year, group = type, fill = type)) +
+          # Add target line to prevalence
+          geom_hline(
+            yintercept = hor_line,
+            size = 1,
+            linetype = "dashed",
+            colour = "grey50"
+          ) +
+          # Prevalence as area plot
+          geom_area(aes(y = 100 * mean.y)) +
+          # suppressWarnings(geom_text(data = dat1,
+          geom_text(
+            data = dat1,
+            aes(
+              # x = 2008,
+              x = min_year,
+              y = 100 * mean.y,
+              fill = NA,
+              label = if_else(
+                # year %in% c(2008),
+                year %in% min_year,
+                scales::percent(mean.y, 1),
+                NA_character_)
+            ),
+            fontface = "bold",
+            vjust = 0,
+            colour = "grey30",
+            size = 6,
+            nudge_y = 0.02,
+            show.legend = FALSE
+          ) +
+          # suppressWarnings(geom_text(data = dat1,
+          geom_text(
+            data = dat1,
+            aes(
+              x = max_year,
+              y = 100 * mean.y,
+              fill = NA,
+              label = if_else(
+                # year %in% c(2020),
+                year %in% max_year,
+                scales::percent(mean.y, 1),
+                NA_character_
+              )
+            ),
+            fontface = "bold",
+            vjust = 0,
+            colour = "grey30",
+            size = 6,
+            nudge_y = 0.02,
+            show.legend = FALSE
+          ) +
+          # Setting for the axes
+          scale_x_continuous(
+            # breaks = seq(2008, 2020, by = 2),
+            breaks = seq(min_year, max_year, by = 2),
+            # limits = c(2007.25, 2020.75)
+            limits = c(min_year - 0.75, max_year + 0.75)
+          ) +
+          scale_y_continuous(
+            breaks = scales::pretty_breaks(5),
+            limits = c(0, 108)
+          ) +
+          # Setting colour palette
+          scale_fill_manual(
+              values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]
+          ) +
+          # Plotting labels
+          labs(
+            x = "",
+            y = "Circumcision Coverage (%)",
+            fill = ""
+          ) +
+          facet_wrap(. ~ area_name) +
+          ggtitle(plot_title) +
+          # Minimal theme
+          theme_minimal() +
+          # Altering plot text size
+          theme(
+              plot.title = element_text(size = 26, hjust = 0.5),
+              axis.text.y = element_blank(),
+              strip.text = element_text(size = 20, face = "bold"),
+              strip.background = element_blank(),
+              axis.title = element_text(size = 16),
+              # panel.grid.minor = element_blank(),
+              legend.text = element_text(size = 12),
+              axis.text.x = element_text(size = 12,
+                                         angle = 45,
+                                         hjust = 1,
+                                         vjust = 1),
+              legend.position = "bottom",
+              plot.tag = element_text(face = "bold", size = 22)
+          )
+    }
+      
+    # plot for each (nested) loop
+    plots <- recursive_plot_2(tmp, tmp1, plot_fun)
+    
     # save, if desired, else return plots
     if (!is.null(str_save)) {
-        ggsave(
-            filename = str_save,
-            plot = gridExtra:: marrangeGrob(rlang::squash(plots),
-                                            nrow = 1,
-                                            ncol = 1),
-            dpi = "retina",
-            width = save_width,
-            height = save_height
+      plots <- rlang::squash(plots)
+      ggsave(
+        filename = str_save,
+        plot = gridExtra:: marrangeGrob(
+          plots, nrow = 1, ncol = 1
+        ),
+        dpi = "retina",
+        width = save_width,
+        height = save_height
         )
     } else {
-        return(rlang::squash(plots))
+      return(rlang::squash(plots))
     }
 }
 
@@ -1787,103 +1808,12 @@ plt_circ_age_ridge <- function(
           panel.spacing = unit(0.2, "lines")
         )
     }
-    
-    # plots <- lapply(seq_along(tmp), function(i) {
-    #     # lapply(seq_along(tmp[[i]]), function(j) {
-    #       # lapply(seq_along(tmp[[i]][[j]]), function(k) {
-    # 
-    #         # plt_data <- tmp[[i]][[j]][[k]]
-    #         # plt_data2 <- tmp2[[i]][[j]][[k]]
-    #         plt_data <- tmp[[i]]
-    #         plt_data2 <- tmp2[[i]]
-    # 
-    #         spec_title <- paste(
-    #           plt_data$year[1],
-    #           plt_data$iso3[1],
-    #           plt_data$area_level[1],
-    #           plt_data$area_level_label[1],
-    #           sep = ", "
-    #         )
-    # 
-    #         ggplot(plt_data,
-    #                aes(x = age,
-    #                    y = area_name,
-    #                    height = density,
-    #                    fill = type,
-    #                    colour = type)) +
-    #           ggridges::geom_density_ridges(
-    #             stat = "identity",
-    #             scale = 1,
-    #             alpha = 0.7,
-    #             colour = NA
-    #           )  +
-    #           # Adding average age of circumcision
-    #           geom_point(data = plt_data2,
-    #                      aes(x = average_age,
-    #                          y = as.integer(area_name) - 0.05,
-    #                          colour = type),
-    #                      inherit.aes = FALSE,
-    #                      show.legend = FALSE) +
-    #           # Adding uncertainty interval of average age of circumcision
-    #           geom_segment(data = plt_data2,
-    #                        aes(x = average_age_lower,
-    #                            xend = average_age_upper,
-    #                            y = as.integer(area_name) - 0.05,
-    #                            yend = as.integer(area_name) - 0.05,
-    #                            colour = type),
-    #                        inherit.aes = FALSE,
-    #                        show.legend = FALSE) +
-    #           # Colour palette
-    #           scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
-    #           scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)[c(1, 3)]) +
-    #           # Setting theme
-    #           theme_minimal() +
-    #           # Splitting by circumcision type
-    #           # facet_grid(. ~ type) +
-    #           # Setting labels
-    #           ggtitle(spec_title) +
-    #           labs(y = NULL,
-    #                x = "Age at circumcision",
-    #                colour = NULL,
-    #                fill = NULL) +
-    #           # Changing plot themes
-    #           theme(
-    #             axis.title = element_text(size = 24),
-    #             axis.text = element_text(size = 20, face = "bold"),
-    #             # axis.text.x = element_text(size = 20, face = "bold"),
-    #             # axis.text.y = element_text(size = 16),
-    #             plot.title = element_text(size = 30, hjust = 0.5),
-    #             strip.text = element_text(size = 16),
-    #             strip.background = element_blank(),
-    #             legend.title = element_text(size = 16),
-    #             legend.text = element_text(size = 24),
-    #             legend.position = "bottom",
-    #             panel.spacing = unit(0.2, "lines")
-    #           )
-    #       # })
-    #     # })
-    # })
-    
-    # recursively fit plots
-    # TODO: This is repeated in other functions; have as it's own fun!
-    recursive_plot_fun <- function(plt_data1, plt_data2, ...) {
-    if (!inherits(plt_data1, "data.frame")) {
-      lapply(seq_along(plt_data1), function(i) {
-        recursive_plot_fun(plt_data1[[i]], plt_data2[[i]], ...)
-      })
-     } else {
-      plot_fun(plt_data1, plt_data2, ...)
-     }
-    }
-  
+       
     # plot for each (nested) loop
-    # plots <- recursive_plot_fun(tmp1, tmp2)
-    plots <- lapply(seq_along(tmp), function(i) {
-      recursive_plot_fun(tmp[[i]], tmp2[[i]])
-    })
+    plots <- recursive_plot_2(tmp, tmp2, plot_fun)
 
-    plots <- rlang::squash(plots)
     if (!is.null(str_save)) {
+        plots <- rlang::squash(plots)
         ggsave(
             filename = str_save,
             plot = gridExtra:: marrangeGrob(plots, nrow = 1, ncol = 1),
@@ -1983,25 +1913,12 @@ pop_pyramid_plt <- function(
         ) 
     }
   
-  # function to recursively create plots for every item in `tmp` list
-  recursive_plot_fun <- function(plt_data1, ...) {
-    if (!inherits(plt_data1, "data.frame")) {
-      lapply(seq_along(plt_data1), function(i) {
-        recursive_plot_fun(plt_data1[[i]], ...)
-      })
-    } else {
-      plot_fun(plt_data1, ...)
-    }
-  }
-  
   # plot for each (nested) list item in `tmp`
-  plots <- lapply(seq_along(tmp), function(i) {
-    recursive_plot_fun(tmp)
-  })
+  plots <- recursive_plot(tmp, plot_fun)
   
   # save or return plots
-  plots <- rlang::squash(plots)
   if (!is.null(str_save)) {
+    plots <- rlang::squash(plots)
     ggsave(
       filename = str_save,
       plot   = gridExtra:: marrangeGrob(plots, nrow = 1, ncol = 1),
@@ -2432,30 +2349,13 @@ plt_MC_modelfit <- function(
     }
     return(p)
   }
-
-  recursive_plot_fun <- function(plt_data1, plt_data2, ...) {
-    if (!inherits(plt_data1, "data.frame")) {
-      lapply(seq_along(plt_data1), function(i) {
-        recursive_plot_fun(plt_data1[[i]], plt_data2[[i]], ...)
-      })
-    } else {
-      plot_fun(plt_data1, plt_data2, ...)
-    }
-  }
-
+  
   # plot for each (nested) loop
-  # plots <- recursive_plot_fun(tmp1, tmp2)
-  plots <- lapply(seq_along(tmp1), function(i) {
-    recursive_plot_fun(tmp1[[i]], tmp2[[i]])
-  })
-
-  # flatten nested list of plots
-  plots <- rlang::squash(plots)
-  # if (!"data.frame" %in% class(plots[[1]][[1]])) {
-  #   plots <- purrr::flatten(plots)
-  # }
+  plots <- recursive_plot_2(tmp1, tmp2, plot_fun)
 
   if (!is.null(str_save)) {
+    # flatten nested list of plots
+    plots <- rlang::squash(plots)
     # save
     plots <-  gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
     ggsave(filename = str_save,
@@ -3390,24 +3290,13 @@ plt_coverage_year_national <- function(
       )
   }
 
-  recursive_plot_fun <- function(all_data, mc_data, ...) {
-    if (!inherits(all_data, "data.frame")) {
-      lapply(seq_along(all_data), function(i) {
-        recursive_plot_fun(all_data[[i]], mc_data[[i]], ...)
-      })
-    } else {
-      plot_fun(all_data, mc_data, ...)
-    }
-  }
-
-  # plots <- recursive_plot_fun(dat_all, tmp1, spec_years, spec_age_group, n_plots)
-  plots <- lapply(seq_along(dat_all), function(i) {
-    recursive_plot_fun(
-      dat_all[[i]], tmp1[[i]], spec_years, spec_age_group, n_plots
-    )
-  })
-  plots <- rlang::squash(plots)
+  # plot for each (nested) loop
+  plots <- recursive_plot_2(
+    dat_all, tmp1, plot_fun, spec_years, spec_age_group, n_plots
+  )
+  
   if (!is.null(str_save)) {
+    plots <- rlang::squash(plots)
     ggsave(
       # filename = paste0("Runs/plots/", cntry, "_Figure1.pdf"),
       filename = str_save,
@@ -3711,26 +3600,12 @@ plt_coverage_year_national_single_age <- function(
       )
   }
   
-  recursive_plot_fun <- function(all_data, mc_data, ...) {
-    if (!inherits(all_data, "data.frame")) {
-      lapply(seq_along(all_data), function(i) {
-        recursive_plot_fun(all_data[[i]], mc_data[[i]], ...)
-      })
-    } else {
-      plot_fun(all_data, mc_data, ...)
-    }
-  }
-  
-  # plots <- recursive_plot_fun(dat_all, tmp1, spec_years, spec_age_group, n_plots)
-  plots <- lapply(seq_along(dat_all), function(i) {
-    recursive_plot_fun(
-      dat_all[[i]], tmp1[[i]], spec_years, spec_age_group, n_plots
-    )
-  })
-  plots <- rlang::squash(plots)
+  plots <- recursive_plot_2(
+    dat_all, tmp1, plot_fun, spec_years, spec_age_group, n_plots
+  )
   if (!is.null(str_save)) {
+    plots <- rlang::squash(plots)
     ggsave(
-      # filename = paste0("Runs/plots/", cntry, "_Figure1.pdf"),
       filename = str_save,
       plot = gridExtra:: marrangeGrob(plots, nrow = 1, ncol = 1),
       dpi = "retina",
@@ -3921,8 +3796,8 @@ plt_empirical_model_rates <- function(
   plots <- recursive_plot_fun(empirical_rates_plt, df_results_plt)
 
   # save plots, if desired
-  if (inherits(plots, "list")) plots <- rlang::squash(plots)
   if (!is.null(str_save)) {
+  if (inherits(plots, "list")) plots <- rlang::squash(plots)
     ggsave(
       filename = str_save,
       plot = gridExtra::marrangeGrob(
