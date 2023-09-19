@@ -1189,7 +1189,8 @@ plt_coverage_map_change <- function(
           frame.colour = "black",
           ticks = TRUE,
           barheight = 1,
-          barwidth = 17,
+          # barwidth = 16,
+          barwidth = 15.5,
           title.position = "bottom", 
           plot.background = element_rect(fill = "white", colour = "white")
         )
@@ -1225,7 +1226,7 @@ plt_coverage_map_change <- function(
         colours = colourPalette2,
         na.value = "grey",
         # breaks = seq(-0.2, 0.5, by = 0.1), 
-        breaks = seq(-0.3, 0.7, by = 0.2), 
+        breaks = seq(-0.3, 0.7, by = 0.1), 
         # breaks = sort(c(seq(-0.3, 0.7, by = 0.2), 0)),
         # limits = c(-0.2, 0.5),
         limits = c(-0.3, 0.7),
@@ -1241,22 +1242,24 @@ plt_coverage_map_change <- function(
           ticks = TRUE, 
           barheight = 1,
           # barwidth = 10,
-          barwidth = 10,
+          barwidth = 13,
           title.position = "bottom"
         )
       ) +
       facet_grid(type ~ year, switch = "y") + 
       theme_minimal(base_size = 9) +
       theme(
-        strip.text    = element_text(size = rel(1.1), face = "bold"), 
-        legend.text   = element_text(size = rel(0.75)),
-        legend.title = element_text(size = rel(1.0), face = "bold", hjust = 0.5),
+        strip.text      = element_text(size = rel(1.1), face = "bold"), 
+        legend.text     = element_text(size = rel(0.75)),
+        legend.title    = element_text(face = "bold", hjust = 0.5),
         axis.text       = element_blank(),
         axis.ticks      = element_blank(),
         legend.position = "bottom",
         panel.grid      = element_blank(),
         panel.spacing   = unit(0.01, "lines"), # make plot as "dense" as possible
-        plot.background = element_rect(fill = "white", colour = "white")
+        plot.background = element_rect(fill = "white", colour = "white"),
+        # add margin so colour bars both fit in
+        plot.margin     = unit(c(0, 0.5, 0, 0), "cm")
       )
   }
   
