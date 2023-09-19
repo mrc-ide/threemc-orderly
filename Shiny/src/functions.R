@@ -152,7 +152,8 @@ split_area_level <- function(
     
     distinct_areas <- .data %>%
         distinct(across(cols)) %>%
-        group_by(across(cols)) %>% 
+        # split each area_level (+ parent area) split by n plots desired
+        group_by(across(cols[!cols == "area_id"])) %>% 
         dplyr::mutate(split = ceiling(row_number() / n_plots)) %>%
         ungroup()
     
@@ -229,8 +230,8 @@ split_area_level <- function(
 # with one plotting object
 # This is required to plot list of objects for different years, areas, etc
 recursive_plot <- function(plt_data, plot_fun, ...) {
-if (!inherits(plt_data1, "data.frame")) {
-  lapply(seq_along(plt_data1), function(i) {
+if (!inherits(plt_data, "data.frame")) {
+  lapply(seq_along(plt_data), function(i) {
     recursive_plot(plt_data[[i]], plot_fun, ...)
   })
  } else {
@@ -1492,13 +1493,13 @@ plt_age_coverage_multi_years <- function(
     n_plots = 12
 ) {
 
-    # Subsetting
+    # Subset
     tmp <- results_age %>%
         filter(
-            type      %in% spec_types,
-            year     %in% spec_years,
+            type       %in% spec_types,
+            year       %in% spec_years,
             area_level %in% area_levels,
-            model == spec_model
+            model      == spec_model
         ) %>%
         # multiply prevalence by 100
         mutate(across(c(mean, lower, upper), ~ . * 100))
@@ -1507,113 +1508,123 @@ plt_age_coverage_multi_years <- function(
     tmp <- add_area_info(tmp, areas)
 
     # split by area level and number of desired plots
-    if (province_split) {
-        # if desired, split by parent area id instead of by n_plots
-        tmp <- dplyr::group_split(tmp, area_level) %>%
-            purrr::map(~ dplyr::group_split(.x, parent_area_id))
-    } else {
-        tmp <- split_area_level(tmp, n_plots = n_plots)
+    tmp <- split_area_level(
+      tmp, n_plots = n_plots, parent_area_split = province_split
+    )
+        
+    # function to create plot for each individual split
+    plot_fun <- function(dat) {
+      # title displaying area level and label
+      spec_title <- paste(
+        spec_title,
+        dat$iso3[1],
+        sep = ", "
+      )
+      if (province_split) {
+        if (is.na(dat$parent_area_name[1])) {
+            parent_lab <- NULL
+        } else {
+            parent_lab <- paste0("Parent Area: ", dat$parent_area_name[1])
+        }
+        spec_title <- paste(
+            spec_title,
+            parent_lab,
+            sep = ", "
+        )
+      } else {
+        spec_title <- paste(
+            spec_title,
+            dat$area_level[1],
+            dat$area_level_label[1],
+            sep = ", "
+        )
+      }
+
+      p <- ggplot(
+        dat,
+        aes(
+          x = age,
+          group = as.factor(year),
+          fill = as.factor(year),
+          colour = as.factor(year)
+        )
+      ) +
+        # Adding target line to prevalence
+        geom_hline(
+          yintercept = 90,
+          size = 1,
+          linetype = "dashed",
+          colour = "grey50"
+        ) +
+        # Prevalence as area plot
+        geom_ribbon(
+          aes(ymin = lower, ymax = upper),
+          colour = NA,
+          alpha = 0.5
+        ) +
+        # Prevalence as area plot
+        geom_line(aes(y = mean), size = 1) +
+        # Setting for the axes
+        scale_x_continuous(
+          breaks = seq(spec_ages[1], spec_ages[2], by = 10)
+        ) +
+        scale_y_continuous(
+          breaks = scales::pretty_breaks(5),
+          limits = c(0, 100)
+        ) +
+        # Setting colour palette
+        scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)) +
+        scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)) +
+        # Plotting labels
+        ggtitle(spec_title) +
+        labs(
+          x = "Age",
+          y = "Circumcision coverage (%)",
+          colour = "",
+          fill = ""
+        ) +
+        # Minimal theme
+        theme_minimal() +
+        # Geofacet
+        # facet_geo(~ area_id # ,
+        #          grid = zaf_district_grid,
+        #          label = "name_district"
+        # ) +
+        # Altering plot text size
+        theme(
+          axis.text = element_text(size = 16),
+          strip.text = element_text(size = 16),
+          strip.background = element_blank(),
+          # panel.grid = element_blank(),
+          # panel.grid.minor = element_blank(),
+          axis.title = element_text(size = 20),
+          # plot.title = element_text(size = 40, hjust = 0.5),
+          plot.title = element_text(size = 24, hjust = 0.5),
+          legend.text = element_text(size = 20),
+          legend.position = "bottom"
+        )
+      
+      if (length(spec_types) > 1) {
+        p <- p + facet_grid(type ~ area_name)
+      } else p <- p + facet_wrap(. ~ area_name)
+
+      return(p)
     }
 
-    plots <- lapply(tmp, function(i) {
-        lapply(i, function(j) {
-
-            # title displaying area level and label
-            spec_title <- paste(
-                spec_title,
-                j$iso3[1],
-                sep = ", "
-            )
-            if (province_split) {
-                if (is.na(j$parent_area_name[1])) {
-                    parent_lab <- NULL
-                } else {
-                    parent_lab <- paste0("Parent Area: ", j$parent_area_name[1])
-                }
-                spec_title <- paste(
-                    spec_title,
-                    parent_lab,
-                    sep = ", "
-                )
-            } else {
-                spec_title <- paste(
-                    spec_title,
-                    j$area_level[1],
-                    j$area_level_label[1],
-                    sep = ", "
-                )
-            }
-
-            p <- ggplot(j,
-                   aes(x = age,
-                       group = as.factor(year),
-                       fill = as.factor(year),
-                       colour = as.factor(year))) +
-                # Adding target line to prevalence
-                geom_hline(yintercept = 90,
-                           size = 1,
-                           linetype = "dashed",
-                           colour = "grey50") +
-                # Prevalence as area plot
-                geom_ribbon(aes(ymin = lower,
-                                ymax = upper),
-                            colour = NA,
-                            alpha = 0.5) +
-                # Prevalence as area plot
-                geom_line(aes(y = mean),
-                          size = 1) +
-                # Setting for the axes
-                scale_x_continuous(
-                    breaks = seq(spec_ages[1], spec_ages[2], by = 10)
-                ) +
-                scale_y_continuous(
-                    breaks = scales::pretty_breaks(5),
-                    limits = c(0, 100)) +
-                # Setting colour palette
-                scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)) +
-                scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)) +
-                # Plotting labels
-                ggtitle(spec_title) +
-                labs(x = "Age",
-                     y = "Circumcision coverage (%)",
-                     colour = "",
-                     fill = "") +
-                # Minimal theme
-                theme_minimal() +
-                # Geofacet
-                # facet_geo(~ area_id # ,
-                #          grid = zaf_district_grid,
-                #          label = "name_district"
-                # ) +
-                # Altering plot text size
-                theme(axis.text = element_text(size = 16),
-                      strip.text = element_text(size = 16),
-                      strip.background = element_blank(),
-                      # panel.grid = element_blank(),
-                      # panel.grid.minor = element_blank(),
-                      axis.title = element_text(size = 20),
-                      # plot.title = element_text(size = 40, hjust = 0.5),
-                      plot.title = element_text(size = 24, hjust = 0.5),
-                      legend.text = element_text(size = 20),
-                      legend.position = "bottom")
-
-            if (length(spec_types) > 1) {
-                p <- p + facet_grid(type ~ area_name)
-            } else p <- p + facet_wrap(. ~ area_name)
-
-            return(p)
-        })
-    })
+    # plot for each (nested) loop
+    plots <- recursive_plot(tmp, plot_fun)
+    
     if (!is.null(str_save)) {
-        ggsave(
-            filename = str_save,
-            plot = gridExtra:: marrangeGrob(rlang::squash(plots), nrow = 1, ncol = 1),
-            dpi = "retina",
-            width = save_width,
-            height = save_height
-        )
+      plots <- rlang::squash(plots)
+      ggsave(
+        filename = str_save,
+        plot = gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1),
+        dpi = "retina",
+        width = save_width,
+        height = save_height
+      )
     } else {
-        return(rlang::squash(plots))
+      return(rlang::squash(plots))
     }
 }
 
