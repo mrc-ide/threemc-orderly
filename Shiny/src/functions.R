@@ -145,14 +145,19 @@ split_area_level <- function(
   ) {
 
   # find unique areas. Only want "n_plots" areas on each page of the plot
+  # Also group by parent area, if desired
   if (!is.null(n_plots)) {
-      distinct_areas <- .data %>%
-          distinct(area_id, area_level) %>%
-          group_by(area_level) %>%
-          dplyr::mutate(split = ceiling(row_number() / n_plots)) %>%
-          ungroup()
-      .data <- .data %>%
-          left_join(distinct_areas, by = c("area_id", "area_level"))
+    cols <- c("area_id", "area_level")
+    if (parent_area_split == TRUE) cols <- c(cols, "parent_area_id")
+    
+    distinct_areas <- .data %>%
+        distinct(across(cols)) %>%
+        group_by(across(cols)) %>% 
+        dplyr::mutate(split = ceiling(row_number() / n_plots)) %>%
+        ungroup()
+    
+    .data <- .data %>%
+        left_join(distinct_areas, by = cols)
   }
   
   # add dummy for areas with no parent areas
@@ -180,7 +185,9 @@ split_area_level <- function(
   }
   
   # split by area level
-  .data <- split_fun(.data, "area_level")
+  if (length(unique(.data$area_level)) > 1) {
+    .data <- split_fun(.data, "area_level")
+  }
 
   # Split options:
   # 1. split by year and number of regions to show on each plot (n_plot) desired
@@ -220,6 +227,7 @@ split_area_level <- function(
 
 #### Recursively search through list and create plots ####
 # with one plotting object
+# This is required to plot list of objects for different years, areas, etc
 recursive_plot <- function(plt_data, plot_fun, ...) {
 if (!inherits(plt_data1, "data.frame")) {
   lapply(seq_along(plt_data1), function(i) {
