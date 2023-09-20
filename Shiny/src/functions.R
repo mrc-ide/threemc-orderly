@@ -360,7 +360,7 @@ plt_mc_coverage_prevalence <- function(
         b$iso3[1],
         b$area_name[1],
         paste0(
-          "Area Level: ", b$area_level[1], 
+          "Area Level ", b$area_level[1], 
           " (", b$area_level_label[1], ")"
         ),
         # b$area_level_label[1],
@@ -548,7 +548,7 @@ plt_age_coverage_by_type <- function(
         b$iso3[1],
         b$area_name[1],
         paste0(
-          "Area Level: ", b$area_level[1], 
+          "Area Level ", b$area_level[1], 
           " (", b$area_level_label[1], ")"
         ),
         sep = ", "
@@ -1408,7 +1408,7 @@ plt_area_facet_coverage <- function(
         dat$iso3[1],
         dat$area_name[1],
         paste0(
-          "Area Level: ", dat$area_level[1], 
+          "Area Level ", dat$area_level[1], 
           " (", dat$area_level_label[1], ")"
         ),
         sep = ", "
@@ -1565,9 +1565,9 @@ plt_age_coverage_multi_years <- function(
     area_levels = unique(results_age$area_level),
     spec_model = "No program data",
     spec_ages = c(0, 60),
+    spec_title = "Male Circumcision Coverage vs Age",
     province_split = FALSE,
     str_save = NULL,
-    spec_title = paste0("Male Circumcision Coverage vs Age"),
     save_width = 9,
     save_height = 7,
     n_plots = 12
@@ -1594,28 +1594,28 @@ plt_age_coverage_multi_years <- function(
         
     # function to create plot for each individual split
     plot_fun <- function(dat) {
+      
       # title displaying area level and label
-      spec_title <- paste(
-        spec_title,
+      plot_title <- paste(
         dat$iso3[1],
+        dat$area_name[1],
+        paste0(
+          "Area Level ", dat$area_level[1], 
+          " (", dat$area_level_label[1], ")"
+        ),
         sep = ", "
       )
-      if (province_split) {
+      if (!is.null(spec_title)) plot_title <- paste(spec_title, plot_title)
+      
+      if (province_split && all(dat$area_level != 0)) {
         if (is.na(dat$parent_area_name[1])) {
             parent_lab <- NULL
         } else {
             parent_lab <- paste0("Parent Area: ", dat$parent_area_name[1])
         }
-        spec_title <- paste(
-            spec_title,
+        plot_title <- paste(
+          plot_title,
             parent_lab,
-            sep = ", "
-        )
-      } else {
-        spec_title <- paste(
-            spec_title,
-            dat$area_level[1],
-            dat$area_level_label[1],
             sep = ", "
         )
       }
@@ -1656,7 +1656,7 @@ plt_age_coverage_multi_years <- function(
         scale_colour_manual(values = wesanderson::wes_palette("Zissou1", 3)) +
         scale_fill_manual(values = wesanderson::wes_palette("Zissou1", 3)) +
         # Plotting labels
-        ggtitle(spec_title) +
+        ggtitle(plot_title) +
         labs(
           x = "Age",
           y = "Circumcision coverage (%)",
@@ -1664,23 +1664,27 @@ plt_age_coverage_multi_years <- function(
           fill = ""
         ) +
         # Minimal theme
-        theme_minimal() +
-        # Geofacet
-        # facet_geo(~ area_id # ,
-        #          grid = zaf_district_grid,
-        #          label = "name_district"
-        # ) +
+        theme_minimal(base_size = 9) +
+        # remove colour legend, remove alpha from fill legend
+        guides(
+          colour = "none", 
+          fill   = guide_legend(override.aes = list(alpha = 1))
+        ) +
         # Altering plot text size
         theme(
-          axis.text = element_text(size = 16),
-          strip.text = element_text(size = 16),
+          # axis.text = element_text(size = 16),
+          axis.text = element_text(size = rel(1.3)),
+          # axis.title = element_text(size = 20),
+          axis.title = element_text(size = rel(1.5)),
+          # strip.text = element_text(size = 16),
+          strip.text = element_text(size = rel(1.5)),
           strip.background = element_blank(),
-          # panel.grid = element_blank(),
-          # panel.grid.minor = element_blank(),
-          axis.title = element_text(size = 20),
-          # plot.title = element_text(size = 40, hjust = 0.5),
-          plot.title = element_text(size = 24, hjust = 0.5),
-          legend.text = element_text(size = 20),
+          # # panel.grid = element_blank(),
+          # # panel.grid.minor = element_blank(),
+          # plot.title = element_text(size = 24, hjust = 0.5),
+          plot.title = element_text(size = rel(1.5), hjust = 0.5),
+          # legend.text = element_text(size = 20),
+          legend.text = element_text(size = rel(1.2)),
           legend.position = "bottom"
         )
       
@@ -3089,7 +3093,7 @@ plt_dmppt2_compare_fits <- function(
     # get specific title for each plot page
     add_title <- paste(
       spec_circ_data$iso3[1],
-      paste0("area level: ", spec_circ_data$area_level[1]),
+      paste0("Area Level ", spec_circ_data$area_level[1]),
       spec_circ_data$area_level_label[1],
       spec_circ_data$year[1],
       sep = ", "
