@@ -4,6 +4,8 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(parallel)
+source("paper_poster_plots/paper/scripts/00_funs.R")
+
 
 #### Parameter Values ####
 
@@ -12,18 +14,22 @@ vmmc_iso3 <- c(
   "LSO", "MOZ", "NAM", "RWA", "TZA", "UGA", "MWI",
   "SWZ", "ZWE", "ZMB", "ETH", "KEN", "ZAF" 
 )
+# countries with no type info
 no_type_iso3 <- c("LBR", "SEN", "NER", "GIN", "COD")
+# countries with only one survey, cannot perform OOS analysis on these
+single_year_iso3 <- c(
+  "AGO", "CAF", "COD", "GAB", "GIN", "GMB", "NER", "SEN", "TGO", "BFA"
+)
 iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE",
           "ZMB", "COG", "AGO", "BEN", "BFA", "BDI", "CMR", "TCD", "CIV",
           "GAB", "GIN", "MLI", "NER", "TGO", "SEN", "SLE", "KEN", "ETH",
           "ZAF", "LBR", "GHA", "GMB", "NGA", "COD")
-# iso3 <- iso3[!iso3 %in% c(vmmc_iso3, no_type_iso3)]
-iso3 <- iso3[!iso3 %in% c(no_type_iso3)]
+iso3 <- iso3[!iso3 %in% c(no_type_iso3, single_year_iso3)]
 
-# only do complete countries for now (6/13)
-# iso3 <- vmmc_iso3 <- c("KEN", "MOZ", "NAM", "RWA", "ZAF", "ZMB")
+# only do VMMC countries
 # iso3 <- vmmc_iso3
-# iso3 <- iso3[!iso3 %in% c("LSO", "KEN")] # remaining countries, fitting now
+# only do non-VMMC countries
+iso3 <- iso3[!iso3 %in% vmmc_iso3]
 
 # AR hyperpars (do a very course grid now, to begin with)
 # ar_pars <- data.frame(
@@ -63,12 +69,16 @@ rw_2_pars <- tidyr::crossing(
 
 pars_df <- rbind(ar_pars, rw_1_pars, rw_2_pars)
 
-pars_df <- pars_df %>% 
+pars_df <- pars_df %>%
   filter(
-    (cntry %in% vmmc_iso3 & paed_age_cutoff == 10 & inc_time_tmc == TRUE)  |
+    (cntry %in% vmmc_iso3 & paed_age_cutoff == 10 & inc_time_tmc == TRUE) |
       # (cntry %in% no_type_iso3 & paed_age_cutoff == Inf & inc_time_tmc == FALSE) |
       (cntry %in% iso3 & paed_age_cutoff == Inf & inc_time_tmc == TRUE)
   )
+
+# for now, don't look at GHA
+pars_df <- pars_df %>% 
+  filter(cntry != "GHA")
 
 # pars_df$paed_age_cutoff <- ifelse(
 #   pars_df$cntry %in% vmmc_iso3, 
@@ -81,90 +91,87 @@ pars_df <- pars_df %>%
 # pars_df <- pars_df %>% 
 #   filter(!(cntry == "ZWE" & rw_order == 1 & logsigma_time_mmc == 1 & logsigma_agetime_mmc == -1 & logsigma_spacetime_mmc == -1))
 
-#### Function to load orderly data ####
+# load parameter values
+# pars_df <- readr::read_csv(
+#   "model_calibration_outputs/01_pars_df_vmmc_inc_ids.csv"
+#   # "model_calibration_outputs/02_pars_df_non_vmmc_inc_ids.csv"
+# ) %>% 
+#   # search for remaining unrun tasks ids
+#   filter(is.na(ids)) %>% 
+#   select(-ids) %>% 
+#   identity() 
 
-# takes a data frame of parameters and performs an orderly search on each row.
-# By default, can also load these files (also ran parallel)
-load_orderly_data <- function(
-    # parameters fed to orderly::orderly_search
-    task,
-    parameters = NULL, # needs to be a df, not a list!
-    query = NULL, 
-    filenames = NULL, # name of specific artefact file to load, if desired
-    dirs = NULL, # optionally just provide dirs to skip orderly_search
-    load_fun = readr::read_csv, # function to load data with, if so desired
-    ncores = max(1, parallel::detectCores() - 1) 
-  ) {
-  
-  # check that either parameters & query or just dirs have been provided
-  # (could also add a query parser here for the parameters!)
-  stopifnot((!is.null(parameters) & !is.null(query)) || !is.null(dirs))
-  
-  if (is.null(dirs)) {
-    # search parameter space specified for previously run orderly tasks
-    dirs <- unlist(parallel::mclapply(seq_len(nrow(parameters)), function(i) {
-      # give progress (no longer works properly w/ mclapply rather than lapply)
-      # message(100 * (i / nrow(parameters)), "% completed") 
-      system(sprintf(
-        'echo "\n%s\n"', 
-        paste0(100 * (i / nrow(parameters)), "% completed", collapse = "")
-      ))
-      orderly::orderly_search(
-        query = query, 
-        name = task, 
-        parameters = c(parameters[i, ]) # coerces pars df to a list 
-      )
-    }, mc.cores = ncores))  
-  }
-  
-  # return NAs in parameters search, but only load files from found directories
-  dirs_return <- dirs
-  dirs <- dirs[!is.na(dirs)]
-  # return dirs if filenames unspecified
-  if (is.null(filenames)) return(list("dirs" = dirs_return))
-  files <- file.path(
-    "archive", 
-    task,
-    dirs, 
-    "artefacts/", # prob don't need this? I just structure my tasks this way
-    filenames
-  )
-  # return filenames if load_fun isn't specified
-  if (!is.null(load_fun) == FALSE) return(files)
-  return(list(
-    "dirs" = dirs_return, 
-    "output" = lapply(files, load_fun)
-  ))
+
+#### load orderly data ####
+
+# search for orderly task corresponding to each line in pars_df
+if (!"ids" %in% names(pars_df)) {
+  fit_dirs <- load_orderly_data(
+    task = "val_hyperpar_temporal_prior_investigation3", 
+    parameters = pars_df,
+    query = "latest(
+        parameter:cntry                  == cntry && 
+        parameter:rw_order               == rw_order &&
+        parameter:paed_age_cutoff        == paed_age_cutoff &&
+        parameter:inc_time_tmc           == inc_time_tmc && 
+        parameter:logsigma_time_mmc      == logsigma_time_mmc &&
+        parameter:logsigma_agetime_mmc   == logsigma_agetime_mmc && 
+        parameter:logsigma_spacetime_mmc == logsigma_spacetime_mmc
+      )"
+  )$dirs
+} else {
+  fit_dirs <- pars_df$ids
 }
 
+# add id of tasks to corresponding parameters 
+# investigate & rerun on the cluster!
+pars_df$ids <- fit_dirs
+
+# save for later
+readr::write_csv(
+   pars_df, 
+  # "model_calibration_outputs/01_pars_df_vmmc_inc_ids.csv"
+  # "model_calibration_outputs/02_pars_df_non_vmmc_inc_ids_gha.csv"
+  "model_calibration_outputs/02_pars_df_non_vmmc_inc_ids.csv"
+)
+
+# tabulate NAs for each model specification
+# VMMC: 363 / 2496 are NAs for 19/39 model combos (now only 14! Good enough)
+# Non-VMMC: 820 / 1920 are NAs for ?/? model combos
+pars_df %>% 
+  filter(is.na(ids)) %>% 
+  group_by(cntry, rw_order, paed_age_cutoff, inc_time_tmc) %>% 
+  summarise(n = n()) %>% 
+  ungroup() 
+
+
+# load fit statistics from each of these directories
+# TODO: Investigate where ppc_summary.csv is blank for GHA!
 fit_stats <- load_orderly_data(
   task = "val_hyperpar_temporal_prior_investigation3", 
-  parameters = pars_df,
-  query = "latest(
-      parameter:cntry                   == cntry && 
-      parameter:rw_order                == rw_order &&
-      parameter:paed_age_cutoff         == paed_age_cutoff &&
-      parameter:inc_time_tmc            == inc_time_tmc && 
-      parameter:logsigma_time_mmc      == logsigma_time_mmc &&
-      parameter:logsigma_agetime_mmc   == logsigma_agetime_mmc && 
-      parameter:logsigma_spacetime_mmc == logsigma_spacetime_mmc
-    )",
-  filenames = "ppc_summary.rds",
-  load_fun = readRDS
+  dirs = fit_dirs[!is.na(fit_dirs)],
+  filenames = "ppc_summary.csv"
+)$output
+
+# remove blank fits (should only be required for GHA)
+fit_stats <- fit_stats[vapply(fit_stats, nrow, numeric(1)) != 0]
+
+fit_stats <- bind_rows(fit_stats)
+gc()
+
+# save 
+readr::write_csv(
+  fit_stats,
+  # "model_calibration_outputs/01a_fit_stats_vmmc.csv.gz"
+  "model_calibration_outputs/02a_fit_stats_non_vmmc.csv.gz"
 )
-# run instead if we already have directories!
-# fit_stats <- load_orderly_data(
-#   task = "val_hyperpar_temporal_prior_investigation3",
-#   dirs = fit_stats$dirs,
-#   filenames = "ppc_summary.rds",
-#   load_fun = readRDS
-# )
 
 # remove rows with no matches from pars_df
-if (any(is.na(fit_stats$dirs))) {
-  pars_df <- pars_df[-which(is.na(fit_stats$dirs)), ]
+if (any(is.na(fit_dirs))) {
+  pars_df <- pars_df[-which(is.na(fit_dirs)), ]
 }
 
+## no longer needed; fit statistics are saved in 
 fit_stats1 <- fit_stats$output
 
 fit_stats_join <- bind_rows(lapply(fit_stats1, function(x) {
