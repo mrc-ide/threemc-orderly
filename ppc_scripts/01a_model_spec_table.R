@@ -30,7 +30,8 @@ fit_stats_join <- fit_stats_join %>%
 # initial preprocessing
 fit_stats_join1 <- fit_stats_join %>% 
   # select(-c(mae, contains("ppd"))) %>% 
-  select(-c(mae, elpd)) %>% 
+  # select(-c(mae, elpd)) %>% 
+  select(-elpd) %>% # keep mae
   mutate(
     mod = case_when(
       paed_age_cutoff == Inf & inc_time_tmc == TRUE ~
@@ -49,7 +50,7 @@ fit_stats_join1 <- fit_stats_join %>%
   )
 
 
-#### Calculate means ####
+#### Calculate Means ####
 
 # calculate mean (or median?) across all countries
 fit_stats_mean <- fit_stats_join1 %>%
@@ -57,20 +58,23 @@ fit_stats_mean <- fit_stats_join1 %>%
   group_by(type, vmmc, rw_order, mod) %>% 
   summarise(
     # across(matches(c("crps", "elpd", "rmse")), ~ mean(., na.rm = TRUE)),
-    across(matches(c("crps", "rmse")) | contains("ppd"), ~ mean(., na.rm = TRUE)),
+    # across(matches(c("crps", "rmse")) | contains("ppd"), ~ mean(., na.rm = TRUE)),
+    across(matches(c("crps", "mae", "rmse")) | contains("ppd"), ~ mean(
+      ., na.rm = TRUE
+    )),
     .groups = "drop"
   ) %>% 
   rename(
     # "elpd_mean" = "elpd", 
     "crps_mean" = "crps", 
+    "mae_mean"  = "mae",
     "rmse_mean" = "rmse",
     "ppd0.500_mean" = "ppd_0.500",
     "ppd0.800_mean" = "ppd_0.800",
     "ppd0.950_mean" = "ppd_0.950"
   ) %>% 
-  pivot_longer(
-    cols = starts_with(c("crps", "rmse", "ppd"))
-  ) %>% 
+  # pivot_longer(cols = starts_with(c("crps", "rmse", "ppd"))) %>% 
+  pivot_longer(cols = starts_with(c("crps", "mae", "rmse", "ppd"))) %>% 
   separate(
     name, 
     into = c("metric", "stat"), 
@@ -78,6 +82,7 @@ fit_stats_mean <- fit_stats_join1 %>%
     fill = "left", 
     sep = "_"
   ) %>%
+  # add back in underscore to coverage variable names
   mutate(
     metric = case_when(
       metric == "ppd0.500" ~ "ppd_0.500",
@@ -118,8 +123,9 @@ fit_stats_best <- fit_stats_mean %>%
         ),
         # for mean fit best mod has min vals, for CIs is closest to target %ile
         best_idx = case_when(
-          metric %in% c("rmse", "crps") ~ min_idx, 
-          TRUE                          ~ closest_idx
+          # metric %in% c("rmse", "crps") ~ min_idx, 
+          metric %in% c("crps", "mae", "rmse") ~ min_idx, 
+          TRUE                                 ~ closest_idx
         )
       )
   ) %>%
@@ -140,7 +146,7 @@ fit_stats_best <- fit_stats_mean %>%
   arrange(vmmc, rw_order, type, metric)
 
 
-#### Match Matt's layout ####
+#### Old: Match Matt's layout ####
 
 # change df to match Matt's (and original lol) structure
 fit_stats_tbl <- fit_stats_best %>% 
@@ -236,26 +242,12 @@ tex_table_layout <- function(fit_stats_tbl, vmmc_status) {
     # Alter labels 
     change_labels() %>% 
     # select relevant columns
-    # dplyr::select(rw, paed, type, tmc, crps, rmse, mae, ppd_0.500, ppd_0.800, ppd_0.950) %>%
     dplyr::select(
-      rw, paed, type, tmc, crps, rmse, ppd_0.500, ppd_0.800, ppd_0.950
+      # rw, paed, type, tmc, crps, rmse, ppd_0.500, ppd_0.800, ppd_0.950
+      rw, paed, type, tmc, crps, mae, rmse, ppd_0.500, ppd_0.800, ppd_0.950
     ) %>%
     # wide to long dataset
-    reshape2::melt(id.vars = c("rw", "paed", "type", "tmc")) %>% 
-    # find best results
-    # dplyr::group_by(rw, variable, type) %>%
-    # dplyr::mutate(
-    #   tmp = if_else(
-    #     value == min(value) & variable %in% c("crps", "mae", "rmse"), 
-    #     1, 
-    #     if_else(
-    #       value == max(value) & variable %in% c("ppd_0.500", "ppd_0.800", "ppd_0.950"), 
-    #       1, 
-    #       0)
-    #   )
-    # ) %>% 
-    # dplyr::ungroup() %>%
-    identity()
+    reshape2::melt(id.vars = c("rw", "paed", "type", "tmc"))
   
   # add best models
   fit_stats_tbl <- left_join(
@@ -278,7 +270,6 @@ tex_table_layout <- function(fit_stats_tbl, vmmc_status) {
     # select relevant columns
     dplyr::select(-c(tmc)) %>%
     # Long to wide dataset
-    # reshape2::dcast(rw + paed + type ~ variable, value.var = c("value")) %>%
     pivot_wider(names_from = variable, values_from = value) %>% 
     # Dummy data to add lines into tables
     # plyr::rbind.fill(expand.grid(rw = c("AR1", "RW1", "RW2"),
@@ -288,9 +279,9 @@ tex_table_layout <- function(fit_stats_tbl, vmmc_status) {
     arrange(rw, paed, type) 
   
   # Removing dummy data
-  fit_stats_tbl$paed[duplicated(fit_stats_tbl[,c("rw", "paed")])] <- ""
+  fit_stats_tbl$paed[duplicated(fit_stats_tbl[, c("rw", "paed")])] <- ""
   fit_stats_tbl$rw[duplicated(fit_stats_tbl$rw)] <- ""
-  fit_stats_tbl[which(fit_stats_tbl$type == "XXX"),] <- ""
+  fit_stats_tbl[which(fit_stats_tbl$type == "XXX"), ] <- ""
   
   # Removing unnecessary columns (???)
   # fit_stats_tbl$`Time invariant rmse` <- NULL
@@ -307,7 +298,7 @@ tex_table_layout <- function(fit_stats_tbl, vmmc_status) {
 fit_stats_tbl_vmmc <- tex_table_layout(fit_stats_tbl, "VMMC") 
 fit_stats_tbl_non_vmmc <- tex_table_layout(fit_stats_tbl, "Non-VMMC") 
 
-#### Print Latex Table to .txt file ####
+#### Old: Print Latex Table to .txt file ####
 
 # function to print latex table to .txt file
 latex_export <- function(fit_stats_tbl, vmmc_status, name) {
@@ -320,24 +311,39 @@ latex_export <- function(fit_stats_tbl, vmmc_status, name) {
   cat("  \\begin{table}[H]", "\n")
   cat("  \\centering", "\n")
   cat("  \\footnotesize", "\n")
+  # cat("  \\begin{tabular}{>{\\bfseries}p{0.75cm} 
+  #     >{\\bfseries}p{3cm} p{1cm} C{1.25cm} 
+  #     C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} 
+  #     C{1.25cm} C{1.25cm}}", "\n")
   cat("  \\begin{tabular}{>{\\bfseries}p{0.75cm} 
-      >{\\bfseries}p{3cm} p{1cm} C{1.25cm} 
-      C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} 
-      C{1.25cm} C{1.25cm}}", "\n")
+     >{\\bfseries}p{3cm} p{1cm} C{1.25cm} 
+     C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} 
+     C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm}}", "\n")
   cat("  \\hline ", "\n")
-  cat("  & & & \\multicolumn{10}{c}{\\bf TMC Model} \\\\", "\n")
-  cat("  \\cmidrule(lr){4-13}", "\n")
-  cat("  & & & \\multicolumn{5}{c}{\\bf Time invariant} & 
-      \\multicolumn{5}{c}{\\bf Time variant} \\\\", "\n")
-  cat("  \\cmidrule(lr){4-8}", "\n")
-  cat("  \\cmidrule(lr){9-13}", "\n")
-  cat("  & {\\bf MMC Model} & {\\bf Type} & {\\bf CRPS} & {\\bf RMSE} & 
-      {\\bf 50\\% CI} & {\\bf 80\\% CI} & {\\bf 95\\% CI} & {\\bf CRPS} & 
-      {\\bf RMSE} & {\\bf 50\\% CI} & {\\bf 80\\% CI} & {\\bf 95\\% CI} \\\\", 
+  # cat("  & & & \\multicolumn{10}{c}{\\bf TMC Model} \\\\", "\n")
+  cat("  & & & \\multicolumn{12}{c}{\\bf TMC Model} \\\\", "\n")
+  # cat("  \\cmidrule(lr){4-13}", "\n")
+  cat("  \\cmidrule(lr){4-15}", "\n")
+  # cat("  & & & \\multicolumn{5}{c}{\\bf Time invariant} & 
+  #     \\multicolumn{5}{c}{\\bf Time variant} \\\\", "\n")
+  cat("  & & & \\multicolumn{6}{c}{\\bf Time invariant} & 
+      \\multicolumn{6}{c}{\\bf Time variant} \\\\", "\n")
+  # cat("  \\cmidrule(lr){4-8}", "\n")
+  cat("  \\cmidrule(lr){4-9}", "\n")
+  # cat("  \\cmidrule(lr){9-13}", "\n")
+  cat("  \\cmidrule(lr){10-15}", "\n")
+  # cat("  & {\\bf MMC Model} & {\\bf Type} & {\\bf CRPS} & {\\bf RMSE} & 
+  #     {\\bf 50\\% CI} & {\\bf 80\\% CI} & {\\bf 95\\% CI} & {\\bf CRPS} & 
+  #     {\\bf RMSE} & {\\bf 50\\% CI} & {\\bf 80\\% CI} & {\\bf 95\\% CI} \\\\", 
+  #     "\n")
+  cat("  & {\\bf MMC Model} & {\\bf Type} & 
+      {\\bf CRPS} & {\\bf MAE} & {\\bf RMSE} & 
+      {\\bf 50\\% CI} & {\\bf 80\\% CI} & {\\bf 95\\% CI} & 
+      {\\bf CRPS} & {\\bf MAE} & {\\bf RMSE} & 
+      {\\bf 50\\% CI} & {\\bf 80\\% CI} & {\\bf 95\\% CI} \\\\", 
       "\n")
   cat("  \\hline", "\n")
-  
-  # 
+  # table contents
   cat(paste(paste(
     fit_stats_tbl_vmmc[, 1, drop = TRUE], 
     fit_stats_tbl_vmmc[, 2, drop = TRUE], 
@@ -352,6 +358,8 @@ latex_export <- function(fit_stats_tbl, vmmc_status, name) {
     fit_stats_tbl_vmmc[, 11, drop = TRUE], 
     fit_stats_tbl_vmmc[, 12, drop = TRUE], 
     fit_stats_tbl_vmmc[, 13, drop = TRUE], 
+    fit_stats_tbl_vmmc[, 14, drop = TRUE], 
+    fit_stats_tbl_vmmc[, 15, drop = TRUE], 
     sep = " & "
   ), "\\\\ \n")) 
   cat("  \\hline", "\n")
@@ -372,12 +380,16 @@ latex_export <- function(fit_stats_tbl, vmmc_status, name) {
              (iii) Autoregressive order 1 (AR1), Random Walk 1 (RW1) or 
              Random Walk 2 (RW2) temporal prior. 
              For all combinations, the within-sample continuous ranked 
-             probability scores (CRPS), root mean squared error (RMSE), 
-             and the proportion of empirical observations that fell within 
-             the 50\\%, 80\\%, and 95\\% quantiles are shown.}"), "\n")
+             probability scores (CRPS), mean absolute error (MAE) , 
+             root mean squared error (RMSE), and the proportion of empirical 
+             observations that fell within the 50\\%, 80\\%, and 95\\% 
+             quantiles are shown.}"), "\n")
   # cat(paste0("  \\label{tab::PPC1", i, "}"), "\n")
   # cat(paste0("  \\label{tab::PPC1", "Non-VMMC", "}"), "\n")
-  cat(paste0("  \\label{tab::PPC1", vmmc_status, "}"), "\n")
+  x <- 1
+  if (vmmc_status == "Non-VMMC") x <- 2
+  # cat(paste0("  \\label{tab::PPC1", vmmc_status, "}"), "\n")
+  cat(paste0("  \\label{tab::PPC", x, vmmc_status, "}"), "\n")
   cat("\\end{table}}", "\n")
   cat("\n")
   cat("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \n")
