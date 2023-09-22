@@ -618,7 +618,7 @@ plt_age_coverage_by_type <- function(
         # Extra options on the plot
         theme(
           axis.text.x = element_text(
-            size = rel(1.2), hjust = 1, vjust = 1, angle = 45
+            size = rel(1.2) # , hjust = 1, vjust = 1, angle = 45
           ),          
           axis.text.y = element_text(size = rel(1.2)),
           axis.title = element_text(size = rel(1.5)),
@@ -1895,14 +1895,7 @@ plt_circ_age_ridge <- function(
         parent_lab,
         sep = ", "
       )
-    } else {
-      plot_title <- paste(
-        plot_title,
-        plt_data$area_level[1],
-        plt_data$area_level_label[1],
-        sep = ", "
-      )
-    }
+    } 
     
     ggplot(
       plt_data,
@@ -2039,32 +2032,57 @@ pop_pyramid_plt <- function(
   plot_fun <- function(tmp) {
     
     # title displaying area level and label
-    spec_title <- paste(
-      spec_title,
+    # TODO: Could functionalise adding this plot title, repeated everywhere!
+    plot_title <- paste(
       tmp$iso3[1],
+      tmp$area_name[1],
+      paste0(
+        "Area Level: ", tmp$area_level[1], 
+        " (", tmp$area_level_label[1], ")"
+      ),
       sep = ", "
     )
+    if (!is.null(spec_title)) plot_title <- paste(spec_title, plot_title)
     
-    if (province_split) {
+    if (province_split && all(tmp$area_level != 0)) {
       if (is.na(tmp$parent_area_name[1])) {
         parent_lab <- NULL
       } else {
         parent_lab <- paste0("Parent Area: ", tmp$parent_area_name[1])
       }
-      spec_title <- paste(
-        spec_title,
+      plot_title <- paste(
+        plot_title,
         parent_lab,
         sep = ", "
       )
-    } else {
-      spec_title <- paste(
-        spec_title,
-        tmp$area_level[1],
-        tmp$area_level_label[1],
-        sep = ", "
-      )
-    }
+    } 
     
+    # title displaying area level and label
+    # spec_title <- paste(
+    #   spec_title,
+    #   tmp$iso3[1],
+    #   sep = ", "
+    # )
+    # 
+    # if (province_split) {
+    #   if (is.na(tmp$parent_area_name[1])) {
+    #     parent_lab <- NULL
+    #   } else {
+    #     parent_lab <- paste0("Parent Area: ", tmp$parent_area_name[1])
+    #   }
+    #   spec_title <- paste(
+    #     spec_title,
+    #     parent_lab,
+    #     sep = ", "
+    #   )
+    # } else {
+    #   spec_title <- paste(
+    #     spec_title,
+    #     tmp$area_level[1],
+    #     tmp$area_level_label[1],
+    #     sep = ", "
+    #   )
+    # }
     
     # create stacked bar plot
     p <- tmp %>% 
@@ -2094,20 +2112,26 @@ pop_pyramid_plt <- function(
             y = "",
             # title = paste("Total Unmet Need & Circumcisions vs Age,", area),
             # title = paste("Total Unmet Need & Circumcisions vs Age,", cntry),
-            title = spec_title,
+            title = plot_title,
             fill = ""
         ) +
-        theme_bw() +
+        theme_bw(base_size = 9) +
         theme(
-            plot.title = element_text(size = 20, hjust = 0.5),
-            axis.text.x = element_text(size = 14, face = "bold"),
-            axis.text.y = element_text(size = 14, vjust = 0.5, face = "bold"),
-            strip.text = element_text(size = 14, face = "bold"),
-            legend.text = element_text(size = 14, face = "bold"),
+            # axis.text.x = element_text(size = 14, face = "bold"),
+            axis.text.x = element_text(size = rel(1.2)),
+            # axis.text.y = element_text(size = 14, vjust = 0.5, face = "bold"),
+            axis.text.y = element_text(size = rel(1.2), vjust = 0.5),
+            # strip.text = element_text(size = 14, face = "bold"),
+            strip.text.x = element_text(size = rel(1.5)),
+            strip.text.y = element_text(size = rel(1.2)),
+            # plot.title = element_text(size = 20, hjust = 0.5),
+            plot.title = element_text(size = rel(1.3), hjust = 0.5),
+            # legend.text = element_text(size = 14, face = "bold"),
+            legend.text = element_text(size = rel(1.3)),
             strip.background = element_blank(),
-            # panel.grid.minor = element_blank(),
-            # panel.grid.major = element_blank(),
-            # legend.position = "none",
+            # # panel.grid.minor = element_blank(),
+            # # panel.grid.major = element_blank(),
+            # # legend.position = "none",
             panel.border = element_blank(),
             legend.position = "bottom"
         ) 
