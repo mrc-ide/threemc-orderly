@@ -243,7 +243,8 @@ depends:
   caf_data_areas:
     # id: latest
     # id: latest(parameter:version == "2021")
-    id: 20220518-145504-892cf80a
+    # id: 20220518-145504-892cf80a
+    id: 20221013-151046-5553b2e2
     use:
       depends/caf_areas.geojson: caf_areas.geojson
   civ_data_areas:
