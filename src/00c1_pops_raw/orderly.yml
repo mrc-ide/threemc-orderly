@@ -85,6 +85,10 @@ depends:
       use:
         depends/gin_interpolated_population.csv: interpolated_population.csv
   - aaa_scale_pop:
+      id: latest(parameter:iso3 == "GNB" && parameter:version == "2021")
+      use:
+        depends/gnb_interpolated_population.csv: interpolated_population.csv
+  - aaa_scale_pop:
       id: latest(parameter:iso3 == "LBR" && parameter:version == "2021")
       use:
         depends/lbr_interpolated_population.csv: interpolated_population.csv

@@ -7,7 +7,7 @@ depends_path <- "depends/"
 threemc::create_dirs_r(save_dir)
 
 # sharepoint remote
-sharepoint <- spud::sharepoint$new("https://imperiallondon.sharepoint.com/")
+# sharepoint <- spud::sharepoint$new("https://imperiallondon.sharepoint.com/")
 
 # number of cores
 cores <- detectCores()
@@ -20,37 +20,39 @@ iso3 <- c("ago", "bdi", "ben", "bfa", "bwa", "caf", "civ", "cmr", "cod",
 
 # countries whose populations are pulled from other orderly tasks
 orderly_iso3 <-  c(
-  "bdi", "ben", "bwa", "cod", "cog", "gab", "gha", "gin", "lbr", 
+  "bdi", "ben", "bwa", "caf", "cod", "cog", "gab", "gha", "gin", "gnb", "lbr", 
   "mli", "moz", "ner", "sen", "sle", "tcd", "tgo" 
   # "mli", "ner", "sen", "sle", "tcd", "tgo" # temp remove MOZ
 )
 
 # individual file names for each country (just need for names in this script)
-pop_file_names <- sort(c(
-               ago = "ago_population_worldpop-2015.csv",
-               bdi = "bdi_population_gpw.csv",
-               bfa = "bfa_population_gpw.csv",
-               bwa = "bwa_population_stats-bw.csv",
-               civ = "civ_population.csv",
-               cmr = "cmr_population_ins.csv",
-               cod = "cod_population_local.csv",
-               eth = "eth_population.csv",
-               gmb = "gmb_population_moh-projections_health-region.csv",
-               ken = "ken_population_subcounty-khis.csv",
-               lso = "lso_population_census16-defacto.csv",
-               moz = "moz_population_nso_v2021.csv",
-               mwi = "mwi_population_projections18.csv",
-               nam = "nam_population_gpw.csv",
-               nga = "nga_population_npopc.csv",
-               rwa = "rwa_population.csv",
-               swz = "swz_population_worldpop.csv",
-               tgo = "tgo_population_nso.csv",
-               tza = "tza_population_tnbs.csv",
-               uga = "uga_population_ubos.csv",
-               zmb = "zmb_population_nso.csv",
-               zwe = "zwe_population_nso.csv"))
+# pop_file_names <- sort(c(
+#   ago = "ago_population_worldpop-2015.csv",
+#   bdi = "bdi_population_gpw.csv",
+#   bfa = "bfa_population_gpw.csv",
+#   bwa = "bwa_population_stats-bw.csv",
+#   civ = "civ_population.csv",
+#   cmr = "cmr_population_ins.csv",
+#   cod = "cod_population_local.csv",
+#   eth = "eth_population.csv",
+#   gmb = "gmb_population_moh-projections_health-region.csv",
+#   ken = "ken_population_subcounty-khis.csv",
+#   lso = "lso_population_census16-defacto.csv",
+#   moz = "moz_population_nso_v2021.csv",
+#   mwi = "mwi_population_projections18.csv",
+#   nam = "nam_population_gpw.csv",
+#   nga = "nga_population_npopc.csv",
+#   rwa = "rwa_population.csv",
+#   swz = "swz_population_worldpop.csv",
+#   tgo = "tgo_population_nso.csv",
+#   tza = "tza_population_tnbs.csv",
+#   uga = "uga_population_ubos.csv",
+#   zmb = "zmb_population_nso.csv",
+#   zwe = "zwe_population_nso.csv"
+# ))
+# 
+# iso3 <- intersect(iso3, names(pop_file_names))
 
-iso3 <- intersect(iso3, names(pop_file_names))
 
 #### download population files #### 
 
@@ -123,7 +125,8 @@ iso3 <- intersect(iso3, names(pop_file_names))
 
 # Areas files
 areas <- read_circ_data(paste0(depends_path, "areas.geojson")) %>% 
-  filter(iso3 %in% c(toupper(iso3), "ZAF"))
+  # filter(iso3 %in% c(toupper(iso3), "ZAF")) %>% 
+  identity()
 
 #### Raw district population ####
 
@@ -166,24 +169,25 @@ pop_orderly[[which(orderly_iso3 == "moz")]] <- rbind(
 
 names(pop_orderly) <- c(orderly_iso3, "eth", "mwi", "zaf") # , "moz")
 
-
 # join area name into pop_orderly
+# joining may lead to "many-to-many" warning because some area_ids may have 
+# multiple area_names
 pop_orderly <- pop_orderly %>% 
   Map(mutate, ., iso3 = toupper(names(.))) %>% 
   bind_rows() %>% 
   left_join(
     (areas %>%
        sf::st_drop_geometry() %>%
-       select(iso3, area_id, area_name))
+       distinct(iso3, area_id, area_name))
 ) %>% 
-  split(.$iso3)
+  group_split(iso3, .keep = TRUE)
   
 # join with raw populations from sharepoint
 # pop_raw <- c(pop_raw, pop_orderly)
 pop_raw <- pop_orderly
 
 pop_raw <- pop_raw %>%
-  Map(mutate, ., iso3 = toupper(substr(names(.), 0, 3))) %>%
+  # Map(mutate, ., iso3 = toupper(substr(names(.), 0, 3))) %>%
   bind_rows() %>%
   # select(iso3, area_id, area_name, source, calendar_quarter, year, sex, age_group, population)
   select(iso3, area_id, area_name, year, sex, age_group, population)
