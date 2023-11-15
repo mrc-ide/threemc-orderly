@@ -17,7 +17,7 @@ results_reader <- function(cntry = NULL, type, dir_path, pattern = NULL,
 
   # load files and append them together. Return this appended df
   results_age <- as.data.frame(data.table::rbindlist(
-    lapply(f, fread, ...), use.names = TRUE
+    lapply(f, data.table::fread, ...), use.names = TRUE
   ))
   if (!is.null(model_type)) {
     results_age <- results_age %>%
@@ -176,8 +176,8 @@ split_area_level <- function(
   # function to recursively split 
   split_fun <- function(dat, col) {
     # check if first object in .data is a vector; if so split by col
-    if (is.vector(dat[[1]])) {
-      # split(.data, .data[[col]])
+    if (is.vector(dat[[1]]) || is.factor(dat[[1]])) {
+    # if (any(c("vector", "factor") %in% class(dat[[1]]))) {
       group_split(dat, .data[[col]])
     # if not, apply split fun recursively to list objects in .data
     } else {
@@ -187,8 +187,9 @@ split_area_level <- function(
   
   # split by area level
   # if (length(unique(.data$area_level)) > 1) {
+  if (all(.data$area_level != 0)) {
     .data <- split_fun(.data, "area_level")
-  # }
+  } else .data <- list(.data)
 
   # Split options:
   # 1. split by year and number of regions to show on each plot (n_plot) desired
@@ -252,9 +253,18 @@ if (!inherits(plt_data1, "data.frame")) {
 
 
 #### Plots from paper ####
+
+# colour palette stollen from Adam Howes
+cbpalette <- function() {
+  c(
+    "#56B4E9","#009E73", "#E69F00", "#F0E442", 
+    "#0072B2", "#D55E00", "#CC79A7", "#999999"
+  )
+}
+
 # figure 1 (coverage and number of circumcisions performed)
 # if str_save is left blank, just return the plot
-plt_mc_coverage_prevalence <- function(
+plt_mc_coverage_coverage <- function(
   results_agegroup, 
   areas, 
   spec_age_group, 
@@ -376,7 +386,7 @@ plt_mc_coverage_prevalence <- function(
       ggplot(b, aes(x = year, group = type, fill = type)) +
         # Adding fake limits to the plot
         geom_point(data = dummy1, aes(x = x, y = y), colour = NA) +
-        # Adding target line to prevalence
+        # Adding target line to coverage
         geom_hline(
           data = dummy2,
           aes(yintercept = y),
@@ -384,7 +394,7 @@ plt_mc_coverage_prevalence <- function(
           linetype = "dashed",
           colour = "grey50"
         ) +
-        # Prevalence as area plot
+        # Coverage as area plot
         geom_area(aes(y = 100 * mean.y)) +
         # Number of MCs performed as bar chart
         # geom_bar(aes(y = mean.x/1000),
@@ -494,7 +504,7 @@ plt_age_coverage_by_type <- function(
     ) %>%
     # rename columns
     summary_col_renamer() %>%
-    # multiply prevalence by 100
+    # multiply coverage by 100
     dplyr::mutate(
       across(c(mean.x, lower.x, upper.x), ~ ifelse(
         grepl("coverage", type), . * 100, .
@@ -569,7 +579,7 @@ plt_age_coverage_by_type <- function(
           aes(x = x, y = y),
           colour = NA
         ) +
-        # Adding target line to prevalence
+        # Adding target line to coverage
         geom_hline(
           data     = dummy2,
           aes(yintercept = y),
@@ -577,13 +587,13 @@ plt_age_coverage_by_type <- function(
           linetype = "dashed",
           colour   = "grey50"
         ) +
-        # Prevalence as area plot
+        # Coverage as area plot
         geom_ribbon(
           aes(ymin = lower.x, ymax = upper.x),
           colour = NA,
           alpha  = 0.5
         ) +
-        # Prevalence as area plot
+        # Coverage as area plot
         geom_line(aes(y = mean.x), size = 1) +
         # Setting for the axes
         scale_x_continuous(breaks = seq(spec_ages[1], spec_ages[2], by = 10)) +
@@ -763,33 +773,43 @@ plt_coverage_map <- function(
     map_plot <- function(spec_results, spec_areas, colourPalette) {
 
         p <- ggplot(spec_results) +
-            geom_sf(aes(fill = mean),
-                    size = 0.5,
-                    colour = NA) +
-            geom_sf(data = spec_areas,
-                    colour = "black",
-                    size = 0.5,
-                    fill = NA) +
+            geom_sf(
+              aes(fill = mean),
+              size = 0.5,
+              colour = NA
+            ) +
+            geom_sf(
+              data = spec_areas,
+              colour = "black",
+              size = 0.5,
+              fill = NA
+            ) +
             labs(fill = "") +
-            scale_fill_gradientn(colours = colourPalette,
-                                 breaks = seq(0, 1, by = 0.1),
-                                 limits = c(0, 1),
-                                 label = scales::label_percent(accuracy = 1),
-                                 guide = guide_colourbar(label = TRUE,
-                                                        draw.ulim = TRUE,
-                                                        draw.llim = TRUE,
-                                                        frame.colour = "black",
-                                                        ticks = TRUE,
-                                                        barheight = 1,
-                                                        barwidth = 30)) +
+            scale_fill_gradientn(
+              colours = colourPalette,
+              breaks = seq(0, 1, by = 0.1),
+              limits = c(0, 1),
+              label = scales::label_percent(accuracy = 1),
+              guide = guide_colourbar(
+                label = TRUE,
+                draw.ulim = TRUE,
+                draw.llim = TRUE,
+                frame.colour = "black",
+                ticks = TRUE,
+                barheight = 1,
+                barwidth = 30
+              )
+            ) +
             theme_minimal() +
-            theme(axis.text = element_blank(),
-                  axis.ticks = element_blank(),
-                  strip.text = element_text(size = 20, face = "bold"),
-                  legend.text = element_text(size = 14, face = "bold"),
-                  plot.title = element_text(size = 26, hjust = 0.5),
-                  panel.grid = element_blank(),
-                  legend.position = "bottom")
+            theme(
+              axis.text = element_blank(),
+              axis.ticks = element_blank(),
+              strip.text = element_text(size = 20, face = "bold"),
+              legend.text = element_text(size = 14, face = "bold"),
+              plot.title = element_text(size = 26, hjust = 0.5),
+              panel.grid = element_blank(),
+              legend.position = "bottom"
+            )
 
         # facet wrap differently according to "type":
         # if we have only one type, facet wrap by year
@@ -1406,7 +1426,7 @@ plt_area_facet_coverage <- function(
       # title displaying area level and label
       plot_title <- paste(
         dat$iso3[1],
-        dat$area_name[1],
+        # dat$area_name[1],
         paste0(
           "Area Level ", dat$area_level[1], 
           " (", dat$area_level_label[1], ")"
@@ -1436,14 +1456,14 @@ plt_area_facet_coverage <- function(
       max_year <- max(dat$year)
       
       ggplot(dat, aes(x = year, group = type, fill = type)) +
-          # Add target line to prevalence
+          # Add target line to coverage
           geom_hline(
             yintercept = hor_line,
             size = 1,
             linetype = "dashed",
             colour = "grey50"
           ) +
-          # Prevalence as area plot
+          # Coverage as area plot
           geom_area(aes(y = 100 * mean.y)) +
           # suppressWarnings(geom_text(data = dat1,
           geom_text(
@@ -1581,7 +1601,7 @@ plt_age_coverage_multi_years <- function(
             area_level %in% area_levels,
             model      == spec_model
         ) %>%
-        # multiply prevalence by 100
+        # multiply coverage by 100
         mutate(across(c(mean, lower, upper), ~ . * 100))
 
     # add in required columns from areas and order area names (make function)
@@ -1598,7 +1618,7 @@ plt_age_coverage_multi_years <- function(
       # title displaying area level and label
       plot_title <- paste(
         dat$iso3[1],
-        dat$area_name[1],
+        # dat$area_name[1],
         paste0(
           "Area Level ", dat$area_level[1], 
           " (", dat$area_level_label[1], ")"
@@ -1629,20 +1649,20 @@ plt_age_coverage_multi_years <- function(
           colour = as.factor(year)
         )
       ) +
-        # Adding target line to prevalence
+        # Adding target line to coverage
         geom_hline(
           yintercept = 90,
           size = 1,
           linetype = "dashed",
           colour = "grey50"
         ) +
-        # Prevalence as area plot
+        # Coverage as area plot
         geom_ribbon(
           aes(ymin = lower, ymax = upper),
           colour = NA,
           alpha = 0.5
         ) +
-        # Prevalence as area plot
+        # Coverage as area plot
         geom_line(aes(y = mean), size = 1) +
         # Setting for the axes
         scale_x_continuous(
@@ -1729,16 +1749,10 @@ calc_circ_age_ridge <- function(
     n_plots        = 1
 ) {
 
-    # temp fix
-    # if (length(spec_ages) != 31 || !all(spec_ages == 0:30)) {
-    #   spec_ages <- 0:30
-    # }
-
     # Keep relevant information (also calculate density from mean)
     tmp <- results_age %>%
         # Only keeping relevant data
         filter(
-          # type %in% c("MMC-nTs performed", "TMICs performed") ,
           # type %in% c("MMCs performed", "TMCs performed") ,
           type %in% spec_types,
           area_level %in% area_levels,
@@ -1747,8 +1761,12 @@ calc_circ_age_ridge <- function(
           age %in% spec_ages
           # area_level %in% c(0:1)# ,
           # model == "With program data"
-        ) %>%
-        # Getting density for the ridge plot
+        ) %>% 
+        # Temp: multiply by population
+        mutate(
+          across(all_of(c("mean", "lower", "upper")), ~ . * population)
+        ) %>% 
+        # Calculate density for the ridge plot
         # Grouping for normalising
         group_by(area_id, year, type) %>%
         # Estimating density
@@ -1875,9 +1893,9 @@ plt_circ_age_ridge <- function(
     # TODO: Could functionalise adding this plot title, repeated everywhere!
     plot_title <- paste(
       plt_data$iso3[1],
-      plt_data$area_name[1],
+      # plt_data$area_name[1],
       paste0(
-        "Area Level: ", plt_data$area_level[1], 
+        "Area Level ", plt_data$area_level[1], 
         " (", plt_data$area_level_label[1], ")"
       ),
       sep = ", "
@@ -2035,9 +2053,9 @@ pop_pyramid_plt <- function(
     # TODO: Could functionalise adding this plot title, repeated everywhere!
     plot_title <- paste(
       tmp$iso3[1],
-      tmp$area_name[1],
+      # tmp$area_name[1],
       paste0(
-        "Area Level: ", tmp$area_level[1], 
+        "Area Level ", tmp$area_level[1], 
         " (", tmp$area_level_label[1], ")"
       ),
       sep = ", "
@@ -2171,7 +2189,7 @@ plt_MC_modelfit_spec_age <- function(
     province_split    = FALSE,
     xlab, 
     ylab, 
-    title, 
+    title             = NULL, 
     str_save          = NULL,
     save_width        = 16, 
     save_height       = 12, 
@@ -2261,20 +2279,35 @@ plt_MC_modelfit_spec_age <- function(
         plt_data1$parent_area_name <- "NA"
     }
 
-    # get specific title for each plot page
-    add_title <- paste(
+    # title displaying area level and label
+    # TODO: Could functionalise adding this plot title, repeated everywhere!
+    plot_title <- paste(
       plt_data1$iso3[1],
-      plt_data1$area_level[1],
-      plt_data1$area_level_label[1],
+      # plt_data1$area_name[1],
+      paste0(
+        "Area Level ", plt_data1$area_level[1], 
+        " (", plt_data1$area_level_label[1], ")"
+      ),
       sep = ", "
     )
-      
-    if (province_split == TRUE && all(plt_data1$parent_area_name != "NA")) {
-      add_title <- paste0(
-        add_title, 
-        ", Parent Area: ",
-        plt_data1$parent_area_name[1])
-    }
+    if (!is.null(title)) plot_title <- paste(title, plot_title)
+    
+    if (province_split && all(plt_data1$area_level != 0)) {
+      if (is.na(plt_data1$parent_area_name[1])) {
+        parent_lab <- NULL
+      } else {
+        parent_lab <- paste0("Parent Area: ", plt_data1$parent_area_name[1])
+      }
+      plot_title <- paste(
+        plot_title,
+        parent_lab,
+        sep = ", "
+      )
+    } 
+    
+    if (length(unique(plt_data1$area_id)) == 1) {
+      x_size <- 1.3
+    } else x_size <- 1.1
 
     ggplot(plt_data1, aes(x = year)) +
       # Credible interval
@@ -2297,29 +2330,44 @@ plt_MC_modelfit_spec_age <- function(
         show.legend = FALSE
       ) +
       # Labels
-      labs(x = xlab, y = "Circumcision prevalence", colour = "", fill = "") +
-      ggtitle(paste0(title, add_title)) +
+      labs(x = xlab, y = "Circumcision coverage", colour = "", fill = "") +
+      ggtitle(plot_title) +
       # Faceting by area
       facet_wrap(~ area_name) +
       scale_x_continuous(
-        breaks = seq(spec_years[1], spec_years[2], by = 2)
+        expand = c(0, 0),
+        breaks = seq(spec_years[1], last(spec_years), by = 2), 
+        limits = c(spec_years[1], last(spec_years))
       ) +
       scale_y_continuous(
         breaks = seq(0, 1, by = 0.25),
         limits = c(0, 1),
         label = scales::label_percent(accuracy = 1)
       ) +
-      theme_bw() +
-      guides(colour = guide_legend(nrow = 2)) +
+      theme_bw(base_size = 9) +
+      scale_fill_manual(values = cbpalette()) + 
+      scale_colour_manual(values = cbpalette()) + 
+      guides(
+        colour = "none", 
+        fill   = guide_legend(override.aes = list(alpha = 1))
+      ) +
+      # TODO: Create your own default theme, a lot of this is repeated!
       theme(
-        axis.text = element_text(size = 14),
-        strip.text = element_text(size = 14),
-        axis.title = element_text(size = 18),
-        legend.text = element_text(size = 18),
-        axis.text.x = element_text(angle = -90, vjust = 0.5, size = 14),
-        plot.title = element_text(size = 18, hjust = 0.5),
-        legend.position = "bottom"
-      )
+        axis.text.x = element_text(
+          size = rel(x_size), angle = -45, vjust = 0.5
+        ),
+        axis.text.y = element_text(size = rel(1.2)),
+        axis.title = element_text(size = rel(1.5)),
+        strip.text = element_text(size = rel(1.3)),
+        plot.title = element_text(size = rel(1.3), hjust = 0.5),
+        legend.text = element_text(size = rel(1.3)),
+        strip.background = element_blank(),
+        legend.position = "bottom", 
+        # move panels further from each other, x-axis labs overlapping
+        panel.spacing = unit(1.2, "lines"), 
+        # increase margin slightly, RHS of x-axis labs goes over plot margins
+        plot.margin   = unit(c(0.2, 0.5, 0, 0), "cm")
+      ) 
   }
 
   # plot for each (nested) loop
@@ -2330,11 +2378,13 @@ plt_MC_modelfit_spec_age <- function(
     plots <- rlang::squash(plots)
     # save
     plots <-  gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
-    ggsave(filename = str_save,
-           plot = plots,
-           dpi = "retina",
-           width = save_width,
-           height = save_height)
+    ggsave(
+      filename = str_save,
+      plot = plots,
+      dpi = "retina",
+      width = save_width,
+      height = save_height
+    )
   } else {
    return(plots)
   }
@@ -2358,7 +2408,7 @@ plt_MC_modelfit <- function(
     facet_year        = "split",
     xlab, 
     ylab, 
-    title,
+    title             = NULL,
     str_save          = NULL,
     save_width        = 16,
     save_height       = 12,
@@ -2461,21 +2511,32 @@ plt_MC_modelfit <- function(
   )
 
   plot_fun <- function(plt_data1, plt_data2) {
-    # get specific title for each plot page
-    add_title <- paste(
+    
+    # title displaying area level and label
+    plot_title <- paste(
       plt_data1$iso3[1],
-      plt_data1$area_level[1],
-      plt_data1$area_level_label[1],
+      # plt_data1$area_name[1],
+      paste0(
+        "Area Level ", plt_data1$area_level[1], 
+        " (", plt_data1$area_level_label[1], ")"
+      ),
       sep = ", "
     )
-  
-    if (province_split == TRUE && all(plt_data1$parent_area_name != "NA")) {
-      add_title <- paste0(
-        add_title, 
-        ", Parent Area: ",
-        plt_data1$parent_area_name[1])
-    }
-
+    if (!is.null(title)) plot_title <- paste(title, plot_title)
+    
+    if (province_split && all(plt_data1$area_level != 0)) {
+      if (is.na(plt_data1$parent_area_name[1])) {
+        parent_lab <- NULL
+      } else {
+        parent_lab <- paste0("Parent Area: ", plt_data1$parent_area_name[1])
+      }
+      plot_title <- paste(
+        plot_title,
+        parent_lab,
+        sep = ", "
+      )
+    } 
+    
     if (facet_year == "colour") {
       colour_var <- "year"
     } else {
@@ -2502,6 +2563,10 @@ plt_MC_modelfit <- function(
           )
         )
     }
+    
+    if (length(unique(plt_data1$area_id)) == 1) {
+      x_size <- 1.3
+    } else x_size <- 1
 
     p <- ggplot(plt_data1, aes(x = age_group)) +
       # geom_ribbon(aes(ymin = lower, ymax = upper, fill = as.factor(year)),
@@ -2527,22 +2592,50 @@ plt_MC_modelfit <- function(
       ) +
       # Labels
       labs(x =  xlab, y = ylab, colour = "", fill = "") +
-      ggtitle(paste0(title, add_title)) +
+      ggtitle(plot_title) +
       scale_x_continuous(
         breaks = 1:(length(age_per) + 1),
         labels = c(age_per, final_label),
+        # expand = c(0, 0) # , 
+        # limits = c(spec_years[1], last(spec_years))
+        guide = guide_axis(check.overlap = TRUE)
       ) +
-      scale_y_continuous(breaks = seq(0, 1,  by =  0.2),
-                         limits = c(0, 1),
-                         labels = scales::label_percent()) +
+      scale_y_continuous(
+        breaks = seq(0, 1,  by =  0.2),
+        limits = c(0, 1),
+        labels = scales::label_percent(), 
+        expand = c(0, 0)
+      ) +
+      scale_fill_manual(values = cbpalette()) + 
+      scale_colour_manual(values = cbpalette()) + 
+      guides(
+        colour = "none", 
+        fill   = guide_legend(override.aes = list(alpha = 1))
+      ) +
       theme_bw() +
-      theme(axis.text = element_text(size = 14),
-            strip.text = element_text(size = 14),
-            axis.title = element_text(size = 18),
-            legend.text = element_text(size = 18),
-            axis.text.x = element_text(angle = -90, vjust = 0.5, size = 14),
-            plot.title = element_text(size = 18, hjust = 0.5),
-            legend.position = "bottom")
+      # theme(axis.text = element_text(size = 14),
+      #       strip.text = element_text(size = 14),
+      #       axis.title = element_text(size = 18),
+      #       legend.text = element_text(size = 18),
+      #       axis.text.x = element_text(angle = -90, vjust = 0.5, size = 14),
+      #       plot.title = element_text(size = 18, hjust = 0.5),
+      #       legend.position = "bottom")
+      theme(
+        axis.text.x = element_text(
+          size = rel(x_size), angle = -45, vjust = 0.5
+        ),
+        axis.text.y = element_text(size = rel(1.2)),
+        axis.title = element_text(size = rel(1.5)),
+        strip.text = element_text(size = rel(1.3)),
+        plot.title = element_text(size = rel(1.3), hjust = 0.5),
+        legend.text = element_text(size = rel(1.3)),
+        strip.background = element_blank(),
+        legend.position = "bottom", 
+        # move panels further from each other, x-axis labs overlapping
+        panel.spacing = unit(0.5, "lines"), 
+        # increase margin slightly, RHS of x-axis labs goes over plot margins
+        plot.margin   = unit(c(0.2, 0.5, 0, 0), "cm")
+      )
 
     if (facet_year == "facet") {
       # p <- p + facet_wrap(
@@ -2811,7 +2904,7 @@ plt_dmppt2_compare_age_group <- function(
     years       = NULL,
     model_type  = NULL,
     xlab        = "Year",
-    ylab        = "Circumcision Prevalence",
+    ylab        = "Circumcision Coverage",
     title,
     str_save    = NULL,
     save_width  = NULL,
@@ -2835,7 +2928,7 @@ plt_dmppt2_compare_age_group <- function(
   # ))
   #
   # xlab = "Age Group"
-  # ylab = "Circumision Prevalence"
+  # ylab = "Circumision Coverage"
   # title = main_title
   # title <- "test"
   # str_save = "test4.pdf"
@@ -3042,7 +3135,7 @@ plt_dmppt2_compare_fits <- function(
     years       = NULL,
     model_type  = NULL,
     xlab        = "Year",
-    ylab        = "Circumcision Prevalence",
+    ylab        = "Circumcision Coverage",
     title,
     str_save    = NULL,
     save_width  = NULL,
@@ -3388,7 +3481,7 @@ plt_coverage_year_national <- function(
           fill = type
         )
       ) +
-      # Adding target line to prevalence
+      # Adding target line to coverage
       geom_hline(
         # yintercept = 80,
         yintercept = 90,
@@ -3396,7 +3489,7 @@ plt_coverage_year_national <- function(
         linetype = "dashed",
         colour = "grey50"
       ) +
-      # Prevalence as area plot
+      # Coverage as area plot
       geom_area(
         position = "stack",
         data = filter(all_data, light == "Surveyed")
@@ -3704,6 +3797,18 @@ plt_coverage_year_national_single_age <- function(
         mutate(age = (max(age) + 1))
     )
   
+  # dummy dataframe for creating dashed horizontal line at 90% circumcision
+  hor_df <- data.frame("area_name" = unique(dat_all$area_name), y = 0.9)
+  # don't want for greyed out missing countries
+  if (length(missing_cntries) > 0) {
+    hor_df <- bind_rows(
+      filter(hor_df,!area_name %in% missing_cntries),
+      data.frame("area_name" = missing_cntries, y = NA)
+    ) %>% 
+      distinct()
+  }
+  
+  # browser()
   dat_all <- purrr::flatten(split_area_level(dat_all, n_plots = n_plots))
   tmp1 <- purrr::flatten(split_area_level(tmp1, n_plots = n_plots))
   
@@ -3748,19 +3853,23 @@ plt_coverage_year_national_single_age <- function(
         position = "stack", 
         data = all_data
       ) + 
+      # Add target line to coverage
+      # geom_hline(
+      #   yintercept = 0.9,
+      #   size = 0.5,
+      #   linetype = "dashed",
+      #   colour = "grey50"
+      # ) +
+      geom_hline(
+        data = filter(hor_df, area_name %in% unique(all_data$area_name)), 
+        aes(yintercept = y), 
+        size = 0.5, 
+        linetype = "dashed", 
+        colour = "grey50"
+      ) + 
       # facet_wrap(. ~ area_name, ncol = 4) +
       facet_wrap(. ~ area_name, ncol = ceiling(n_plots / 4)) +
-      # Adding target line to prevalence
-      geom_hline(
-        # yintercept = 80,
-        # yintercept = 90,
-        yintercept = 0.9,
-        size = 0.5,
-        linetype = "dashed",
-        colour = "grey50"
-      ) +
       # add alpha and associated legend
-      # scale_alpha_manual(values = c("Surveyed" = 1, "Projected" = 0.5)) +
       guides(
         alpha = guide_legend(override.aes = list(
           fill = wesanderson::wes_palette("Zissou1", 1)
