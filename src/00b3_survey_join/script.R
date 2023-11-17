@@ -28,9 +28,9 @@ threemc::create_dirs_r(save_dir)
 # Surveys we don't have permissions to publish with yet
 rm_surveys <- c("UGA2020PHIA", "MWI2020PHIA")
 
-# location of UGA2020PHIA file
-uga2020phia_loc <- "depends/uga2020phia.csv.gz"
-is_uga2020phia <- file.exists(uga2020phia_loc) # check it exists
+## # location of UGA2020PHIA file
+## uga2020phia_loc <- "depends/uga2020phia.csv.gz"
+## is_uga2020phia <- file.exists(uga2020phia_loc) # check it exists
 
 # location of BWA surveys 
 bwa2008bais_loc <- "depends/bwa2008bais.csv.gz"
@@ -72,9 +72,9 @@ dhs_merged <- dhs_clusters %>%
          dob_cmc, interview_cmc, indweight,
          circ_status, circ_age, circ_who, circ_where)
 
-if (!is_uga2020phia && !is_paper && !"UGA2020PHIA" %in% dhs_merged$survey_id) {
-  stop("Require UGA2020PHIA for full analysis!")
-}
+## if (!is_uga2020phia && !is_paper && !"UGA2020PHIA" %in% dhs_merged$survey_id) {
+##   stop("Require UGA2020PHIA for full analysis!")
+## }
 
 
 #' ## MICS surveys

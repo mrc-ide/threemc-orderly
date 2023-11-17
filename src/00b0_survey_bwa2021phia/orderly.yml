@@ -1,0 +1,29 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: BAIS V 2021 survey microdata
+      filenames:
+        - artefacts/bwa2021phia_survey_meta.csv
+        - artefacts/bwa2021phia_survey_regions.csv
+        - artefacts/bwa2021phia_survey_clusters.csv
+        - artefacts/bwa2021phia_survey_individuals.csv
+        - artefacts/bwa2021phia_survey_biomarker.csv
+        - artefacts/bwa2021phia_survey_circumcision.csv
+
+packages:
+  - dplyr
+  - ggplot2
+  - haven
+  - naomi
+  - spud
+  - rdhs
+  - readr
+  - sf
+
+depends:
+  bwa_data_areas:
+    id: latest
+    use:
+      depends/bwa_areas.geojson: bwa_areas.geojson
+  

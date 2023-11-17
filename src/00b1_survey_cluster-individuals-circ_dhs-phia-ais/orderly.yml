@@ -49,11 +49,13 @@ depends:
     use:
       depends/ben_dhs_clusters.csv: ben_dhs_clusters.csv
   bfa_survey:
-    id: latest(parameter:version == "2021")
+    ## id: latest(parameter:version == "2021")
+    id: latest
     use:
      depends/bfa_dhs_clusters.csv: bfa_dhs_clusters.csv
   civ_survey:
-    id: latest(parameter:version == "2021")
+    ## id: latest(parameter:version == "2021")
+    id: latest
     use:
       depends/civ_dhs_clusters.csv: civ_dhs_clusters.csv
   cmr_survey:
@@ -74,7 +76,8 @@ depends:
     use:
       depends/eth_dhs_clusters.csv: eth_dhs_clusters.csv
   gab_survey:
-    id: latest(parameter:version == "2021")
+    ## id: latest(parameter:version == "2021")
+    id: latest
     use:
       depends/gab_dhs_clusters.csv: gab_dhs_clusters.csv
   gha_survey:
@@ -90,7 +93,8 @@ depends:
     use:
       depends/gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
   ken_survey:
-    id: latest(parameter:version == "2021")
+    ## id: latest(parameter:version == "2021")
+    id: latest
     use:
       depends/ken_dhs_clusters.csv: ken_dhs_clusters.csv
   lbr_survey:
@@ -152,7 +156,8 @@ depends:
     use:
       depends/tgo_dhs_clusters.csv: tgo_dhs_clusters.csv
   tza_survey:
-    id: latest(parameter:version == "2021")
+    ## id: latest(parameter:version == "2021")
+    id: latest
     use:
       depends/tza_dhs_clusters.csv: tza_dhs_clusters.csv
   uga_survey:
@@ -257,4 +262,13 @@ depends:
     id: latest
     use:
       depends/lso2017phia_survey_circumcision.csv: artefacts/lso2017phia-circumcision.csv
-    
+
+  ## Botswana BAIS V 2021 survy
+  00b0_survey_bwa2021phia:
+    id: latest
+    use:
+      depends/bwa2021phia_survey_clusters.csv: artefacts/bwa2021phia_survey_clusters.csv
+      depends/bwa2021phia_survey_individuals.csv: artefacts/bwa2021phia_survey_individuals.csv      
+      depends/bwa2021phia_survey_circumcision.csv: artefacts/bwa2021phia_survey_circumcision.csv
+
+      
