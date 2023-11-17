@@ -11,35 +11,53 @@ save_dir <- "artefacts/"
 threemc::create_dirs_r(save_dir)
 
 
-#### Initial Sharepoint Download ####
-sharepoint <- spud::sharepoint$new(Sys.getenv("SHAREPOINT_URL"))
+#' ============================================================
+#' !! NOTE 12 November 2023: orderly.sharepoint authentication
+#' broken; work around using local file paths
 
-# function to load data from specific dir on sharepoint
-load_sharepoint_data <- function(
-  path, pattern = NULL, group = "HIVInferenceGroup-WP/"
-) {
+## #### Initial Sharepoint Download ####
+## sharepoint <- spud::sharepoint$new(Sys.getenv("SHAREPOINT_URL"))
+
+## # function to load data from specific dir on sharepoint
+## load_sharepoint_data <- function(
+##   path, pattern = NULL, group = "HIVInferenceGroup-WP/"
+## ) {
   
-  # List files in folder
-  folder <- sharepoint$folder(group, URLencode(path))
+##   # List files in folder
+##   folder <- sharepoint$folder(group, URLencode(path))
   
-  # pull urls for each file
-  urls <- URLencode(file.path("sites", group, path, folder$files()$name))
+##   # pull urls for each file
+##   urls <- URLencode(file.path("sites", group, path, folder$files()$name))
   
-  # may only require certain files 
-  if (!is.null(pattern)) {
-    # only want cluster, individuals and circumcision data
-    urls <- urls[grepl(pattern, urls)]
-  }
+##   # may only require certain files 
+##   if (!is.null(pattern)) {
+##     # only want cluster, individuals and circumcision data
+##     urls <- urls[grepl(pattern, urls)]
+##   }
   
-  # download files, name with urls so we know order of temp files
-  files = lapply(urls, sharepoint$download)
-  if (length(files) == 0) stop("No files found at supplied path")
-  names(files) <- basename(urls)
+##   # download files, name with urls so we know order of temp files
+##   files = lapply(urls, sharepoint$download)
+##   if (length(files) == 0) stop("No files found at supplied path")
+##   names(files) <- basename(urls)
   
-  return(files)
+##   return(files)
+## }
+
+## shared_path <- "Shared Documents/Circumcision coverage/raw"
+
+load_sharepoint_data <- function(path, pattern = NULL, group = NULL) {
+
+  stopifnot(is.null(group))
+
+  f <- list.files(path, pattern, full.names = TRUE)
+  names(f) <- basename(f)
+  f <- as.list(f)
+  f
 }
 
-shared_path <- "Shared Documents/Circumcision coverage/raw"
+shared_path <- "~/Imperial College London/HIV Inference Group - WP - Documents/Circumcision coverage/raw/"
+
+#' ============================================================
 
 ## zaf data
 zaf_path <- file.path(shared_path, "zaf/survey")
@@ -93,11 +111,13 @@ dhs_clusters <- load_cluster_data(dhs_paths)
 
 # countries with phia surveys
 iso3_phia <- c(
-  "civ", "cmr", "lso", "mwi", "nam", "rwa",
-  "swz", "tza", "uga", "zmb", "zwe"
+  "bwa", "civ", "cmr", "lso", "mwi", "nam",
+  "rwa", "swz", "tza", "uga", "zmb", "zwe"
 )
+
 # years of phia surveys for each country
 phia_years <- c(
+  "bwa" = 2021,
   "civ" = 2017,
   "cmr" = 2017,
   "lso" = 2017,
@@ -200,6 +220,7 @@ survey_individuals <- bind_rows(survey_individuals, zaf_individuals)
 dhs_circumcision <- readRDS(se_files$circ_recoded_dhs.rds) %>% 
   bind_rows() %>% 
   mutate(individual_id = as.character(individual_id))
+
 dhs_circumcision <- as.list(dhs_circumcision) %>%
   bind_rows() %>%
   mutate(iso3 = substr(survey_id, 1, 3)) %>% 
