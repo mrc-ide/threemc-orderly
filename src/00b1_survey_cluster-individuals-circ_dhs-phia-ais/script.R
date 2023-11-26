@@ -114,6 +114,7 @@ phia_survey_id <- c(
   "civ2017phia",
   "cmr2017phia",
   "lso2017phia",
+  "ken2018phia",
   "mwi2016phia",
   "nam2017phia",
   "rwa2018phia",
