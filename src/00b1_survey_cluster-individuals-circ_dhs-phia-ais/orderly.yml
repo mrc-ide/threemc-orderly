@@ -271,4 +271,28 @@ depends:
       depends/bwa2021phia_survey_individuals.csv: artefacts/bwa2021phia_survey_individuals.csv      
       depends/bwa2021phia_survey_circumcision.csv: artefacts/bwa2021phia_survey_circumcision.csv
 
+  ## Zimbabwe ZimPHIA 2020 survey
+  00b0_survey_zwe2020phia:
+    id: latest
+    use:
+      depends/zwe2020phia_survey_clusters.csv: artefacts/zwe2020phia_survey_clusters.csv
+      depends/zwe2020phia_survey_individuals.csv: artefacts/zwe2020phia_survey_individuals.csv      
+      depends/zwe2020phia_survey_circumcision.csv: artefacts/zwe2020phia_survey_circumcision.csv
+
+  ## Lesotho LePHIA 2020 survey
+  00b0_survey_lso2020phia:
+    id: latest
+    use:
+      depends/lso2020phia_survey_clusters.csv: artefacts/lso2020phia_survey_clusters.csv
+      depends/lso2020phia_survey_individuals.csv: artefacts/lso2020phia_survey_individuals.csv      
+      depends/lso2020phia_survey_circumcision.csv: artefacts/lso2020phia_survey_circumcision.csv
+
+  ## Recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS
+  00b0_survey_dhs-individual-circumcision:
+    id: latest
+    use:
+      depends/dhs_survey_individuals.csv: artefacts/dhs_survey_individuals.csv      
+      depends/dhs_survey_circumcision.csv: artefacts/dhs_survey_circumcision.csv
+
+      
       
