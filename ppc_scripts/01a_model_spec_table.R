@@ -22,6 +22,14 @@ vmmc_iso3 <- c(
 
 fit_stats_join <- readr::read_csv("01e_new_final_ppc_models_fit_stats.csv")
 
+# TEMP: Strange results, have a look at removing "odd" countries
+fit_stats_join <- fit_stats_join %>% 
+  filter(
+    !(rw_order == 0 & cntry %in% c("COG")), 
+    !(rw_order == 1 & cntry %in% c("BFA", "TCD", "ZWE")), 
+    !(rw_order == 2 & cntry %in% c("GHA"))
+  )
+
 # Label VMMC status
 fit_stats_join <- fit_stats_join %>% 
   mutate(vmmc = ifelse(cntry %in% vmmc_iso3, "VMMC", "Non-VMMC")) %>% 
@@ -49,6 +57,20 @@ fit_stats_join1 <- fit_stats_join %>%
     )
   )
 
+# Are there any outliers in mean fit statistics?
+tapply(fit_stats_join1$mae, fit_stats_join1$vmmc, summary)
+tapply(fit_stats_join1$rmse, fit_stats_join1$vmmc, summary)
+tapply(fit_stats_join1$crps, fit_stats_join1$vmmc, summary)
+# Answer: Yes! But noticeably a much greater "swing" in non-VMMC countries
+
+# coverages?
+tapply(fit_stats_join1$ppd_0.500, fit_stats_join1$vmmc, summary)
+tapply(fit_stats_join1$ppd_0.800, fit_stats_join1$vmmc, summary)
+tapply(fit_stats_join1$ppd_0.950, fit_stats_join1$vmmc, summary)
+# Same as for mean fit stats
+
+# TODO: with country on y axis, plot mean fit stats and coverages for each model
+# Facet by rw_order, should reveil outliers in mean fit & coverage
 
 #### Calculate Means ####
 
@@ -146,7 +168,7 @@ fit_stats_best <- fit_stats_mean %>%
   arrange(vmmc, rw_order, type, metric)
 
 
-#### Old: Match Matt's layout ####
+#### Match Matt's layout ####
 
 # change df to match Matt's (and original lol) structure
 fit_stats_tbl <- fit_stats_best %>% 
@@ -199,31 +221,32 @@ fit_stats_tbl <- fit_stats_tbl %>%
 change_labels <- function(df) {
   ret_df <- df %>% 
     mutate(
-    rw = case_when(
-      rw_order == 0 ~ "AR1",
-      rw_order == 1 ~ "RW1",
-      rw_order == 2 ~ "RW2"
-    ),
-    paed = case_when(
-      paed_age_cutoff == "10"  ~ "Paediatric cut-off",
-      paed_age_cutoff == "Inf" ~ "No cut-off"
-    ),
-    type = case_when(
-      type == "MC coverage"  ~ "MC",
-      type == "TMC coverage" ~ "MMC",
-      type == "MMC coverage" ~ "TMC",
-      TRUE                   ~ type
-    ),
-    tmc = case_when(
-      inc_time_tmc == TRUE  ~ "Time variant",
-      inc_time_tmc == FALSE ~ "Time invariant"
-    )
-  ) %>% 
+      rw = case_when(
+        rw_order == 0 ~ "AR1",
+        rw_order == 1 ~ "RW1",
+        rw_order == 2 ~ "RW2"
+      ),
+      paed = case_when(
+        paed_age_cutoff == "10"  ~ "\\bf PC",
+        # paed_age_cutoff == "10"  ~ "\\bf Peadiatric \nCut-off",
+        paed_age_cutoff == "Inf" ~ "\\bf NC"
+        # paed_age_cutoff == "Inf" ~ "\\bf No Cutoff"
+      ),
+      type = case_when(
+        type == "MC coverage"  ~ "\\bf MC",
+        type == "TMC coverage" ~ "\\bf MMC",
+        type == "MMC coverage" ~ "\\bf TMC",
+        TRUE                   ~ type
+      ),
+      tmc = case_when(
+        inc_time_tmc == TRUE  ~ "Time variant",
+        inc_time_tmc == FALSE ~ "Time invariant"
+      )
+    ) %>% 
     select(-c(rw_order, paed_age_cutoff, inc_time_tmc))
   
   return(ret_df)
 }
-
 
 # Matt's code from here
 
@@ -234,8 +257,10 @@ tex_table_layout <- function(fit_stats_tbl, vmmc_status) {
     filter(vmmc == vmmc_status)
   
   # Change coverage to percentage
-  fit_stats_tbl[, c("ppd_0.500", "ppd_0.800", "ppd_0.950")] <- 100 * 
-    fit_stats_tbl[, c("ppd_0.500", "ppd_0.800", "ppd_0.950")]
+  # fit_stats_tbl[, c("ppd_0.500", "ppd_0.800", "ppd_0.950")] <- 100 * 
+  #   fit_stats_tbl[, c("ppd_0.500", "ppd_0.800", "ppd_0.950")]
+  fit_stats_tbl <- fit_stats_tbl %>% 
+    mutate(across(contains("ppd_"), ~ 100 * .)) 
   
   # Format dataset for output
   fit_stats_tbl <- fit_stats_tbl %>%
@@ -243,11 +268,12 @@ tex_table_layout <- function(fit_stats_tbl, vmmc_status) {
     change_labels() %>% 
     # select relevant columns
     dplyr::select(
-      # rw, paed, type, tmc, crps, rmse, ppd_0.500, ppd_0.800, ppd_0.950
-      rw, paed, type, tmc, crps, mae, rmse, ppd_0.500, ppd_0.800, ppd_0.950
+      rw, paed, type, tmc, crps, rmse, mae, ppd_0.500, ppd_0.800, ppd_0.950
     ) %>%
     # wide to long dataset
-    reshape2::melt(id.vars = c("rw", "paed", "type", "tmc"))
+    reshape2::melt(id.vars = c("rw", "paed", "type", "tmc")) %>% 
+    # tidyr::pivot_longer(c("rw", "paed", "type", "tmc"))
+    identity()
   
   # add best models
   fit_stats_tbl <- left_join(
@@ -270,26 +296,43 @@ tex_table_layout <- function(fit_stats_tbl, vmmc_status) {
     # select relevant columns
     dplyr::select(-c(tmc)) %>%
     # Long to wide dataset
+    # reshape2::dcast(rw + paed + type ~ variable, value.var = c("value")) %>%
     pivot_wider(names_from = variable, values_from = value) %>% 
     # Dummy data to add lines into tables
-    # plyr::rbind.fill(expand.grid(rw = c("AR1", "RW1", "RW2"),
-    #                        paed = c("Paediatric cut-off"), #, "No cut-off"),
-    #                        type = "XXX")) %>%
+    # plyr::rbind.fill(
+    #   expand.grid(rw = c("AR1", "RW1", "RW2"),
+    #   paed = c("Paediatric cut-off"), #, "No cut-off"),
+    #   type = "XXX")
+    # ) %>%
     # Sort dataset
-    arrange(rw, paed, type) 
+    # arrange(rw, paed, type) %>% 
+    arrange(rw, type, type) %>%
+    dplyr::select(
+      rw, type, paed, 
+      contains("crps"), contains("mae"), contains("rmse"), 
+      contains("0.5"), contains("0.8"), contains("0.9")
+    )
   
-  # Removing dummy data
-  fit_stats_tbl$paed[duplicated(fit_stats_tbl[, c("rw", "paed")])] <- ""
-  fit_stats_tbl$rw[duplicated(fit_stats_tbl$rw)] <- ""
-  fit_stats_tbl[which(fit_stats_tbl$type == "XXX"), ] <- ""
+  # Remove dummy data
+  # fit_stats_tbl$paed[duplicated(fit_stats_tbl[, c("rw", "paed")])] <- ""
+  # fit_stats_tbl$rw[duplicated(fit_stats_tbl$rw)] <- ""
+  # fit_stats_tbl[which(fit_stats_tbl$type == "XXX"), ] <- ""
+  fit_stats_tbl$type[duplicated(fit_stats_tbl[, c("rw", "type")])] <- ""
   
-  # Removing unnecessary columns (???)
+  # Remove unnecessary columns (???)
   # fit_stats_tbl$`Time invariant rmse` <- NULL
   # fit_stats_tbl$`Time variant rmse` <- NULL
   
+  # Add spacing 
+  fit_stats_tbl$num <- seq_len(nrow(fit_stats_tbl))
+  fit_stats_tbl$nextrow <- ""
+  fit_stats_tbl$nextrow[!((fit_stats_tbl$num %% 2) == 0)] <- "\\\\ \n"
+  fit_stats_tbl$nextrow[(fit_stats_tbl$num %% 2) == 0] <- "\\\\[3pt] \n"
+  fit_stats_tbl$num <- NULL
+  
   # reorder so time invariant columns come before time variant, as in table
-  fit_stats_tbl <- fit_stats_tbl %>% 
-    relocate(contains("Time invariant"), .after = "type")
+  # fit_stats_tbl <- fit_stats_tbl %>% 
+  #   relocate(contains("Time invariant"), .after = "type")
   
   return(fit_stats_tbl)
 }
@@ -298,7 +341,131 @@ tex_table_layout <- function(fit_stats_tbl, vmmc_status) {
 fit_stats_tbl_vmmc <- tex_table_layout(fit_stats_tbl, "VMMC") 
 fit_stats_tbl_non_vmmc <- tex_table_layout(fit_stats_tbl, "Non-VMMC") 
 
-#### Old: Print Latex Table to .txt file ####
+#### Print Latex Table to .txt file ####
+
+# function to print latex table to .txt file
+latex_export <- function(fit_stats_tbl, vmmc_status, name) {
+  
+  # open text file
+  sink(name, append = FALSE)
+  
+  cat("\n")
+  cat("{\\linespread{1}", "\n")
+  cat("  \\begin{table}[H]", "\n")
+  cat("  \\centering", "\n")
+  cat("  \\footnotesize", "\n")
+  cat("  \\begin{tabular}{>{\\bfseries}p{0.05cm} p{0.85cm} p{0.75cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm} C{1.25cm}}", "\n")
+  cat("  \\hline ", "\n")
+  # cat("  & & & \\multicolumn{12}{c}{\\bf TMC} \\\\", "\n")
+  # cat("  \\cmidrule(lr){4-15}", "\n")
+  cat("  & & & \\multicolumn{2}{c}{\\bf CRPS} & \\multicolumn{2}{c}{\\bf MAE} & \\multicolumn{2}{c}{\\bf RMSE} & \\multicolumn{2}{c}{\\bf 50\\% CI} & \\multicolumn{2}{c}{\\bf 80\\% CI} & \\multicolumn{2}{c}{\\bf 95\\% CI}  \\\\", "\n")
+  cat("  \\cmidrule(lr){4-5}", "\n")
+  cat("  \\cmidrule(lr){6-7}", "\n")
+  cat("  \\cmidrule(lr){8-9}", "\n")
+  cat("  \\cmidrule(lr){10-11}", "\n")
+  cat("  \\cmidrule(lr){12-13}", "\n")
+  cat("  \\cmidrule(lr){14-15}", "\n")
+  cat("  & & & {\\bf TI} & {\\bf TV} & {\\bf TI} & {\\bf TV} & {\\bf TI} & {\\bf TV} & {\\bf TI} & {\\bf TV} & {\\bf TI} & {\\bf TV} & {\\bf TI} & {\\bf TV}\\\\", "\n")
+  # cat(
+  #   "  & & & {\\bf Time \nInvariant} & 
+  #   {\\bf Time \nVariant} & 
+  #   {\\bf Time \nInvariant} & 
+  #   {\\bf Time \nVariant} & 
+  #   {\\bf Time \nInvariant} & 
+  #   {\\bf Time \nVariant} & 
+  #   {\\bf Time \nInvariant} & 
+  #   {\\bf Time \nVariant} & 
+  #   {\\bf Time \nInvariant} & 
+  #   {\\bf Time \nVariant} & 
+  #   {\\bf Time \nInvariant} & 
+  #   {\\bf Time \nVariant}\\\\", 
+  #   "\n"
+  # )
+  # cat("  & {\\bf MMC} & {\\bf Type} & {\\bf TI} & {\\bf TV} & {\\bf TI} & {\\bf TV} & {\\bf TI} & {\\bf TV} & {\\bf TI} & {\\bf TV} & {\\bf TI} & {\\bf TV} & {\\bf TI} & {\\bf TV}\\\\", "\n")
+  cat("  \\hline", "\n")
+  
+  # Print VMMC status
+  # cat(paste("    \\multicolumn{8}{l}{\\textbf{", vmmc_status, "}} \\\\", "\n"))
+  
+  # loop for each temporal prior
+  rw_orders <- unique(fit_stats_tbl$rw)
+  # browser()
+  for (i in seq_along(rw_orders)) {
+    
+    fit_stats_spec_rw <- fit_stats_tbl %>%
+      filter(rw == rw_orders[i]) %>%
+      as.data.frame()
+    
+    # RW order/temporal prior
+    cat(paste(
+      "    \\multicolumn{8}{l}{\\textbf{", rw_orders[i], "}} \\\\", "\n"
+    ))
+    # table contents
+    cat(paste(paste0(
+      "", " & ",
+      # fit_stats_spec_rw[, 1, drop = TRUE], # " & ", 
+      fit_stats_spec_rw[, 2, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 3, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 4, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 5, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 6, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 7, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 8, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 9, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 10, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 11, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 12, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 13, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 14, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 15, drop = TRUE], " & ", 
+      fit_stats_spec_rw[, 16, drop = TRUE] # , 
+      # sep = " & "
+    # ), "\\\\ \n")) 
+    )))
+ 
+  }
+  
+  cat("  \\hline", "\n")
+  cat("  \\end{tabular}", "\n")
+  cat(paste0(
+    "  \\caption{Results of the posterior predictive checking in total male 
+    circumcision (MC), medical male circumcision (MMC) and traditional male 
+    circumcision (TMC) from fitting the 12 candidate models in ",
+    # areas$area_name[which(areas$area_id == i)], 
+    vmmc_status, " countries. ",
+    "Combinations include (i) Time invariant (TI) or Time variant (TV) TMC, 
+    (ii) No cut off (NC) vs. Paediatric cut-off (PC) in MMC, and (iii) 
+    Autoregressive order 1 (AR1), Random Walk 1 (RW1) or Random Walk 2 (RW2) 
+    temporal prior. For all combinations, the within-sample continuous ranked 
+    probability scores (CRPS), mean absolute error (MAE), root mean square 
+    error (RMSE), and the proportion of empirical observations that fell within 
+    the 50\\%, 80\\%, and 95\\% quantiles are shown.}"
+  ), "\n")
+  # cat(paste0("  \\label{tab::PPC1", i, "}"), "\n")
+  x <- 1
+  if (vmmc_status == "Non-VMMC") x <- 2
+  cat(paste0("  \\label{tab::PPC", x, " ", vmmc_status, "}"), "\n")
+  cat("\\end{table}}", "\n")
+  cat("\n")
+  cat("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \n")
+  
+  # Close text file
+  sink()
+}
+
+# export for both VMMC and non-VMMC
+latex_export(
+  fit_stats_tbl_vmmc, 
+  "VMMC", 
+  "01test_model_spec_table_vmmc.tex"
+)
+latex_export(
+  fit_stats_tbl_non_vmmc, 
+  "Non-VMMC", 
+  "02test__model_spec_table_non_vmmc.tex"
+)
+
+#### Old: Print Latex Table to .txt file
 
 # function to print latex table to .txt file
 latex_export <- function(fit_stats_tbl, vmmc_status, name) {
@@ -397,15 +564,3 @@ latex_export <- function(fit_stats_tbl, vmmc_status, name) {
   # Close text file
   sink()
 }
-
-# export for both VMMC and non-VMMC
-latex_export(
-  fit_stats_tbl_vmmc, 
-  "VMMC", 
-  "01_model_spec_table_vmmc.txt"
-)
-latex_export(
-  fit_stats_tbl_non_vmmc, 
-  "Non-VMMC", 
-  "02_model_spec_table_non_vmmc.txt"
-)

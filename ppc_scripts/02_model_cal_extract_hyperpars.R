@@ -27,9 +27,9 @@ iso3 <- c("LSO", "MWI", "MOZ", "NAM", "RWA", "SWZ", "TZA", "UGA", "ZWE",
 iso3 <- iso3[!iso3 %in% c(no_type_iso3, single_year_iso3)]
 
 # only do VMMC countries
-# iso3 <- vmmc_iso3
+iso3 <- vmmc_iso3
 # only do non-VMMC countries
-iso3 <- iso3[!iso3 %in% vmmc_iso3]
+# iso3 <- iso3[!iso3 %in% vmmc_iso3]
 
 # AR hyperpars (do a very course grid now, to begin with)
 # ar_pars <- data.frame(
@@ -92,14 +92,14 @@ pars_df <- pars_df %>%
 #   filter(!(cntry == "ZWE" & rw_order == 1 & logsigma_time_mmc == 1 & logsigma_agetime_mmc == -1 & logsigma_spacetime_mmc == -1))
 
 # load parameter values
-# pars_df <- readr::read_csv(
-#   "model_calibration_outputs/01_pars_df_vmmc_inc_ids.csv"
-#   # "model_calibration_outputs/02_pars_df_non_vmmc_inc_ids.csv"
-# ) %>% 
-#   # search for remaining unrun tasks ids
-#   filter(is.na(ids)) %>% 
-#   select(-ids) %>% 
-#   identity() 
+pars_df <- readr::read_csv(
+  "model_calibration_outputs/01_pars_df_vmmc_inc_ids.csv"
+  # "model_calibration_outputs/02_pars_df_non_vmmc_inc_ids.csv"
+) %>% 
+  # search for remaining unrun tasks ids
+  # filter(is.na(ids)) %>% 
+  # select(-ids) %>% 
+  identity() 
 
 
 #### load orderly data ####
@@ -128,12 +128,12 @@ if (!"ids" %in% names(pars_df)) {
 pars_df$ids <- fit_dirs
 
 # save for later
-readr::write_csv(
-   pars_df, 
-  # "model_calibration_outputs/01_pars_df_vmmc_inc_ids.csv"
-  # "model_calibration_outputs/02_pars_df_non_vmmc_inc_ids_gha.csv"
-  "model_calibration_outputs/02_pars_df_non_vmmc_inc_ids.csv"
-)
+# readr::write_csv(
+#    pars_df, 
+#   "model_calibration_outputs/01_pars_df_vmmc_inc_ids.csv"
+#   # "model_calibration_outputs/02_pars_df_non_vmmc_inc_ids_gha.csv"
+#   # "model_calibration_outputs/02_pars_df_non_vmmc_inc_ids.csv"
+# )
 
 # tabulate NAs for each model specification
 # VMMC: 363 / 2496 are NAs for 19/39 model combos (now only 14! Good enough)
@@ -147,29 +147,39 @@ pars_df %>%
 
 # load fit statistics from each of these directories
 # TODO: Investigate where ppc_summary.csv is blank for GHA!
-fit_stats <- load_orderly_data(
-  task = "val_hyperpar_temporal_prior_investigation3", 
-  dirs = fit_dirs[!is.na(fit_dirs)],
-  filenames = "ppc_summary.csv"
-)$output
+# fit_stats <- load_orderly_data(
+#   task = "val_hyperpar_temporal_prior_investigation3", 
+#   dirs = fit_dirs[!is.na(fit_dirs)],
+#   filenames = "ppc_summary.csv"
+# )$output
+# 
+# # remove blank fits (should only be required for GHA)
+# fit_stats <- fit_stats[vapply(fit_stats, nrow, numeric(1)) != 0]
+# 
+# fit_stats <- bind_rows(fit_stats)
+# gc()
 
-# remove blank fits (should only be required for GHA)
-fit_stats <- fit_stats[vapply(fit_stats, nrow, numeric(1)) != 0]
-
-fit_stats <- bind_rows(fit_stats)
-gc()
+fit_stats <- readr::read_csv(
+  "model_calibration_outputs/01a_fit_stats_vmmc.csv.gz"
+)
 
 # save 
-readr::write_csv(
-  fit_stats,
-  # "model_calibration_outputs/01a_fit_stats_vmmc.csv.gz"
-  "model_calibration_outputs/02a_fit_stats_non_vmmc.csv.gz"
-)
+# readr::write_csv(
+#   fit_stats,
+#   "model_calibration_outputs/01a_fit_stats_vmmc.csv.gz"
+#   # "model_calibration_outputs/02a_fit_stats_non_vmmc.csv.gz"
+# )
 
 # remove rows with no matches from pars_df
 if (any(is.na(fit_dirs))) {
   pars_df <- pars_df[-which(is.na(fit_dirs)), ]
 }
+
+# join parameter values to fit statistics
+fit_stats_join <- bind_rows(lapply(group_split(fit_stats, type), function(x) {
+  bind_cols(pars_df, x)
+}))
+
 
 ## no longer needed; fit statistics are saved in 
 fit_stats1 <- fit_stats$output
