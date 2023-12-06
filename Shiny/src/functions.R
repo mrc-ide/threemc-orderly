@@ -187,7 +187,7 @@ split_area_level <- function(
   
   # split by area level
   # if (length(unique(.data$area_level)) > 1) {
-  if (all(.data$area_level != 0)) {
+  if (any(.data$area_level != 0)) {
     .data <- split_fun(.data, "area_level")
   } else .data <- list(.data)
 
