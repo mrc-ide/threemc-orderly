@@ -40,6 +40,10 @@ areas <- st_make_valid(areas)
 survey_circumcision <- read_circ_data("depends/survey_circumcision.csv.gz", filters)
 populations <- read_circ_data("depends/population_singleage_aggr.csv.gz", filters)
 
+# negative circ ages in BWA encode NAs
+survey_circumcision <- survey_circumcision %>% 
+  mutate(circ_age = ifelse(circ_age < 0, NA, circ_age))
+
 # pull recommended area hierarchy for target country
 area_lev <- threemc::datapack_psnu_area_level %>%
   filter(iso3 == cntry) %>%
@@ -127,6 +131,37 @@ out <- create_shell_dataset(
   age                 = "age",
   circ                = "indweight_st"
 )
+
+# add missing countries
+# missing_ages <- (1:cens_age)[!1:cens_age %in% out$age]
+# if (length(missing_ages) > 0) {
+#   
+#   # fill in missing pops with pop in last known year for that age, if required
+#   min_pop_year <- min(populations$year)
+#   if (min_pop_year > min(out$year)) {
+#     populations_full <- threemc:::fill_downup_populations(
+#       populations, 
+#       min(out$year), 
+#       min_pop_year
+#     )
+#   } else populations_full <- populations
+#   
+#   missing_out <- tidyr::crossing(
+#     distinct(out, area_id, area_name, year, area_level, space, time), 
+#     "age" = missing_ages
+#   ) %>% 
+#     mutate(circ_age = age - 1) %>% 
+#     left_join(select(populations_full, area_id, year, age, population))
+#   
+#   out <- bind_rows(
+#     out, 
+#     missing_out
+#   ) %>% 
+#     # arrange as in original shell dataset
+#     arrange(area_id, age, year) %>% 
+#     # fill in NAs with 0s
+#     mutate(across(N:icens, ~ ifelse(is.na(.), 0, .)))
+# }
 
 # for countries with no age & type information, use max start_year
 if (is_type == FALSE && all(out[, c("obs_mc", "obs_mmc", "obs_tmc")] == 0)) {
