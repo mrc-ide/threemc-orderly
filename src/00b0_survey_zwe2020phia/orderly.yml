@@ -1,0 +1,33 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: ZimPHIA 2020 survey microdata
+      filenames:
+        - artefacts/zwe2020phia_survey_meta.csv
+        - artefacts/zwe2020phia_survey_regions.csv
+        - artefacts/zwe2020phia_survey_clusters.csv
+        - artefacts/zwe2020phia_survey_individuals.csv
+        - artefacts/zwe2020phia_survey_biomarker.csv
+        - artefacts/zwe2020phia_survey_circumcision.csv
+  - staticgraph:
+       description: ZimPHIA 2020 survey regions vs. area hierarchy
+       filenames:
+         - check/zwe2020phia-survey-region-boundaries.png
+
+packages:
+  - dplyr
+  - ggplot2
+  - haven
+  - naomi
+  - spud
+  - rdhs
+  - tidyverse
+  - sf
+
+depends:
+  zwe_data_areas:
+    id: latest
+    use:
+      depends/zwe_areas.geojson: zwe_areas.geojson
+  
