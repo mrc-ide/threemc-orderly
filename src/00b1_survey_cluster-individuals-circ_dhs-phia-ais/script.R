@@ -124,7 +124,8 @@ phia_survey_id <- c(
   "zmb2016phia",
   "zwe2016phia",
   "zwe2020phia",
-  "lso2020phia"
+  "lso2020phia",
+  "swz2021phia"
 )
 
 # years of phia surveys for each country
@@ -175,7 +176,7 @@ stopifnot(!lso2014dhs_individuals$survey_id %in% dhs_individuals$survey_id)
 dhs_individuals <- dhs_individuals %>%
   bind_rows(lso2014dhs_individuals)
 
-#' Add recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS
+#' Add recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS, GHA2022DHS
 
 dhs_individuals_new <- read_csv("depends/dhs_survey_individuals.csv")
 stopifnot(length(intersect(dhs_individuals$survey_id, dhs_individuals_new$survey_id)) == 0)
@@ -251,7 +252,7 @@ dhs_circumcision <- dhs_circumcision %>%
   bind_rows(lso2014dhs_circumcision)
 
 
-#' Add recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS
+#' Add recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS, GHA2022DHS
 
 dhs_circumcision_new <- read_csv("depends/dhs_survey_circumcision.csv") %>%
   mutate(

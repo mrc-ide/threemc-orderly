@@ -81,7 +81,8 @@ depends:
     use:
       depends/gab_dhs_clusters.csv: gab_dhs_clusters.csv
   gha_survey:
-    id: latest(parameter:version == "2021")
+    ## id: latest(parameter:version == "2021")
+    id: latest
     use:
       depends/gha_dhs_clusters.csv: gha_dhs_clusters.csv
   gin_survey:
@@ -286,7 +287,15 @@ depends:
       depends/lso2020phia_survey_individuals.csv: artefacts/lso2020phia_survey_individuals.csv      
       depends/lso2020phia_survey_circumcision.csv: artefacts/lso2020phia_survey_circumcision.csv
 
-  ## Recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS
+  ## Eswatini SHIMS3 2021 survey
+  00b0_survey_swz2021phia:
+    id: latest
+    use:
+      depends/swz2021phia_survey_clusters.csv: artefacts/swz2021phia_survey_clusters.csv
+      depends/swz2021phia_survey_individuals.csv: artefacts/swz2021phia_survey_individuals.csv      
+      depends/swz2021phia_survey_circumcision.csv: artefacts/swz2021phia_survey_circumcision.csv
+
+  ## Recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS, GHA2022DHS
   00b0_survey_dhs-individual-circumcision:
     id: latest
     use:

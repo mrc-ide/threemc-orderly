@@ -15,7 +15,7 @@ dhs_individual_id <- function(cluster, household, line) {
 }
 
 
-surveys <- create_surveys_dhs(c("BFA", "CIV", "GAB", "KEN", "TZA"), "DHS", NULL)
+surveys <- create_surveys_dhs(c("BFA", "CIV", "GAB", "KEN", "TZA", "GHA"), "DHS", NULL)
 surveys <- surveys %>% filter(SurveyYear >= 2019)
 dat <- create_individual_hiv_dhs(surveys)
 ind <- create_survey_individuals_dhs(dat)
