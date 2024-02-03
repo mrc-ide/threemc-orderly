@@ -295,6 +295,14 @@ depends:
       depends/swz2021phia_survey_individuals.csv: artefacts/swz2021phia_survey_individuals.csv      
       depends/swz2021phia_survey_circumcision.csv: artefacts/swz2021phia_survey_circumcision.csv
 
+  ## Mozambique INSIDA 2021 survey
+  00b0_survey_moz2021phia:
+    id: latest
+    use:
+      depends/moz2021phia_survey_clusters.csv: artefacts/moz2021phia_survey_clusters.csv
+      depends/moz2021phia_survey_individuals.csv: artefacts/moz2021phia_survey_individuals.csv      
+      depends/moz2021phia_survey_circumcision.csv: artefacts/moz2021phia_survey_circumcision.csv
+
   ## Recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS, GHA2022DHS
   00b0_survey_dhs-individual-circumcision:
     id: latest

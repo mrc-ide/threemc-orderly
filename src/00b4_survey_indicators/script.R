@@ -115,7 +115,8 @@ survey_circ_coverage <- calc_survey_indicators(
   sex = "male",
   area_bottom_level = 5,
   indicators = c("circumcised", "circ_medical", "circ_traditional"),
-  stratification = ~survey_id + area_id + sex + age_group
+  stratification = ~survey_id + area_id + sex + age_group,
+  mc.cores = mc.cores
 )
 
 circ_coverage <- survey_circ_coverage %>%
