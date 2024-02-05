@@ -303,6 +303,14 @@ depends:
       depends/moz2021phia_survey_individuals.csv: artefacts/moz2021phia_survey_individuals.csv      
       depends/moz2021phia_survey_circumcision.csv: artefacts/moz2021phia_survey_circumcision.csv
 
+  ## Zambia ZamPHIA 2021 survey
+  00b0_survey_zmb2021phia:
+    id: latest
+    use:
+      depends/zmb2021phia_survey_clusters.csv: artefacts/zmb2021phia_survey_clusters.csv
+      depends/zmb2021phia_survey_individuals.csv: artefacts/zmb2021phia_survey_individuals.csv      
+      depends/zmb2021phia_survey_circumcision.csv: artefacts/zmb2021phia_survey_circumcision.csv
+
   ## Recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS, GHA2022DHS
   00b0_survey_dhs-individual-circumcision:
     id: latest

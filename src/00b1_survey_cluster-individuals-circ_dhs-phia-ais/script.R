@@ -123,6 +123,7 @@ phia_survey_id <- c(
   "tza2016phia",
   "uga2016phia",
   "zmb2016phia",
+  "zmb2021phia",
   "zwe2016phia",
   "zwe2020phia",
   "lso2020phia",
