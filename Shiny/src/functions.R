@@ -3819,7 +3819,7 @@ plt_coverage_year_national_single_age <- function(
   # missing_cntries <- ssa_grid$name[!ssa_grid$name %in% dat_all$area_name]
   missing_cntries <- ssa_grid %>% 
     filter(!name %in% dat_all$area_name) %>% 
-    select(name, area_id)
+    select(name, area_id = code)
   
   if (!is.null(ssa_grid) && nrow(missing_cntries) > 0) {
     
