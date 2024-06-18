@@ -151,11 +151,16 @@ split_area_level <- function(
     if (parent_area_split == TRUE) cols <- c(cols, "parent_area_id")
     
     distinct_areas <- .data %>%
-        distinct(across(cols)) %>%
+        distinct(across(all_of(cols))) %>%
         # split each area_level (+ parent area) split by n plots desired
-        group_by(across(cols[!cols == "area_id"])) %>% 
+        group_by(across(all_of(cols[!cols == "area_id"]))) %>% 
         dplyr::mutate(split = ceiling(row_number() / n_plots)) %>%
         ungroup()
+    
+    n_na <- sum(is.na(distinct_areas))
+    if (n_na > 0) {
+      message("NAs in distinct areas, investigate")
+    }
     
     .data <- .data %>%
         left_join(distinct_areas, by = cols)
@@ -1145,6 +1150,17 @@ plt_coverage_map_change <- function(
   tmp <- st_make_valid(tmp)
   areas_plot <- st_make_valid(areas_plot)
   
+  # JIE 14 Apr 2024: remove fragments from national boundaries
+  areas_plot$geometry[areas_plot$iso3 == "CIV"] <- nngeo::st_remove_holes(
+    areas_plot$geometry[areas_plot$iso3 == "CIV"]
+  )
+  areas_plot$geometry[areas_plot$iso3 == "ZMB"] <- nngeo::st_remove_holes(
+    areas_plot$geometry[areas_plot$iso3 == "ZMB"]
+  )
+  areas_plot$geometry[areas_plot$iso3 == "BWA"] <- nngeo::st_remove_holes(
+    areas_plot$geometry[areas_plot$iso3 == "BWA"]
+  )
+  
   # Add difference, if specified
   tmp$year <- as.factor(tmp$year)
   if (inc_difference == TRUE) {
@@ -1192,62 +1208,90 @@ plt_coverage_map_change <- function(
   # rm(results_agegroup1, areas1); gc()
   
   map_plot <- function(
-    spec_results, spec_areas, lake_vic = NULL, colourPalette, colourPalette2
+    spec_results, spec_areas, lake_vic = NULL, colourPalette, colourPalette2,
+    colourbar1_width = 14, colourbar2_width = 7, 
+    legend.spacing.x = unit(1, "lines")
   ) {
+    
+    # browser()
     
     spec_results$type <- factor(
       spec_results$type, 
       levels = c("Total", "Medical", "Traditional")
     )
     
+    # crosshatch countries with no circ info for MMC and TMC
+    no_type_iso3 <- c("LBR", "SEN", "NER", "GIN", "COD")
+    spec_results$type_iso3 <- ifelse(
+      spec_results$iso3 %in% no_type_iso3 & spec_results$type != "Total", 
+      "no_type", 
+      "type"
+    )
+    
     spec_results_change <- filter(spec_results, year == "% Change")
     spec_results_year <- filter(spec_results, year != "% Change")
     
     p <- ggplot() +
-      geom_sf(
-        data = spec_results_year,
-        aes(fill = mean), 
-        size = 0.5,
-        colour = NA
-      ) +
-      labs(fill = "") +
-      scale_fill_gradientn(
-        colours = colourPalette,
-        na.value = "grey",
-        breaks = seq(0, 1, by = 0.1),
-        limits = c(0, 1),
-        label = scales::label_percent(accuracy = 1, trim = FALSE), 
-        guide = guide_colourbar(
-          # title = " Percent circumcised, 15–29 years",
-          title = paste0(" Percent circumcised, ", spec_age_group, " years"),
-          direction = "horizontal",
-          label = TRUE,
-          draw.ulim = TRUE,
-          draw.llim = TRUE,
-          frame.colour = "black",
-          ticks = TRUE,
-          barheight = 1,
-          # barwidth = 16,
-          barwidth = 15.5,
-          title.position = "bottom", 
-          plot.background = element_rect(fill = "white", colour = "white")
-        )
-      ) +
-      ggnewscale::new_scale_fill() +
-      # colour percentage change differently
-      geom_sf(
-        data = spec_results_change,
-        aes(fill = mean),
-        size = 0.5,
-        colour = NA
-      ) +
-      geom_sf(
-        data = spec_areas,
-        colour = "black",
-        size = 0.5,
-        fill = NA
+    # geom_sf(
+    #   data = spec_results_year,
+    #   aes(fill = mean), 
+    #   size = 0.5,
+    #   colour = NA
+    # ) +
+    geom_sf_pattern(
+      data = spec_results_year,
+      aes(fill = mean, pattern = type_iso3),
+      pattern_fill = "black",
+      pattern_angle = 45,
+      size = 0.5,
+      colour = NA
+    ) +
+    scale_pattern_manual(values = c(no_type = "stripe", type = "none")) + 
+    labs(fill = "") +
+    scale_fill_gradientn(
+      colours = colourPalette,
+      na.value = "grey",
+      breaks = seq(0, 1, by = 0.1),
+      limits = c(0, 1),
+      label = scales::label_percent(accuracy = 1, trim = FALSE), 
+      guide = guide_colourbar(
+        title = paste0(" Percent circumcised, ", spec_age_group, " years"),
+        direction = "horizontal",
+        label = TRUE,
+        draw.ulim = TRUE,
+        draw.llim = TRUE,
+        frame.colour = "black",
+        ticks = TRUE,
+        barheight = 1,
+        barwidth = colourbar1_width,
+        title.position = "bottom", 
+        plot.background = element_rect(fill = "white", colour = "white"),
+        order = 1
       )
-    
+    ) +
+    ggnewscale::new_scale_fill() +
+    # colour percentage change differently
+    # geom_sf(
+    #   data = spec_results_change,
+    #   aes(fill = mean),
+    #   size = 0.5,
+    #   colour = NA
+    # ) +
+    geom_sf_pattern(
+      data = spec_results_change,
+      aes(fill = mean, pattern = type_iso3),
+      pattern_fill = "black",
+      pattern_angle = 45,
+      size = 0.5,
+      colour = NA
+    ) +
+    geom_sf(
+      data = spec_areas,
+      colour = "black",
+      size = 0.5,
+      fill = NA
+    )
+   
     if (!is.null(lake_vic)) {
       p <- p + 
         geom_sf(
@@ -1259,18 +1303,13 @@ plt_coverage_map_change <- function(
     }
     p <- p + 
       labs(fill = "") +
-      ## ggtitle("Circumcision coverage 2006-2020, 15-29 year olds") + 
-      scale_fill_gradientn(
-        colours = colourPalette2,
+      scale_fill_gradient2(
+        low = "blue3",
+        high = "red3",
         na.value = "grey",
-        # breaks = seq(-0.2, 0.5, by = 0.1), 
-        breaks = seq(-0.3, 0.7, by = 0.1), 
-        # breaks = sort(c(seq(-0.3, 0.7, by = 0.2), 0)),
-        # limits = c(-0.2, 0.5),
-        limits = c(-0.3, 0.7),
+        breaks = seq(-0.3, 0.65, by = 0.15), 
         label = scales::label_percent(accuracy = 1, trim = TRUE),
         guide = guide_colourbar(
-          # title = "Absolute change, 2006–2020",
           title = paste0("Absolute change, ", spec_years[1], "-", spec_years[2]),
           direction = "horizontal",
           label = TRUE, 
@@ -1279,20 +1318,24 @@ plt_coverage_map_change <- function(
           frame.colour = "black", 
           ticks = TRUE, 
           barheight = 1,
-          # barwidth = 10,
-          barwidth = 13,
-          title.position = "bottom"
+          barwidth = colourbar2_width,
+          title.position = "bottom",
+          order = 2
         )
       ) +
-      facet_grid(type ~ year, switch = "y") + 
+      expand_limits(fill = -0.3) +
+      facet_grid(type ~ year, switch = "y") +
+      coord_sf(expand = FALSE) + 
       theme_minimal(base_size = 9) +
       theme(
-        strip.text      = element_text(size = rel(1.1), face = "bold"), 
-        legend.text     = element_text(size = rel(0.75)),
+        strip.text      = element_text(size = rel(1.25), face = "bold"), 
+        legend.text     = element_text(size = rel(0.9)),
         legend.title    = element_text(face = "bold", hjust = 0.5),
+        legend.spacing.x = legend.spacing.x,
         axis.text       = element_blank(),
         axis.ticks      = element_blank(),
         legend.position = "bottom",
+        legend.justification = 0.95,
         panel.grid      = element_blank(),
         panel.spacing   = unit(0.01, "lines"), # make plot as "dense" as possible
         plot.background = element_rect(fill = "white", colour = "white"),
@@ -1301,7 +1344,9 @@ plt_coverage_map_change <- function(
       )
   }
   
-  plot <- map_plot(tmp, areas_plot, lake_vic, colourPalette, colourPalette2)
+  plot <- map_plot(tmp, areas_plot, lake_vic, colourPalette, colourPalette2,
+                   colourbar1_width = 16, colourbar2_width = 8.5,
+                   legend.spacing.x = unit(2, "lines"))
   
   # add title, if desired
   if (!is.null(spec_main_title)) {
@@ -1310,9 +1355,8 @@ plt_coverage_map_change <- function(
      theme(plot.title = element_text(size = rel(1.3), hjust = 0.5))
   }
   
-  # If desired, save plots, else, return them ("ungrobbed")
+  # If desired, save plots, else, return them
   if (!is.null(str_save)) {
-    # plots <- gridExtra::marrangeGrob(plots, nrow = 1, ncol = 1)
     ggsave(
       filename = str_save,
       plot     = plot,
@@ -1686,9 +1730,17 @@ plt_age_coverage_multi_years <- function(
         # Minimal theme
         theme_minimal(base_size = 9) +
         # remove colour legend, remove alpha from fill legend
+        # guides(
+        #   colour = "none",
+        #   fill = guide_legend(override.aes = list(alpha = 1))
+        # ) + 
         guides(
           colour = "none", 
-          fill   = guide_legend(override.aes = list(alpha = 1))
+          pattern = "none",
+          # fill   = guide_legend(override.aes = list(alpha = 1))
+          fill     = guide_legend(override.aes = list(
+            alpha = 1, pattern = "none"
+          ))
         ) +
         # Altering plot text size
         theme(
@@ -1746,8 +1798,18 @@ calc_circ_age_ridge <- function(
     spec_ages      = 0:30,
     province_split = province_split,
     spec_types     = c("MCs performed", "MMCs performed", "TMCs performed"),
-    n_plots        = 1
+    n_plots        = 1, 
+    iso3_no_correct_pop = NULL
 ) {
+  
+    # do we need to correct values 
+    results_age$correct_pop <- TRUE
+    if (!is.null(iso3_no_correct_pop)) {
+      results_age <- results_age %>% 
+        mutate(
+          correct_pop = ifelse(iso3 %in% iso3_no_correct_pop, FALSE, TRUE)
+        )
+    }
 
     # Keep relevant information (also calculate density from mean)
     tmp <- results_age %>%
@@ -1764,8 +1826,11 @@ calc_circ_age_ridge <- function(
         ) %>% 
         # Temp: multiply by population
         mutate(
-          across(all_of(c("mean", "lower", "upper")), ~ . * population)
+          across(all_of(c("mean", "lower", "upper")), ~ ifelse(
+            correct_pop, . * population, .
+          ))
         ) %>% 
+        select(-correct_pop) %>% 
         # Calculate density for the ridge plot
         # Grouping for normalising
         group_by(area_id, year, type) %>%
@@ -3649,7 +3714,8 @@ plt_coverage_year_national_single_age <- function(
                     "Medical Male Circumcision (MMC)",
                     ifelse(grepl("TMC", type),
                            "Traditional Male Circumcision (TMC)",
-                           "Male Circumcision (MC)"))
+                           # "Male Circumcision (MC)"))
+                           "Male Circumcision (unknown type)"))
     )
   
   # add last surveys for each country
@@ -3724,13 +3790,15 @@ plt_coverage_year_national_single_age <- function(
   
   # data for specific total circumcision, to add to plot labels
   tmp1 <- tmp %>%
-    filter(type == "Male Circumcision (MC)") %>%
+    # filter(type == "Male Circumcision (MC)") %>%
+    filter(type == "Male Circumcision (unknown type)") %>%
     arrange(area_name)
   
   dat_all <- tmp %>%
     # plot TMC in front of MC, relabel MC to MMC
     filter(
-      type != "Male Circumcision (MC)",
+      # type != "Male Circumcision (MC)",
+      type != "Male Circumcision (unknown type)",
       mean.y > 0
     )
   
@@ -3742,18 +3810,23 @@ plt_coverage_year_national_single_age <- function(
     missing_dat_all <- tmp1 %>%
       filter(iso3 %in% missing_type_iso3) %>%
       # mutate(type = "Unknown")
-      mutate(type = "Male Circumcision")
+      # mutate(type = "Male Circumcision")
+      mutate(type = "Male Circumcision (unknown type)")
     dat_all <- bind_rows(dat_all, missing_dat_all)
   }
   
   # add in missing countries
-  missing_cntries <- ssa_grid$name[!ssa_grid$name %in% dat_all$area_name]
-  if (!is.null(ssa_grid) && length(missing_cntries) > 0) {
+  # missing_cntries <- ssa_grid$name[!ssa_grid$name %in% dat_all$area_name]
+  missing_cntries <- ssa_grid %>% 
+    filter(!name %in% dat_all$area_name) %>% 
+    select(name, area_id)
+  
+  if (!is.null(ssa_grid) && nrow(missing_cntries) > 0) {
     
     # dummy dataframe for missing countries
     dat_missing <- dat_all %>% 
       distinct(year, age) %>% 
-      tidyr::crossing("area_name" = missing_cntries) %>% 
+      tidyr::crossing(missing_cntries) %>% 
       mutate(mean.y = 1, type = "Missing", area_level = 0)
     
     # add to plot data 
@@ -3763,14 +3836,16 @@ plt_coverage_year_national_single_age <- function(
     levs <- c(
       "Medical Male Circumcision", 
       "Traditional Male Circumcision", 
-      "Male Circumcision",
+      # "Male Circumcision",
+      "Male Circumcision (unknown type)",
       "Missing"
     )
   } else {
     levs <- c(
       "Medical Male Circumcision", 
       "Traditional Male Circumcision", 
-      "Male Circumcision"
+      # "Male Circumcision"
+      "Male Circumcision (unknown type)"
     )
   }
   
@@ -3802,7 +3877,7 @@ plt_coverage_year_national_single_age <- function(
   # don't want for greyed out missing countries
   if (length(missing_cntries) > 0) {
     hor_df <- bind_rows(
-      filter(hor_df,!area_name %in% missing_cntries),
+      filter(hor_df, !area_name %in% missing_cntries),
       data.frame("area_name" = missing_cntries, y = NA)
     ) %>% 
       distinct()
@@ -3830,11 +3905,13 @@ plt_coverage_year_national_single_age <- function(
     
     # add purple for unknown type, to be in line with map plots
     # if ("Unknown" %in% all_data$type) {
-    if ("Male Circumcision" %in% all_data$type) {
+    # if ("Male Circumcision" %in% all_data$type) {
+    if ("Male Circumcision (unknown type)" %in% all_data$type) {
       manual_fill <- c(manual_fill, "#5e4fa2")
     }
     
-    if (!is.null(ssa_grid) && length(missing_cntries) > 0) {
+    # if (!is.null(ssa_grid) && length(missing_cntries) > 0) {
+    if (!is.null(ssa_grid) && nrow(missing_cntries) > 0) {
      manual_fill <- c(manual_fill, "lightgrey") 
     }
     
@@ -3907,9 +3984,10 @@ plt_coverage_year_national_single_age <- function(
         # axis.text.y = element_blank(),
         strip.text = element_text(size = 20, face = "bold"),
         strip.background = element_blank(),
-        axis.title = element_text(size = 16),
+        # axis.title = element_text(size = 16),
+        axis.title = element_text(size = 14),
         # panel.grid = element_blank(),
-        plot.title = element_text(size = 22, hjust = 0.0),
+        plot.title = element_text(size = 22, hjust = 0.0), # not used
         legend.text = element_text(size = 12),
         axis.text.x = element_text(size = 12, angle = 45, hjust = 1, vjust = 1),
         legend.position = "bottom",
@@ -4384,7 +4462,7 @@ threemc_val_plt <- function(
       if (x_var == "age_group") {
         p <- p +
           scale_x_continuous(
-            breaks = 1:length(spec_agegroup), # (length(age_per) + 1),
+            breaks = seq_len(length(spec_agegroup)), # (length(age_per) + 1),
             labels = spec_agegroup # c(age_per, final_label),
         )
       }
