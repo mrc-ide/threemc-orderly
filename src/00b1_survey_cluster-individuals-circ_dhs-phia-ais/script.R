@@ -109,30 +109,32 @@ iso3_dhs <- iso3[!iso3 %in% c("bwa", "caf", "gnb", "gnq", "hti", "zaf")]
 dhs_paths <- paste0("depends/", iso3_dhs, "_dhs_clusters.csv")
 dhs_clusters <- load_cluster_data(dhs_paths)
 
-# countries with phia surveys
-iso3_phia <- c(
-  "bwa", "civ", "cmr", "lso", "mwi", "nam",
-  "rwa", "swz", "tza", "uga", "zmb", "zwe"
+phia_survey_id <- c(
+  "bwa2021phia",
+  "civ2017phia",
+  "cmr2017phia",
+  "lso2017phia",
+  "ken2018phia",
+  "moz2021phia",
+  "mwi2016phia",
+  "nam2017phia",
+  "rwa2018phia",
+  "swz2017phia",
+  "tza2016phia",
+  "uga2016phia",
+  "zmb2016phia",
+  "zmb2021phia",
+  "zwe2016phia",
+  "zwe2020phia",
+  "lso2020phia",
+  "swz2021phia"
 )
 
 # years of phia surveys for each country
-phia_years <- c(
-  "bwa" = 2021,
-  "civ" = 2017,
-  "cmr" = 2017,
-  "lso" = 2017,
-  "mwi" = 2016,
-  "nam" = 2017,
-  "rwa" = 2018,
-  "swz" = 2017,
-  "tza" = 2016,
-  "uga" = 2016,
-  "zmb" = 2016,
-  "zwe" = 2016
-)
+
 
 # load phia cluster datasets
-phia_paths <- paste0("depends/", iso3_phia, phia_years[iso3_phia], "phia_survey_clusters.csv")
+phia_paths <- paste0("depends/", phia_survey_id, "_survey_clusters.csv")
 phia_clusters <- load_cluster_data(phia_paths)
 
 # bind together both cluster datasets
@@ -176,6 +178,14 @@ stopifnot(!lso2014dhs_individuals$survey_id %in% dhs_individuals$survey_id)
 dhs_individuals <- dhs_individuals %>%
   bind_rows(lso2014dhs_individuals)
 
+#' Add recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS, GHA2022DHS
+
+dhs_individuals_new <- read_csv("depends/dhs_survey_individuals.csv")
+stopifnot(length(intersect(dhs_individuals$survey_id, dhs_individuals_new$survey_id)) == 0)
+
+dhs_individuals <- dhs_individuals %>%
+  bind_rows(dhs_individuals_new)
+
 
 # individual_id has been coded differently than in circumcision dataset
 
@@ -190,14 +200,14 @@ dhs_individuals <- dhs_individuals %>%
   )
 
 
-phia_paths <- paste0("depends/", iso3_phia, phia_years, "phia_survey_individuals.csv")
+phia_paths <- paste0("depends/", phia_survey_id, "_survey_individuals.csv")
 
 phia_individuals <- lapply(phia_paths, read_csv)
-names(phia_individuals) <- toupper(iso3_phia)
+names(phia_individuals) <- toupper(phia_survey_id)
 phia_individuals <- phia_individuals %>%
-  Map(mutate, ., iso3 = toupper(names(.))) %>%
+  Map(mutate, ., iso3 = toupper(substr(names(.), 1, 3))) %>%
   bind_rows() %>%
-  select(iso3, everything())
+  select(survey_id, everything())
 
 survey_individuals <- dhs_individuals %>%
   mutate(cluster_id = as.character(cluster_id),
@@ -242,19 +252,33 @@ stopifnot(!lso2014dhs_circumcision$survey_id %in% dhs_circumcision$survey_id)
 
 dhs_circumcision <- dhs_circumcision %>%
   bind_rows(lso2014dhs_circumcision)
-  
 
-phia_paths <- paste0("depends/", iso3_phia, phia_years, "phia_survey_circumcision.csv")
+
+#' Add recent DHS surveys: BFA2021DHS, CIV2021DHS, GAB2019DHS, KEN2022DHS, TZA2022DHS, GHA2022DHS
+
+dhs_circumcision_new <- read_csv("depends/dhs_survey_circumcision.csv") %>%
+  mutate(
+    individual_id = sprintf("%11s", individual_id)
+  )
+stopifnot(length(intersect(dhs_circumcision$survey_id, dhs_circumcision_new$survey_id)) == 0)
+
+dhs_circumcision <- dhs_circumcision %>%
+  bind_rows(
+    select(dhs_circumcision_new, any_of(names(dhs_circumcision)))
+  )
+
+
+phia_paths <- paste0("depends/", phia_survey_id, "_survey_circumcision.csv")
 phia_circumcision <- lapply(phia_paths, read_csv)
 
-names(phia_circumcision) <- toupper(iso3_phia)
+names(phia_circumcision) <- toupper(phia_survey_id)
 
 #' To match other PHIA surveys
-phia_circumcision$LSO <- phia_circumcision$LSO %>%
+phia_circumcision$LSO2017PHIA <- phia_circumcision$LSO2017PHIA %>%
   rename(circumcised = circ_status)
 
 phia_circumcision <- phia_circumcision %>% 
-  Map(mutate, ., iso3 = toupper(names(.))) %>%
+  Map(mutate, ., iso3 = substr(names(.), 1, 3)) %>%
   bind_rows() %>%
   select(iso3, everything()) %>%
   rename(circ_status = circumcised) %>%
@@ -346,6 +370,7 @@ survey_individuals %>%
 #' All circumcision in individuals data 
 survey_circumcision %>%
   anti_join(survey_individuals, by = c("iso3", "survey_id", "individual_id")) %>%
+  count(survey_id) %>%
   nrow() %>%
   {stopifnot(. == 0)}
 

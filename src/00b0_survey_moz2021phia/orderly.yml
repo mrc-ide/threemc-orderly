@@ -1,0 +1,33 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: INSIDA 2021 survey microdata
+      filenames:
+        - artefacts/moz2021phia_survey_meta.csv
+        - artefacts/moz2021phia_survey_regions.csv
+        - artefacts/moz2021phia_survey_clusters.csv
+        - artefacts/moz2021phia_survey_individuals.csv
+        - artefacts/moz2021phia_survey_biomarker.csv
+        - artefacts/moz2021phia_survey_circumcision.csv
+  - staticgraph:
+       description: INSIDA 2021 survey regions vs. area hierarchy
+       filenames:
+         - check/moz2021phia-survey-region-boundaries.png
+
+packages:
+  - dplyr
+  - ggplot2
+  - haven
+  - naomi
+  - spud
+  - rdhs
+  - tidyverse
+  - sf
+
+depends:
+  moz_data_areas:
+    id: latest
+    use:
+      depends/moz_areas.geojson: moz_areas.geojson
+  

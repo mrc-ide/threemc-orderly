@@ -1,0 +1,33 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: SHIMS3 2021 survey microdata
+      filenames:
+        - artefacts/swz2021phia_survey_meta.csv
+        - artefacts/swz2021phia_survey_regions.csv
+        - artefacts/swz2021phia_survey_clusters.csv
+        - artefacts/swz2021phia_survey_individuals.csv
+        - artefacts/swz2021phia_survey_biomarker.csv
+        - artefacts/swz2021phia_survey_circumcision.csv
+  - staticgraph:
+       description: SHIMS3 2021 survey regions vs. area hierarchy
+       filenames:
+         - check/swz2021phia-survey-region-boundaries.png
+
+packages:
+  - dplyr
+  - ggplot2
+  - haven
+  - naomi
+  - spud
+  - rdhs
+  - tidyverse
+  - sf
+
+depends:
+  swz_data_areas:
+    id: latest
+    use:
+      depends/swz_areas.geojson: swz_areas.geojson
+  

@@ -1,0 +1,22 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: DHS individual and circumcision dataset
+      filenames:
+        - artefacts/dhs_survey_circumcision.csv
+        - artefacts/dhs_survey_individuals.csv	
+
+displayname: DHS circumcision data set
+
+description: |
+  DHS individual and circumcision datasets for new surveys.
+
+
+packages:
+  - dplyr
+  - forcats
+  - haven
+  - naomi.utils
+  - rdhs
+  - readr

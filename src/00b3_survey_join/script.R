@@ -26,7 +26,7 @@ save_dir <- "artefacts/"
 threemc::create_dirs_r(save_dir)
 
 # Surveys we don't have permissions to publish with yet
-rm_surveys <- c("UGA2020PHIA", "MWI2020PHIA")
+rm_surveys <- c("UGA2020PHIA")
 
 ## # location of UGA2020PHIA file
 ## uga2020phia_loc <- "depends/uga2020phia.csv.gz"

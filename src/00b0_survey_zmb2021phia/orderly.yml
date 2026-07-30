@@ -1,0 +1,33 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: ZamPHIA 2021 survey microdata
+      filenames:
+        - artefacts/zmb2021phia_survey_meta.csv
+        - artefacts/zmb2021phia_survey_regions.csv
+        - artefacts/zmb2021phia_survey_clusters.csv
+        - artefacts/zmb2021phia_survey_individuals.csv
+        - artefacts/zmb2021phia_survey_biomarker.csv
+        - artefacts/zmb2021phia_survey_circumcision.csv
+  - staticgraph:
+       description: ZamPHIA 2021 survey regions vs. area hierarchy
+       filenames:
+         - check/zmb2021phia-survey-region-boundaries.png
+
+packages:
+  - dplyr
+  - ggplot2
+  - haven
+  - naomi
+  - spud
+  - rdhs
+  - tidyverse
+  - sf
+
+depends:
+  zmb_data_areas:
+    id: latest
+    use:
+      depends/zmb_areas.geojson: zmb_areas.geojson
+  

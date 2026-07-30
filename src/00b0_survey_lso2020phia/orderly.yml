@@ -1,0 +1,33 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: LePHIA 2020 survey microdata
+      filenames:
+        - artefacts/lso2020phia_survey_meta.csv
+        - artefacts/lso2020phia_survey_regions.csv
+        - artefacts/lso2020phia_survey_clusters.csv
+        - artefacts/lso2020phia_survey_individuals.csv
+        - artefacts/lso2020phia_survey_biomarker.csv
+        - artefacts/lso2020phia_survey_circumcision.csv
+  - staticgraph:
+       description: LePHIA 2020 survey regions vs. area hierarchy
+       filenames:
+         - check/lso2020phia-survey-region-boundaries.png
+
+packages:
+  - dplyr
+  - ggplot2
+  - haven
+  - naomi
+  - spud
+  - rdhs
+  - tidyverse
+  - sf
+
+depends:
+  lso_data_areas:
+    id: latest
+    use:
+      depends/lso_areas.geojson: lso_areas.geojson
+  
